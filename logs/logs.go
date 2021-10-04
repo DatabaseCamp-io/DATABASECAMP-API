@@ -5,7 +5,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-type Log struct {
+type log struct {
 	log *zap.Logger
 }
 
@@ -15,17 +15,17 @@ type ILog interface {
 	Error(message interface{}, fields ...zapcore.Field)
 }
 
-var instantiated *Log = nil
+var instantiated *log = nil
 
-func New() *Log {
+func New() *log {
 	if instantiated == nil {
-		instantiated = new(Log)
+		instantiated = new(log)
 		instantiated.init()
 	}
 	return instantiated
 }
 
-func (l Log) init() {
+func (l log) init() {
 	config := zap.NewProductionConfig()
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -36,15 +36,15 @@ func (l Log) init() {
 	l.log = buildedLog
 }
 
-func (l Log) Info(message string, fields ...zapcore.Field) {
+func (l log) Info(message string, fields ...zapcore.Field) {
 	l.log.Info(message, fields...)
 }
 
-func (l Log) Debug(message string, fields ...zapcore.Field) {
+func (l log) Debug(message string, fields ...zapcore.Field) {
 	l.log.Debug(message, fields...)
 }
 
-func (l Log) Error(message interface{}, fields ...zapcore.Field) {
+func (l log) Error(message interface{}, fields ...zapcore.Field) {
 	switch v := message.(type) {
 	case error:
 		l.log.Error(v.Error(), fields...)

@@ -9,33 +9,33 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type Router struct {
-	router *echo.Echo
+type router struct {
+	echo *echo.Echo
 }
 
 type IRouter interface {
 }
 
-var instantiated *Router = nil
+var instantiated *router = nil
 
-func New(router *echo.Echo) *Router {
+func New(e *echo.Echo) *router {
 	if instantiated == nil {
-		instantiated = &Router{router: router}
+		instantiated = &router{echo: e}
 		instantiated.init()
 	}
 	return instantiated
 }
 
-func (r Router) init() {
+func (r router) init() {
 	r.setupTodo()
 }
 
-func (r Router) setupTodo() {
+func (r router) setupTodo() {
 	db := database.New().Get()
 	repository := repository.NewTodoRepository(db)
 	controller := controller.NewTodoController(repository)
 	handler := handler.NewTodoHandler(controller)
-	group := r.router.Group("todo")
+	group := r.echo.Group("todo")
 	{
 		group.GET("/list", handler.GetAll)
 	}

@@ -12,7 +12,7 @@ type message struct {
 	En string
 }
 
-func HandleError(c echo.Context, err error) error {
+func handleError(c echo.Context, err error) error {
 	switch e := err.(type) {
 	case errs.AppError:
 		return c.JSON(e.Code, message{Th: e.ThMessage, En: e.EnMessage})

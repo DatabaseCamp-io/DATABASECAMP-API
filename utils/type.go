@@ -2,18 +2,18 @@ package utils
 
 import "encoding/json"
 
-type Type struct{}
+type typeUtils struct{}
 
 type IType interface {
 	StructToStruct(x1 interface{}, x2 interface{}) error
 	StructToMap(obj interface{}) (newMap map[string]interface{}, err error)
 }
 
-func NewType() Type {
-	return Type{}
+func NewType() typeUtils {
+	return typeUtils{}
 }
 
-func (t Type) StructToMap(obj interface{}) (newMap map[string]interface{}, err error) {
+func (t typeUtils) StructToMap(obj interface{}) (newMap map[string]interface{}, err error) {
 	data, err := json.Marshal(obj)
 
 	if err != nil {
@@ -24,7 +24,7 @@ func (t Type) StructToMap(obj interface{}) (newMap map[string]interface{}, err e
 	return
 }
 
-func (t Type) StructToStruct(x1 interface{}, x2 interface{}) error {
+func (t typeUtils) StructToStruct(x1 interface{}, x2 interface{}) error {
 	temp, err := t.StructToMap(x1)
 	if err != nil {
 		return err

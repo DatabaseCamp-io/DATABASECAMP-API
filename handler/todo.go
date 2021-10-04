@@ -22,7 +22,7 @@ func NewTodoHandler(controller controller.ITodoController) todoHandler {
 func (h todoHandler) GetAll(c echo.Context) error {
 	todo, err := h.controller.GetAll()
 	if err != nil {
-		return HandleError(c, err)
+		return handleError(c, err)
 	}
 	return c.JSON(http.StatusOK, todo)
 }

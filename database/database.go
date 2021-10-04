@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type DB struct {
+type db struct {
 	db *gorm.DB
 }
 
@@ -18,16 +18,16 @@ type IDatabase interface {
 	OpenConnection() (*gorm.DB, error)
 }
 
-var instantiated *DB = nil
+var instantiated *db = nil
 
-func New() *DB {
+func New() *db {
 	if instantiated == nil {
-		instantiated = new(DB)
+		instantiated = new(db)
 	}
 	return instantiated
 }
 
-func (database DB) getDSN() string {
+func (database db) getDSN() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		os.Getenv("DB_USERNAME"),
 		os.Getenv("DB_PASSWORD"),
@@ -37,7 +37,7 @@ func (database DB) getDSN() string {
 	)
 }
 
-func (database DB) OpenConnection() error {
+func (database db) OpenConnection() error {
 	var err error
 	dsn := database.getDSN()
 	sql := mysql.Open(dsn)
@@ -45,11 +45,11 @@ func (database DB) OpenConnection() error {
 	return err
 }
 
-func (database DB) Get() *gorm.DB {
+func (database db) Get() *gorm.DB {
 	return database.db
 }
 
-func (database DB) Close() error {
+func (database db) Close() error {
 	sql, err := database.db.DB()
 	if err != nil {
 		return err
