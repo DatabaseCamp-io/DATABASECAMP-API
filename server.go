@@ -45,12 +45,13 @@ func setupEcho() error {
 	e.Use(middleware.CORSWithConfig(getCORSConfig()))
 	e.Pre(middleware.AddTrailingSlash())
 
+	router.New(e)
+
 	err := e.Start(":" + os.Getenv("PORT"))
 	if err != nil {
 		return err
 	}
 
-	router.New(e)
 	return nil
 }
 
@@ -73,7 +74,7 @@ func main() {
 		logs.New().Error(err)
 		return
 	}
-	defer db.Close()
+	defer db.CloseDB()
 
 	err = setupEcho()
 	if err != nil {

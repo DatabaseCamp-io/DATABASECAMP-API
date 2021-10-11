@@ -1,13 +1,13 @@
 package utils
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"time"
+)
 
 type typeUtils struct{}
-
-type IType interface {
-	StructToStruct(x1 interface{}, x2 interface{}) error
-	StructToMap(obj interface{}) (newMap map[string]interface{}, err error)
-}
 
 func NewType() typeUtils {
 	return typeUtils{}
@@ -41,4 +41,32 @@ func (t typeUtils) StructToStruct(x1 interface{}, x2 interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func (t typeUtils) ParseDuration(item interface{}) time.Duration {
+	intType := t.ParseInt(item)
+	return time.Duration(intType)
+}
+
+func (t typeUtils) ParseInt(item interface{}) int {
+	_item := item
+	switch item.(type) {
+	case int:
+		return _item.(int)
+	case int64:
+		return int(_item.(int64))
+	case int32:
+		return int(_item.(int32))
+	case float64:
+		return int(_item.(float64))
+	case string:
+		_int, _ := strconv.Atoi(_item.(string))
+		return _int
+	default:
+		return 0
+	}
+}
+
+func (t typeUtils) ParseString(item interface{}) string {
+	return fmt.Sprintf("%v", item)
 }

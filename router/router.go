@@ -13,9 +13,6 @@ type router struct {
 	echo *echo.Echo
 }
 
-type IRouter interface {
-}
-
 var instantiated *router = nil
 
 func New(e *echo.Echo) *router {
@@ -27,16 +24,18 @@ func New(e *echo.Echo) *router {
 }
 
 func (r router) init() {
-	r.setupTodo()
+	r.setupUser()
 }
 
-func (r router) setupTodo() {
-	db := database.New().Get()
-	repository := repository.NewTodoRepository(db)
-	controller := controller.NewTodoController(repository)
-	handler := handler.NewTodoHandler(controller)
-	group := r.echo.Group("todo")
+func (r router) setupUser() {
+	db := database.New()
+	repository := repository.NewUserRepository(db)
+	controller := controller.NewUserController(repository)
+	jwt := handler.NewJwtMiddleware(repository)
+	handler := handler.NewUserHandler(controller, jwt)
+	group := r.echo.Group("user")
 	{
-		group.GET("/list", handler.GetAll)
+		group.POST("/register/", handler.Register)
+		group.POST("/login/", handler.Login)
 	}
 }

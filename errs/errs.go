@@ -19,3 +19,27 @@ func NewNotFoundError(thMessage string, enMessage string) error {
 		EnMessage: enMessage,
 	}
 }
+
+func NewForbiddenError(thMessage string, enMessage string) error {
+	return AppError{
+		Code:      http.StatusForbidden,
+		ThMessage: thMessage,
+		EnMessage: enMessage,
+	}
+}
+
+func NewInternalServerError(thMessage string, enMessage string) error {
+	return AppError{
+		Code:      http.StatusInternalServerError,
+		ThMessage: thMessage,
+		EnMessage: enMessage,
+	}
+}
+
+func NewBadRequestError(thMessage string, enMessage string) error {
+	return AppError{
+		Code:      http.StatusBadRequest,
+		ThMessage: thMessage,
+		EnMessage: enMessage,
+	}
+}

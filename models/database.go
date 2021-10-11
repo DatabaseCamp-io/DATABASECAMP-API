@@ -1,7 +1,13 @@
 package models
 
-var Table = struct {
-	Todo string
+var TableName = struct {
+	User string
 }{
-	"Todo",
+	"User",
+}
+
+var IDName = struct {
+	User string
+}{
+	"user_id",
 }
