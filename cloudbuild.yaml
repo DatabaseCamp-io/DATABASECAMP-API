@@ -1,0 +1,21 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/$TRIGGER_NAME', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/$TRIGGER_NAME']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: 
+      [
+        'beta', 
+        'run', 
+        'deploy', 
+        '$TRIGGER_NAME', 
+        '--image', 
+        'gcr.io/$PROJECT_ID/$TRIGGER_NAME', 
+        '--region',
+        'asia-east1',
+        '--platform', 
+        'managed', 
+        '--quiet']
+images:
+  - gcr.io/$PROJECT_ID/$TRIGGER_NAME
