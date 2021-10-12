@@ -18,22 +18,20 @@ type ILog interface {
 var instantiated *log = nil
 
 func New() *log {
+	var buildedLog *zap.Logger
 	if instantiated == nil {
-		instantiated = new(log)
-		instantiated.init()
+		buildedLog, _ = initLog()
+		instantiated = &log{log: buildedLog}
 	}
 	return instantiated
 }
 
-func (l log) init() {
+func initLog() (*zap.Logger, error) {
 	config := zap.NewProductionConfig()
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	buildedLog, err := config.Build(zap.AddCallerSkip(1))
-	if err != nil {
-		panic(err)
-	}
-	l.log = buildedLog
+	return buildedLog, err
 }
 
 func (l log) Info(message string, fields ...zapcore.Field) {
