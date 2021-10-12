@@ -8,11 +8,10 @@ import (
 	"DatabaseCamp/utils"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
-	"github.com/labstack/echo/v4"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -59,20 +58,6 @@ func (j jwtMiddleware) JwtSign(id int) (string, error) {
 	return token, nil
 }
 
-func (j jwtMiddleware) getBearer(header []string) (string, error) {
-	if len(header) == 0 {
-		return "", errs.NewForbiddenError("ส่วนหัวของคำร้องขอไม่ถูกต้อง", "Bad header")
-	}
-
-	splitHeader := strings.Split(header[0], " ")
-	if len(splitHeader) != 2 {
-		return "", errs.NewForbiddenError("ส่วนหัวของคำร้องขอไม่ถูกต้อง", "Bad header")
-	}
-
-	bearer := splitHeader[1]
-	return bearer, nil
-}
-
 func (j jwtMiddleware) getClaims(token *jwt.Token) (jwt.MapClaims, error) {
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
@@ -82,9 +67,9 @@ func (j jwtMiddleware) getClaims(token *jwt.Token) (jwt.MapClaims, error) {
 	}
 }
 
-func (j jwtMiddleware) setClaims(c echo.Context, claims jwt.MapClaims) {
+func (j jwtMiddleware) setClaims(c *fiber.Ctx, claims jwt.MapClaims) {
 	for k, v := range claims {
-		c.Set(k, v)
+		c.Set(k, utils.NewType().ParseString(v))
 	}
 }
 
@@ -101,44 +86,40 @@ func (j jwtMiddleware) validUser(token string, id int) bool {
 	return true
 }
 
-func (j jwtMiddleware) JwtVerify(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		bearer, err := j.getBearer(c.Request().Header["Authorization"])
-		if err != nil {
-			return handleError(c, err)
+func (j jwtMiddleware) JwtVerify(c *fiber.Ctx) error {
+
+	bearer := utils.NewType().ParseString(c.Locals("token"))
+
+	token, err := jwt.Parse(bearer, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			EnMessage := fmt.Sprintf("unexpected signing method: %v", token.Header["alg"])
+			ThMessage := fmt.Sprintf("วิธีการลงนามที่ไม่คาดคิด: %v", token.Header["alg"])
+			return nil, handleError(c, errs.NewForbiddenError(ThMessage, EnMessage))
 		}
-
-		token, err := jwt.Parse(bearer, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				EnMessage := fmt.Sprintf("unexpected signing method: %v", token.Header["alg"])
-				ThMessage := fmt.Sprintf("วิธีการลงนามที่ไม่คาดคิด: %v", token.Header["alg"])
-				return nil, handleError(c, errs.NewForbiddenError(ThMessage, EnMessage))
-			}
-			return []byte(os.Getenv("JWT_SECRET")), nil
-		})
-		if err != nil {
-			logs.New().Error(err)
-			return handleError(c, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error"))
-		}
-
-		claims, err := j.getClaims(token)
-		if err != nil {
-			return handleError(c, err)
-		}
-
-		id := utils.NewType().ParseInt(claims["id"])
-
-		if !j.validUser(bearer, id) {
-			return handleError(c, errs.NewForbiddenError("โทเค็นไม่ถูกต้อง", "Token Invalid"))
-		}
-
-		err = j.updateToken(id, bearer)
-		if err != nil {
-			logs.New().Error(err)
-			return handleError(c, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error"))
-		}
-
-		j.setClaims(c, claims)
-		return next(c)
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+	if err != nil {
+		logs.New().Error(err)
+		return handleError(c, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error"))
 	}
+
+	claims, err := j.getClaims(token)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	id := utils.NewType().ParseInt(claims["id"])
+
+	if !j.validUser(bearer, id) {
+		return handleError(c, errs.NewForbiddenError("โทเค็นไม่ถูกต้อง", "Token Invalid"))
+	}
+
+	err = j.updateToken(id, bearer)
+	if err != nil {
+		logs.New().Error(err)
+		return handleError(c, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error"))
+	}
+
+	j.setClaims(c, claims)
+	return c.Next()
 }

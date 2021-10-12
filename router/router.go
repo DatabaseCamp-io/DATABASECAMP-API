@@ -6,18 +6,18 @@ import (
 	"DatabaseCamp/handler"
 	"DatabaseCamp/repository"
 
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
 )
 
 type router struct {
-	echo *echo.Echo
+	app *fiber.App
 }
 
 var instantiated *router = nil
 
-func New(e *echo.Echo) *router {
+func New(app *fiber.App) *router {
 	if instantiated == nil {
-		instantiated = &router{echo: e}
+		instantiated = &router{app: app}
 		instantiated.init()
 	}
 	return instantiated
@@ -33,9 +33,9 @@ func (r router) setupUser() {
 	controller := controller.NewUserController(repository)
 	jwt := handler.NewJwtMiddleware(repository)
 	handler := handler.NewUserHandler(controller, jwt)
-	group := r.echo.Group("user")
+	group := r.app.Group("user")
 	{
-		group.POST("/register/", handler.Register)
-		group.POST("/login/", handler.Login)
+		group.Post("/register", handler.Register)
+		group.Post("/login", handler.Login)
 	}
 }
