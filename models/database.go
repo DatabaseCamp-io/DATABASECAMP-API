@@ -11,3 +11,8 @@ var IDName = struct {
 }{
 	"user_id",
 }
+var ViewName = struct{
+	Profile string
+}{
+	"Profile",
+}

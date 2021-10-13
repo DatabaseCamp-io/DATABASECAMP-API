@@ -55,3 +55,23 @@ func (r UserRequest) ValidateLogin() error {
 	}
 	return err
 }
+
+type ProfileResponse struct {
+	Name             string    `json:"name"`
+	Point            int       `json:"point"`
+	ActivityCount    int       `json:"activity_count"`
+	Badges           []Badge   `json:"badges"`
+	CreatedTimestamp time.Time ` json:"created_timestamp"`
+}
+type Badge struct {
+	ImagePath string `json:"image_path"`
+	ID        int    `json:"badge_id"`
+	Name      string `json:"badge_name"`
+}
+type ProfileDB struct {
+	ID               int       `gorm:"primaryKey;column:user_id" json:"user_id"`
+	Name             string    `gorm:"column:name" json:"name"`
+	Point            int       `gorm:"column:point" json:"point"`
+	ActivityCount    int       `gorm:"column:activity_count" json:"activity_count"`
+	CreatedTimestamp time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
+}

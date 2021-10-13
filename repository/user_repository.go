@@ -15,6 +15,7 @@ type IUserRepository interface {
 	GetUserByEmail(email string) (models.User, error)
 	GetUserByID(id int) (models.User, error)
 	UpdatesByID(id int, updateData map[string]interface{}) error
+	GetProfile(id int) (*models.ProfileDB, error)
 }
 
 func NewUserRepository(db database.IDatabase) userRepository {
@@ -57,4 +58,16 @@ func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) e
 		Updates(updateData).
 		Error
 	return err
+}
+func (r userRepository) GetProfile(id int) (*models.ProfileDB, error) {
+	profile := models.ProfileDB{}
+	err := r.database.GetDB().
+		Table(models.ViewName.Profile).
+		Where(models.IDName.User+" = ?", id).
+		Find(&profile).
+		Error
+	if profile == (models.ProfileDB{}) {
+		return nil, nil
+	}
+	return &profile, err
 }

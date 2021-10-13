@@ -3,6 +3,7 @@ package handler
 import (
 	"DatabaseCamp/controller"
 	"DatabaseCamp/models"
+	"DatabaseCamp/utils"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,6 +17,7 @@ type userHandler struct {
 type IUserHandler interface {
 	Register(c *fiber.Ctx) error
 	Login(c *fiber.Ctx) error
+	GetProfile(c *fiber.Ctx) error
 }
 
 func NewUserHandler(controller controller.IUserController, jwt IJwt) userHandler {
@@ -75,5 +77,13 @@ func (h userHandler) Login(c *fiber.Ctx) error {
 
 	response.AccessToken = token
 
+	return c.Status(http.StatusOK).JSON(response)
+}
+func (h userHandler) GetProfile(c *fiber.Ctx) error {
+	id := c.Params("id")
+	response,err := h.controller.GetProfile(utils.NewType().ParseInt(id))
+	if err != nil{
+		return handleError(c, err)
+	}
 	return c.Status(http.StatusOK).JSON(response)
 }

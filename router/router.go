@@ -37,5 +37,6 @@ func (r router) setupUser() {
 	{
 		group.Post("/register", handler.Register)
 		group.Post("/login", handler.Login)
+		group.Get("/profile/:id",handler.GetProfile)
 	}
 }

@@ -16,6 +16,7 @@ type userController struct {
 type IUserController interface {
 	Register(request models.UserRequest) (*models.UserResponse, error)
 	Login(request models.UserRequest) (*models.UserResponse, error)
+	GetProfile(userID int) (*models.ProfileResponse, error)
 }
 
 func NewUserController(repo repository.IUserRepository) userController {
@@ -63,5 +64,20 @@ func (c userController) Login(request models.UserRequest) (*models.UserResponse,
 	}
 
 	utils.NewType().StructToStruct(user, &response)
+	return &response, nil
+}
+func (c userController) GetProfile(id int) (*models.ProfileResponse, error) {
+	response := models.ProfileResponse{}
+	profileDB, err := c.repo.GetProfile(id)
+	if err != nil || profileDB == nil {
+		logs.New().Error(err)
+		return nil, errs.NewNotFoundError("ไม่พบผู้ใช้", "Profile Not Found")
+	}
+	err = utils.NewType().StructToStruct(profileDB, &response)
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+	}
+	response.Badges = make([]models.Badge, 0)
 	return &response, nil
 }
