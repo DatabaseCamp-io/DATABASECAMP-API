@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gofiber/fiber/v2 v2.20.1
+	github.com/gofiber/jwt/v3 v3.1.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/joho/godotenv v1.4.0
 	github.com/satori/go.uuid v1.2.0

@@ -24,6 +24,7 @@ func New(app *fiber.App) *router {
 }
 
 func (r router) init() {
+
 	r.setupUser()
 }
 
@@ -32,11 +33,13 @@ func (r router) setupUser() {
 	repository := repository.NewUserRepository(db)
 	controller := controller.NewUserController(repository)
 	jwt := handler.NewJwtMiddleware(repository)
-	handler := handler.NewUserHandler(controller, jwt)
+	userHandler := handler.NewUserHandler(controller, jwt)
+	middleware := handler.NewJwtMiddleware(repository)
 	group := r.app.Group("user")
 	{
-		group.Post("/register", handler.Register)
-		group.Post("/login", handler.Login)
-		group.Get("/profile/:id",handler.GetProfile)
+		group.Post("/register", userHandler.Register)
+		group.Post("/login", userHandler.Login)
+		group.Get("/info", middleware.JwtVerify, userHandler.GetInfo)
+		group.Get("/profile/:id", middleware.JwtVerify, userHandler.GetProfile)
 	}
 }

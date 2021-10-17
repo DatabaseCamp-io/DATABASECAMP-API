@@ -8,6 +8,7 @@ import (
 	"DatabaseCamp/utils"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -69,7 +70,9 @@ func (j jwtMiddleware) getClaims(token *jwt.Token) (jwt.MapClaims, error) {
 
 func (j jwtMiddleware) setClaims(c *fiber.Ctx, claims jwt.MapClaims) {
 	for k, v := range claims {
-		c.Set(k, utils.NewType().ParseString(v))
+		if k != "secret" {
+			c.Locals(k, utils.NewType().ParseString(v))
+		}
 	}
 }
 
@@ -86,9 +89,20 @@ func (j jwtMiddleware) validUser(token string, id int) bool {
 	return true
 }
 
-func (j jwtMiddleware) JwtVerify(c *fiber.Ctx) error {
+func (j jwtMiddleware) jwtFromHeader(c *fiber.Ctx) (string, error) {
+	auth := c.Get("Authorization")
+	l := len("Bearer")
+	if len(auth) > l+1 && strings.EqualFold(auth[:l], "Bearer") {
+		return auth[l+1:], nil
+	}
+	return "", errs.NewBadRequestError("ไม่พบ JWT Token ในส่วนหัวของคำร้องขอ", "JWT Token Not found")
+}
 
-	bearer := utils.NewType().ParseString(c.Locals("token"))
+func (j jwtMiddleware) JwtVerify(c *fiber.Ctx) error {
+	bearer, err := j.jwtFromHeader(c)
+	if err != nil {
+		return handleError(c, err)
+	}
 
 	token, err := jwt.Parse(bearer, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -100,7 +114,7 @@ func (j jwtMiddleware) JwtVerify(c *fiber.Ctx) error {
 	})
 	if err != nil {
 		logs.New().Error(err)
-		return handleError(c, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error"))
+		return handleError(c, errs.NewForbiddenError("โทเค็นไม่ถูกต้อง", "Token Invalid"))
 	}
 
 	claims, err := j.getClaims(token)
