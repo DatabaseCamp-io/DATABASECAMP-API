@@ -1,7 +1,8 @@
 package utils
 
 import (
-	"net/mail"
+	"regexp"
+	"unicode"
 
 	m "github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
@@ -30,13 +31,22 @@ func (h helper) ComparePasswords(hashedPwd string, plainPwd string) bool {
 }
 
 func (h helper) IsEmailValid(email string) bool {
-	_, err := mail.ParseAddress(email)
-	return err == nil
+	emailRegExp := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	return emailRegExp.MatchString(email)
 }
 
 func (h helper) IsSqlDuplicateError(err error) bool {
 	sqlError, ok := err.(*m.MySQLError)
 	return ok && sqlError.Number == 1062
+}
+
+func (h helper) IsLetter(s string) bool {
+	for _, r := range s {
+		if !unicode.IsLetter(r) {
+			return false
+		}
+	}
+	return true
 }
 
 func (h helper) GetKeyList(value map[string]interface{}) (result []string) {

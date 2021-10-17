@@ -38,6 +38,8 @@ func (r UserRequest) ValidateRegister() error {
 	var err error
 	if r.Name == "" {
 		err = errs.NewBadRequestError("ไม่พบชื่อในคำร้องขอ", "Name Not Found")
+	} else if !utils.NewHelper().IsLetter(r.Name) {
+		err = errs.NewBadRequestError("รูปแบบของชื่อไม่ถูกต้อง", "Name Format Incorrect")
 	} else {
 		err = r.ValidateLogin()
 	}
@@ -52,6 +54,8 @@ func (r UserRequest) ValidateLogin() error {
 		err = errs.NewBadRequestError("รูปแบบ email ไม่ถูกต้อง", "Email Invalid")
 	} else if r.Password == "" {
 		err = errs.NewBadRequestError("ไม่พบรหัสผ่านในคำร้องขอ", "Password Not Found")
+	} else if len(r.Password) < 8 {
+		err = errs.NewBadRequestError("ความยาวของรหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร", "Password length must be at least 8 characters")
 	}
 	return err
 }
