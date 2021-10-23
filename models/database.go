@@ -1,9 +1,11 @@
 package models
 
 var TableName = struct {
-	User string
+	User    string
+	Content string
 }{
 	"User",
+	"Content",
 }
 
 var IDName = struct {
@@ -11,7 +13,7 @@ var IDName = struct {
 }{
 	"user_id",
 }
-var ViewName = struct{
+var ViewName = struct {
 	Profile string
 }{
 	"Profile",

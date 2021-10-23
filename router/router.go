@@ -5,6 +5,7 @@ import (
 	"DatabaseCamp/database"
 	"DatabaseCamp/handler"
 	"DatabaseCamp/repository"
+	"DatabaseCamp/services"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -24,12 +25,23 @@ func New(app *fiber.App) *router {
 }
 
 func (r router) init() {
-
-	r.setupUser()
+	db := database.New()
+	r.setupLearning(db)
+	r.setupUser(db)
 }
 
-func (r router) setupUser() {
-	db := database.New()
+func (r router) setupLearning(db database.IDatabase) {
+	repo := repository.NewLearningRepository(db)
+	service := services.GetAwsServiceInstance()
+	controller := controller.NewLearningController(repo, service)
+	learningHandler := handler.NewLearningHandler(controller)
+	group := r.app.Group("learning")
+	{
+		group.Get("/video/", learningHandler.GetVideo)
+	}
+}
+
+func (r router) setupUser(db database.IDatabase) {
 	repository := repository.NewUserRepository(db)
 	controller := controller.NewUserController(repository)
 	jwt := handler.NewJwtMiddleware(repository)
