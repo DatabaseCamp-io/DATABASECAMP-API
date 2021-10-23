@@ -15,7 +15,6 @@ type awsService struct {
 }
 
 type IAwsService interface {
-	ConnectAws() error
 	GetFileLink(imagekey string) (string, error)
 }
 
