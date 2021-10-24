@@ -2,8 +2,12 @@ package models
 
 var TableName = struct {
 	User string
+	UserBadge string
+	Badge string
 }{
 	"User",
+	"UserBadge",
+	"Badge",
 }
 
 var IDName = struct {
@@ -11,8 +15,11 @@ var IDName = struct {
 }{
 	"user_id",
 }
+
 var ViewName = struct{
 	Profile string
+	Ranking string
 }{
 	"Profile",
+	"Ranking",
 }
