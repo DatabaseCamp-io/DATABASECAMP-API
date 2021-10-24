@@ -66,6 +66,7 @@ func (c userController) Login(request models.UserRequest) (*models.UserResponse,
 	utils.NewType().StructToStruct(user, &response)
 	return &response, nil
 }
+
 func (c userController) GetProfile(id int) (*models.ProfileResponse, error) {
 	response := models.ProfileResponse{}
 	profileDB, err := c.repo.GetProfile(id)
