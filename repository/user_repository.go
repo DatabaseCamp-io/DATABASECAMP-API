@@ -16,6 +16,8 @@ type IUserRepository interface {
 	GetUserByID(id int) (models.User, error)
 	UpdatesByID(id int, updateData map[string]interface{}) error
 	GetProfile(id int) (*models.ProfileDB, error)
+	GetLearningProgression(id int) ([]models.LearningProgressionDB, error)
+	GetExam(id int) ([]models.ExamDB, error)
 }
 
 func NewUserRepository(db database.IDatabase) userRepository {
@@ -59,6 +61,7 @@ func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) e
 		Error
 	return err
 }
+
 func (r userRepository) GetProfile(id int) (*models.ProfileDB, error) {
 	profile := models.ProfileDB{}
 	err := r.database.GetDB().
@@ -70,4 +73,25 @@ func (r userRepository) GetProfile(id int) (*models.ProfileDB, error) {
 		return nil, nil
 	}
 	return &profile, err
+}
+
+func (r userRepository) GetLearningProgression(id int) ([]models.LearningProgressionDB, error) {
+	learningProgrogression := make([]models.LearningProgressionDB, 0)
+	err := r.database.GetDB().
+		Table(models.TableName.LearningProgression).
+		Where(models.IDName.User+" = ?", id).
+		Order("created_timestamp desc").
+		Find(&learningProgrogression).
+		Error
+	return learningProgrogression, err
+}
+
+func (r userRepository) GetExam(id int) ([]models.ExamDB, error) {
+	exam := make([]models.ExamDB, 0)
+	err := r.database.GetDB().
+		Table(models.TableName.Exam).
+		Where(models.IDName.User+" = ?", id).
+		Find(&exam).
+		Error
+	return exam, err
 }
