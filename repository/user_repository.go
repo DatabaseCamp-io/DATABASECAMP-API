@@ -16,6 +16,10 @@ type IUserRepository interface {
 	GetUserByID(id int) (models.User, error)
 	UpdatesByID(id int, updateData map[string]interface{}) error
 	GetProfile(id int) (*models.ProfileDB, error)
+	GetAllBadge() ([]models.Badge, error)
+	GetUserBadgeIDPair(id int) ([]models.UserBadgeIDPair, error)
+	GetAllPointranking() ([]models.PointRanking, error)
+	UserPointranking(id int) (*models.PointRanking, error)
 }
 
 func NewUserRepository(db database.IDatabase) userRepository {
@@ -59,6 +63,7 @@ func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) e
 		Error
 	return err
 }
+
 func (r userRepository) GetProfile(id int) (*models.ProfileDB, error) {
 	profile := models.ProfileDB{}
 	err := r.database.GetDB().
@@ -70,4 +75,43 @@ func (r userRepository) GetProfile(id int) (*models.ProfileDB, error) {
 		return nil, nil
 	}
 	return &profile, err
+}
+
+func (r userRepository) GetAllBadge() ([]models.Badge, error) {
+	badge := make([]models.Badge, 0)
+	err := r.database.GetDB().
+		Table(models.TableName.Badge).
+		Find(&badge).
+		Error
+	return badge, err
+}
+
+func (r userRepository) GetUserBadgeIDPair(id int) ([]models.UserBadgeIDPair, error) {
+	badgePair := make([]models.UserBadgeIDPair, 0)
+	err := r.database.GetDB().
+		Table(models.TableName.UserBadge).
+		Where(models.IDName.User+" = ?", id).
+		Find(&badgePair).
+		Error
+	return badgePair, err
+}
+
+func (r userRepository) GetAllPointranking() ([]models.PointRanking, error) {
+	ranking := make([]models.PointRanking, 0)
+	err := r.database.GetDB().
+		Table(models.ViewName.Ranking).
+		Limit(20).
+		Find(&ranking).
+		Error
+	return ranking, err
+}
+
+func (r userRepository) UserPointranking(id int) (*models.PointRanking, error) {
+	ranking := models.PointRanking{}
+	err := r.database.GetDB().
+		Table(models.ViewName.Ranking).
+		Where(models.IDName.User+" = ?", id).
+		Find(&ranking).
+		Error
+	return &ranking, err
 }

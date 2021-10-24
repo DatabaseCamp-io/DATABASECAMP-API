@@ -18,6 +18,8 @@ type IUserHandler interface {
 	Register(c *fiber.Ctx) error
 	Login(c *fiber.Ctx) error
 	GetProfile(c *fiber.Ctx) error
+	GetBadge(c *fiber.Ctx) error
+	GetUserRanking(c *fiber.Ctx) error
 }
 
 func NewUserHandler(controller controller.IUserController, jwt IJwt) userHandler {
@@ -80,6 +82,15 @@ func (h userHandler) Login(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 func (h userHandler) GetProfile(c *fiber.Ctx) error {
+	id := c.Params("id")
+	response,err := h.controller.GetProfile(utils.NewType().ParseInt(id))
+	if err != nil{
+		return handleError(c, err)
+	}
+	return c.Status(http.StatusOK).JSON(response)
+}
+
+func (h userHandler) GetUserRanking(c *fiber.Ctx) error {
 	id := c.Params("id")
 	response,err := h.controller.GetProfile(utils.NewType().ParseInt(id))
 	if err != nil{
