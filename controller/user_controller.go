@@ -112,20 +112,19 @@ func (c userController) isCollectBadge(badgeID int, userBadgeGain []models.UserB
 func (c userController) GetUserRanking(id int) (*models.PointRanking, error) {
 	response := models.PointRanking{}
 	user, err := c.repo.UserPointranking(id)
-	if err != nil || user == nil{
+	if err != nil || user == nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่พบผู้ใช้", "Profile Not Found")
 	}
 	return &response, nil
 }
 
-func(c userController) LeaderBoard() ([]models.PointRanking, error){
+func (c userController) LeaderBoard() ([]models.PointRanking, error) {
 	response := make([]models.PointRanking, 0)
-	ranking, err := c.repo.GetAllPointranking(){
-		if err != nil || ranking == nil{
-			logs.New().Error(err)
-			return nil, errs.NewNotFoundError("ไม่มีตารางคะแนน", "LeaderBoard Not Found")
-		}
-	return response, nil
+	ranking, err := c.repo.GetAllPointranking()
+	if err != nil || ranking == nil {
+		logs.New().Error(err)
+		return nil, errs.NewNotFoundError("ไม่มีตารางคะแนน", "LeaderBoard Not Found")
 	}
+	return response, nil
 }
