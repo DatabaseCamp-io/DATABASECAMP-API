@@ -6,12 +6,16 @@ var TableName = struct {
 	ContentGroup        string
 	LearningProgression string
 	Exam                string
+	ExamResult          string
+	ContentExam         string
 }{
 	"User",
 	"Content",
 	"ContentGroup",
 	"LearningProgression",
 	"Exam",
+	"ExamResult",
+	"ContentExam",
 }
 
 var IDName = struct {

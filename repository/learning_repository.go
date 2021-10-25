@@ -12,6 +12,7 @@ type learningRepository struct {
 type ILearningRepository interface {
 	GetContent(id int) (*models.ContentDB, error)
 	GetOverview() ([]models.OverviewDB, error)
+	GetContentExam(examType models.ExamType) ([]models.ContentExamDB, error)
 }
 
 func NewLearningRepository(db database.IDatabase) learningRepository {
@@ -39,7 +40,24 @@ func (r learningRepository) GetOverview() ([]models.OverviewDB, error) {
 		).
 		Joins("LEFT JOIN Content ON ContentGroup.content_group_id = Content.content_group_id").
 		Joins("LEFT JOIN Activity ON Content.content_id = Activity.content_id").
+		Order("content_group_id ASC").
 		Find(&overview).
 		Error
 	return overview, err
+}
+
+func (r learningRepository) GetContentExam(examType models.ExamType) ([]models.ContentExamDB, error) {
+	contentExam := make([]models.ContentExamDB, 0)
+	db := r.database.GetDB()
+	examSubquery := db.Table(models.TableName.Exam).
+		Select("exam_id").
+		Where("type = ?", string(examType)).
+		Order("created_timestamp desc").
+		Limit(1)
+	err := r.database.GetDB().
+		Table(models.TableName.ContentExam).
+		Where("exam_id = (?)", examSubquery).
+		Find(&contentExam).
+		Error
+	return contentExam, err
 }

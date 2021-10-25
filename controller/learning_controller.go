@@ -77,17 +77,19 @@ func (c learningController) loadOverviewInfo(id int) (*models.OverviewInfo, erro
 	var err error
 	overview := make([]models.OverviewDB, 0)
 	learningProgression := make([]models.LearningProgressionDB, 0)
-	exam := make([]models.ExamDB, 0)
+	exam := make([]models.ExamResultDB, 0)
+	contentExam := make([]models.ContentExamDB, 0)
 
 	concurrent := models.Concurrent{
 		Wg:  &wg,
 		Err: &err,
 	}
 
-	wg.Add(3)
+	wg.Add(4)
 	go c.loadOverviewAsync(&concurrent, &overview)
 	go c.loadLearningProgressionAsync(&concurrent, &learningProgression, id)
-	go c.loadExamAsync(&concurrent, &exam, id)
+	go c.loadFailedExamAsync(&concurrent, &exam, id)
+	go c.loadContentExamPretestAsync(&concurrent, &contentExam)
 	wg.Wait()
 
 	if err != nil {
@@ -97,7 +99,8 @@ func (c learningController) loadOverviewInfo(id int) (*models.OverviewInfo, erro
 	info := models.OverviewInfo{
 		Overview:            overview,
 		LearningProgression: learningProgression,
-		Exam:                exam,
+		ExamResult:          exam,
+		ContentExam:         contentExam,
 	}
 
 	return &info, err
@@ -121,13 +124,22 @@ func (c learningController) loadLearningProgressionAsync(concurrent *models.Conc
 	*learningProgression = append(*learningProgression, result...)
 }
 
-func (c learningController) loadExamAsync(concurrent *models.Concurrent, exam *[]models.ExamDB, id int) {
+func (c learningController) loadFailedExamAsync(concurrent *models.Concurrent, exam *[]models.ExamResultDB, id int) {
 	defer concurrent.Wg.Done()
-	result, err := c.userRepo.GetExam(id)
+	result, err := c.userRepo.GetFailedExam(id)
 	if err != nil {
 		*concurrent.Err = err
 	}
 	*exam = append(*exam, result...)
+}
+
+func (c learningController) loadContentExamPretestAsync(concurrent *models.Concurrent, contentExamDB *[]models.ContentExamDB) {
+	defer concurrent.Wg.Done()
+	result, err := c.learningRepo.GetContentExam(models.Exam.Pretest)
+	if err != nil {
+		*concurrent.Err = err
+	}
+	*contentExamDB = append(*contentExamDB, result...)
 }
 
 func (c learningController) prepareOverview(info *models.OverviewInfo) overviewData {
@@ -184,11 +196,26 @@ func (c learningController) prepareOverview(info *models.OverviewInfo) overviewD
 	return overviewData
 }
 
+func (c learningController) getRecommendGroupFromExam(info *models.OverviewInfo) map[int]bool {
+	recommendedGroup := map[int]bool{}
+	examGroupMap := map[int]int{}
+	for _, v := range info.ContentExam {
+		examGroupMap[v.ActivityID] = v.GroupID
+	}
+	for _, v := range info.ExamResult {
+		recommendedGroup[examGroupMap[v.ActivityID]] = true
+	}
+	return recommendedGroup
+}
+
 func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, data overviewData) models.OverviewResponse {
 	var lastedActivityID int
-	var lastedGroup models.LastedGroup
+	var lastedGroup *models.LastedGroup
 	userActivityCount := map[int]int{}
 	contentGroupOverview := make([]models.ContentGroupOverview, 0)
+
+	countRecommend := 0
+	recommendGroup := c.getRecommendGroupFromExam(info)
 
 	for i, v := range info.LearningProgression {
 		if i == 0 {
@@ -214,7 +241,7 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 				Progress:    progress,
 			})
 			if _isLasted {
-				lastedGroup = models.LastedGroup{
+				lastedGroup = &models.LastedGroup{
 					GroupID:     ko,
 					ContentID:   kc,
 					GroupName:   vo.name,
@@ -224,9 +251,16 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 			}
 		}
 
+		isRecommend := recommendGroup[ko]
+		if isRecommend {
+			countRecommend++
+			if countRecommend > 3 {
+				isRecommend = false
+			}
+		}
 		contentGroupOverview = append(contentGroupOverview, models.ContentGroupOverview{
 			GroupID:     ko,
-			IsRecommend: false,
+			IsRecommend: isRecommend,
 			IsLasted:    _isLasted,
 			GroupName:   vo.name,
 			Progress:    (countUserActivity / countActivity) * 100,

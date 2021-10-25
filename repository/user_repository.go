@@ -17,7 +17,7 @@ type IUserRepository interface {
 	UpdatesByID(id int, updateData map[string]interface{}) error
 	GetProfile(id int) (*models.ProfileDB, error)
 	GetLearningProgression(id int) ([]models.LearningProgressionDB, error)
-	GetExam(id int) ([]models.ExamDB, error)
+	GetFailedExam(id int) ([]models.ExamResultDB, error)
 }
 
 func NewUserRepository(db database.IDatabase) userRepository {
@@ -86,11 +86,11 @@ func (r userRepository) GetLearningProgression(id int) ([]models.LearningProgres
 	return learningProgrogression, err
 }
 
-func (r userRepository) GetExam(id int) ([]models.ExamDB, error) {
-	exam := make([]models.ExamDB, 0)
+func (r userRepository) GetFailedExam(id int) ([]models.ExamResultDB, error) {
+	exam := make([]models.ExamResultDB, 0)
 	err := r.database.GetDB().
-		Table(models.TableName.Exam).
-		Where(models.IDName.User+" = ?", id).
+		Table(models.TableName.ExamResult).
+		Where(models.IDName.User+" = ? AND is_passed = false", id).
 		Find(&exam).
 		Error
 	return exam, err

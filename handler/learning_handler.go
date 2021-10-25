@@ -31,7 +31,7 @@ func (h learningHandler) GetVideo(c *fiber.Ctx) error {
 }
 
 func (h learningHandler) GetOverview(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id := c.Locals("id")
 	response, err := h.controller.GetOverview(utils.NewType().ParseInt(id))
 	if err != nil {
 		return handleError(c, err)
