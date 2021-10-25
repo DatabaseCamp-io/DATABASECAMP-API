@@ -3,14 +3,13 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-        sh '''docker rm back &&
-docker image build -t backend-main .'''
+        sh '''cker image build -t backend-main .'''
       }
     }
 
     stage('Run') {
       steps {
-        sh 'docker run -it --pid=host -p 8008:8080 --name back backend-main'
+        sh 'docker run -it --pid=host -p 8008:8001 --name back backend-main'
       }
     }
 
