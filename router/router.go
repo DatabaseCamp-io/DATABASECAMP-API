@@ -26,32 +26,34 @@ func New(app *fiber.App) *router {
 
 func (r router) init() {
 	db := database.New()
-	r.setupLearning(db)
-	r.setupUser(db)
+	userRepo := repository.NewUserRepository(db)
+	jwt := handler.NewJwtMiddleware(userRepo)
+	r.setupLearning(db, userRepo, jwt)
+	r.setupUser(db, userRepo, jwt)
 }
 
-func (r router) setupLearning(db database.IDatabase) {
+func (r router) setupLearning(db database.IDatabase, userRepo repository.IUserRepository, jwt handler.IJwt) {
+
 	repo := repository.NewLearningRepository(db)
 	service := services.GetAwsServiceInstance()
-	controller := controller.NewLearningController(repo, service)
+	controller := controller.NewLearningController(repo, userRepo, service)
 	learningHandler := handler.NewLearningHandler(controller)
 	group := r.app.Group("learning")
+	group.Use(jwt.JwtVerify)
 	{
-		group.Get("/video/", learningHandler.GetVideo)
+		group.Get("/video", learningHandler.GetVideo)
+		group.Get("/overview", learningHandler.GetOverview)
 	}
 }
 
-func (r router) setupUser(db database.IDatabase) {
-	repository := repository.NewUserRepository(db)
-	controller := controller.NewUserController(repository)
-	jwt := handler.NewJwtMiddleware(repository)
+func (r router) setupUser(db database.IDatabase, repo repository.IUserRepository, jwt handler.IJwt) {
+	controller := controller.NewUserController(repo)
 	userHandler := handler.NewUserHandler(controller, jwt)
-	middleware := handler.NewJwtMiddleware(repository)
 	group := r.app.Group("user")
 	{
 		group.Post("/register", userHandler.Register)
 		group.Post("/login", userHandler.Login)
-		group.Get("/info", middleware.JwtVerify, userHandler.GetInfo)
-		group.Get("/profile/:id", middleware.JwtVerify, userHandler.GetProfile)
+		group.Get("/info", jwt.JwtVerify, userHandler.GetInfo)
+		group.Get("/profile/:id", jwt.JwtVerify, userHandler.GetProfile)
 	}
 }

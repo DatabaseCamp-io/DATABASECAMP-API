@@ -22,6 +22,7 @@ type jwtMiddleware struct {
 
 type IJwt interface {
 	JwtSign(id int) (string, error)
+	JwtVerify(c *fiber.Ctx) error
 }
 
 func NewJwtMiddleware(repo repository.IUserRepository) jwtMiddleware {
