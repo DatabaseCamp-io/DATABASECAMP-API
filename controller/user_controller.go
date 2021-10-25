@@ -66,6 +66,7 @@ func (c userController) Login(request models.UserRequest) (*models.UserResponse,
 	utils.NewType().StructToStruct(user, &response)
 	return &response, nil
 }
+
 func (c userController) GetProfile(id int) (*models.ProfileResponse, error) {
 	response := models.ProfileResponse{}
 	profileDB, err := c.repo.GetProfile(id)
@@ -78,6 +79,52 @@ func (c userController) GetProfile(id int) (*models.ProfileResponse, error) {
 		logs.New().Error(err)
 		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
 	}
-	response.Badges = make([]models.Badge, 0)
+	allBadge, err := c.repo.GetAllBadge()
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+	}
+	userBadgeGain, err := c.repo.GetUserBadgeIDPair(id)
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+	}
+	response.Badges = c.calculateUserBadge(allBadge, userBadgeGain)
 	return &response, nil
+}
+
+func (c userController) calculateUserBadge(allBadge []models.Badge, userBadgeGain []models.UserBadgeIDPair) []models.Badge {
+	for i, v := range allBadge {
+		allBadge[i].IsCollect = c.isCollectBadge(v.ID, userBadgeGain)
+	}
+	return allBadge
+}
+
+func (c userController) isCollectBadge(badgeID int, userBadgeGain []models.UserBadgeIDPair) bool {
+	for _, v := range userBadgeGain {
+		if v.BadgeID == badgeID {
+			return true
+		}
+	}
+	return false
+}
+
+func (c userController) GetUserRanking(id int) (*models.PointRanking, error) {
+	response := models.PointRanking{}
+	user, err := c.repo.UserPointranking(id)
+	if err != nil || user == nil {
+		logs.New().Error(err)
+		return nil, errs.NewNotFoundError("ไม่พบผู้ใช้", "Profile Not Found")
+	}
+	return &response, nil
+}
+
+func (c userController) LeaderBoard() ([]models.PointRanking, error) {
+	response := make([]models.PointRanking, 0)
+	ranking, err := c.repo.GetAllPointranking()
+	if err != nil || ranking == nil {
+		logs.New().Error(err)
+		return nil, errs.NewNotFoundError("ไม่มีตารางคะแนน", "LeaderBoard Not Found")
+	}
+	return response, nil
 }

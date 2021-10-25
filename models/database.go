@@ -8,6 +8,8 @@ var TableName = struct {
 	Exam                string
 	ExamResult          string
 	ContentExam         string
+	UserBadge           string
+	Badge               string
 }{
 	"User",
 	"Content",
@@ -16,6 +18,8 @@ var TableName = struct {
 	"Exam",
 	"ExamResult",
 	"ContentExam",
+	"UserBadge",
+	"Badge",
 }
 
 var IDName = struct {
@@ -23,8 +27,11 @@ var IDName = struct {
 }{
 	"user_id",
 }
+
 var ViewName = struct {
 	Profile string
+	Ranking string
 }{
 	"Profile",
+	"Ranking",
 }
