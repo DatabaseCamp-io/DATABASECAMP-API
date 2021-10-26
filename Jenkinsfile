@@ -9,7 +9,7 @@ pipeline {
 
     stage('Run') {
       steps {
-        sh 'docker run -it --pid=host -p 8008:8001 --name back backend-main'
+        sh 'docker run --pid=host -p 8008:8001 --name back backend-main'
       }
     }
 
