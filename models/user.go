@@ -38,8 +38,6 @@ func (r UserRequest) ValidateRegister() error {
 	var err error
 	if r.Name == "" {
 		err = errs.NewBadRequestError("ไม่พบชื่อในคำร้องขอ", "Name Not Found")
-	} else if !utils.NewHelper().IsLetter(r.Name) {
-		err = errs.NewBadRequestError("รูปแบบของชื่อไม่ถูกต้อง", "Name Format Incorrect")
 	} else {
 		err = r.ValidateLogin()
 	}
