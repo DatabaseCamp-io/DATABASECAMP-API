@@ -8,6 +8,7 @@ import (
 	"DatabaseCamp/services"
 	"DatabaseCamp/utils"
 	"sync"
+	"time"
 )
 
 type content struct {
@@ -38,6 +39,7 @@ type ILearningController interface {
 	GetVideoLecture(id int) (*models.VideoLectureResponse, error)
 	GetOverview(id int) (*models.OverviewResponse, error)
 	GetActivity(id int) (*models.ActivityResponse, error)
+	CheckMatchingAnswer(userID int, request models.MatchingChoiceAnswerRequest) (interface{}, error)
 }
 
 func NewLearningController(
@@ -373,4 +375,52 @@ func (c learningController) GetActivity(id int) (*models.ActivityResponse, error
 	}
 
 	return &res, nil
+}
+
+func (c learningController) SaveProgression(userID int, activityID int) (*models.LearningProgressionDB, error) {
+	progression := models.LearningProgressionDB{
+		UserID:           userID,
+		ActivityID:       activityID,
+		CreatedTimestamp: time.Now().Local(),
+	}
+	return c.userRepo.InsertLearningProgression(progression)
+}
+
+func (c learningController) CheckMatchingAnswer(userID int, request models.MatchingChoiceAnswerRequest) (interface{}, error) {
+	choice, err := c.getChoice(*request.ActivityID, 1)
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
+	}
+
+	matchingChoice := choice.([]models.MatchingChoiceDB)
+	isCorrect := true
+
+	if len(matchingChoice) != len(request.Answer) {
+		return nil, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
+	}
+
+	for _, correct := range matchingChoice {
+		for _, answer := range request.Answer {
+			if (correct.PairItem1 == *answer.Item1) && (correct.PairItem2 != *answer.Item2) {
+				isCorrect = false
+				break
+			}
+		}
+	}
+
+	response := models.AnswerResponse{
+		ActivityID: *request.ActivityID,
+		IsCorrect:  isCorrect,
+	}
+
+	if isCorrect {
+		_, err = c.SaveProgression(userID, *request.ActivityID)
+		if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
+			logs.New().Error(err)
+			return nil, errs.NewInternalServerError("เกิดข้อผิดพลาดในการบันทึกกิจกรรม", "Saved Activity Failed")
+		}
+	}
+
+	return response, nil
 }

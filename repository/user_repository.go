@@ -22,10 +22,19 @@ type IUserRepository interface {
 	GetUserBadgeIDPair(id int) ([]models.UserBadgeIDPair, error)
 	GetAllPointranking() ([]models.PointRanking, error)
 	UserPointranking(id int) (*models.PointRanking, error)
+	InsertLearningProgression(progression models.LearningProgressionDB) (*models.LearningProgressionDB, error)
 }
 
 func NewUserRepository(db database.IDatabase) userRepository {
 	return userRepository{database: db}
+}
+
+func (r userRepository) InsertLearningProgression(progression models.LearningProgressionDB) (*models.LearningProgressionDB, error) {
+	err := r.database.GetDB().
+		Table(models.TableName.LearningProgression).
+		Create(&progression).
+		Error
+	return &progression, err
 }
 
 func (r userRepository) Insert(user models.User) (models.User, error) {

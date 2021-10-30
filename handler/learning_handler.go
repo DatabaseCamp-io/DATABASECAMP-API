@@ -2,6 +2,7 @@ package handler
 
 import (
 	"DatabaseCamp/controller"
+	"DatabaseCamp/models"
 	"DatabaseCamp/utils"
 	"net/http"
 
@@ -16,6 +17,7 @@ type ILearningHandler interface {
 	GetVideo(c *fiber.Ctx) error
 	GetOverview(c *fiber.Ctx) error
 	GetActivity(c *fiber.Ctx) error
+	CheckMatchingAnswer(c *fiber.Ctx) error
 }
 
 func NewLearningHandler(controller controller.ILearningController) learningHandler {
@@ -46,5 +48,27 @@ func (h learningHandler) GetActivity(c *fiber.Ctx) error {
 	if err != nil {
 		return handleError(c, err)
 	}
+	return c.Status(http.StatusOK).JSON(response)
+}
+
+func (h learningHandler) CheckMatchingAnswer(c *fiber.Ctx) error {
+	id := c.Locals("id")
+	request := models.MatchingChoiceAnswerRequest{}
+
+	err := bindRequest(c, &request)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	err = request.Validate()
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	response, err := h.controller.CheckMatchingAnswer(utils.NewType().ParseInt(id), request)
+	if err != nil {
+		return handleError(c, err)
+	}
+
 	return c.Status(http.StatusOK).JSON(response)
 }

@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"DatabaseCamp/errs"
+	"time"
+)
 
 type ExamType string
 
@@ -58,6 +61,7 @@ type ActivityDB struct {
 }
 
 type LearningProgressionDB struct {
+	ID               int       `gorm:"primaryKey;column:learning_progression_id" json:"learning_progression_id"`
 	UserID           int       `gorm:"column:user_id" json:"user_id"`
 	ActivityID       int       `gorm:"column:activity_id" json:"activity_id"`
 	CreatedTimestamp time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
@@ -88,6 +92,44 @@ type ExamResultDB struct {
 type ActivityResponse struct {
 	Activity ActivityDB  `json:"activity"`
 	Choice   interface{} `json:"choice"`
+}
+
+type PairItem struct {
+	Item1 *string `json:"item1"`
+	Item2 *string `json:"item2"`
+}
+
+type MatchingChoiceAnswerRequest struct {
+	ActivityID *int       `json:"activity_id"`
+	Answer     []PairItem `json:"answer"`
+}
+
+func (r MatchingChoiceAnswerRequest) validatePairItem(pairItem PairItem) error {
+	if pairItem.Item1 == nil || pairItem.Item2 == nil {
+		return errs.NewBadRequestError("ไม่พบคำตอบในคำร้องขอ", "Answer Not Found")
+	}
+	return nil
+}
+
+func (r MatchingChoiceAnswerRequest) Validate() error {
+	if r.ActivityID == nil {
+		return errs.NewBadRequestError("ไม่พบไอดีของกิจกรรมในคำร้องขอ", "Activity ID Not Found")
+	} else if len(r.Answer) == 0 {
+		return errs.NewBadRequestError("ไม่พบคำตอบในคำร้องขอ", "Answer Not Found")
+	} else {
+		for _, v := range r.Answer {
+			e := r.validatePairItem(v)
+			if e != nil {
+				return e
+			}
+		}
+	}
+	return nil
+}
+
+type AnswerResponse struct {
+	ActivityID int  `json:"activity_id"`
+	IsCorrect  bool `json:"is_correct"`
 }
 
 type VideoLectureResponse struct {
