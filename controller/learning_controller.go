@@ -208,6 +208,15 @@ func (c learningController) getRecommendGroupFromExam(info *models.OverviewInfo)
 	return recommendedGroup
 }
 
+func (c learningController) calculateProgress(progress int, total int) int {
+	if total == 0 {
+		return 0
+	} else {
+		return (progress / total) * 100
+	}
+
+}
+
 func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, data overviewData) models.OverviewResponse {
 	var lastedActivityID int
 	var lastedGroup *models.LastedGroup
@@ -233,7 +242,7 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 			countActivity += data.activityCount[kc]
 			countUserActivity += userActivityCount[kc]
 			_isLasted = lastedActivityID == kc
-			progress := (userActivityCount[kc] / data.activityCount[kc]) * 100
+			progress := c.calculateProgress(userActivityCount[kc], data.activityCount[kc])
 			content = append(content, models.ContentOverview{
 				ContentID:   kc,
 				ContentName: vc.name,
@@ -263,7 +272,7 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 			IsRecommend: isRecommend,
 			IsLasted:    _isLasted,
 			GroupName:   vo.name,
-			Progress:    (countUserActivity / countActivity) * 100,
+			Progress:    c.calculateProgress(countUserActivity, countActivity),
 			Contents:    content,
 		})
 	}
