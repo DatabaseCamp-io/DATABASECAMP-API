@@ -15,6 +15,8 @@ type ILearningRepository interface {
 	GetContentExam(examType models.ExamType) ([]models.ContentExamDB, error)
 	GetActivity(id int) (*models.ActivityDB, error)
 	GetMatchingChoice(activityID int) ([]models.MatchingChoiceDB, error)
+	GetMultipleChoice(activityID int) ([]models.MultipleChoiceDB, error)
+	GetCompletionChoice(activityID int) ([]models.CompletionChoiceDB, error)
 }
 
 func NewLearningRepository(db database.IDatabase) learningRepository {
@@ -86,4 +88,28 @@ func (r learningRepository) GetMatchingChoice(activityID int) ([]models.Matching
 		Error
 
 	return matchingChoice, err
+}
+
+func (r learningRepository) GetMultipleChoice(activityID int) ([]models.MultipleChoiceDB, error) {
+	multipleChoice := make([]models.MultipleChoiceDB, 0)
+
+	err := r.database.GetDB().
+		Table(models.TableName.MultipleChoice).
+		Where(models.IDName.Activity+" = ?", activityID).
+		Find(&multipleChoice).
+		Error
+
+	return multipleChoice, err
+}
+
+func (r learningRepository) GetCompletionChoice(activityID int) ([]models.CompletionChoiceDB, error) {
+	completionChoice := make([]models.CompletionChoiceDB, 0)
+
+	err := r.database.GetDB().
+		Table(models.TableName.CompletionChoice).
+		Where(models.IDName.Activity+" = ?", activityID).
+		Find(&completionChoice).
+		Error
+
+	return completionChoice, err
 }

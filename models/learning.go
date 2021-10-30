@@ -85,6 +85,11 @@ type ExamResultDB struct {
 	CreatedTimestamp time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
 }
 
+type ActivityResponse struct {
+	Activity ActivityDB  `json:"activity"`
+	Choice   interface{} `json:"choice"`
+}
+
 type VideoLectureResponse struct {
 	ContentID   int    `json:"content_id"`
 	ContentName string `json:"content_name"`

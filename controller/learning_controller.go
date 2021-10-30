@@ -6,6 +6,7 @@ import (
 	"DatabaseCamp/models"
 	"DatabaseCamp/repository"
 	"DatabaseCamp/services"
+	"DatabaseCamp/utils"
 	"sync"
 )
 
@@ -36,7 +37,7 @@ type learningController struct {
 type ILearningController interface {
 	GetVideoLecture(id int) (*models.VideoLectureResponse, error)
 	GetOverview(id int) (*models.OverviewResponse, error)
-	GetActivity(id int) (interface{}, error)
+	GetActivity(id int) (*models.ActivityResponse, error)
 }
 
 func NewLearningController(
@@ -285,6 +286,90 @@ func (c learningController) GetOverview(id int) (*models.OverviewResponse, error
 	return &res, nil
 }
 
-func (c learningController) GetActivity(id int) (interface{}, error) {
-	return nil, nil
+func (c learningController) getChoice(activityID int, typeID int) (interface{}, error) {
+	if typeID == 1 {
+		return c.learningRepo.GetMatchingChoice(activityID)
+	} else if typeID == 2 {
+		return c.learningRepo.GetMultipleChoice(activityID)
+	} else if typeID == 3 {
+		return c.learningRepo.GetCompletionChoice(activityID)
+	} else {
+		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+	}
+}
+
+func (c learningController) prepareMultipleChoice(multipleChoice []models.MultipleChoiceDB) interface{} {
+	utils.NewHelper().Shuffle(multipleChoice)
+	return multipleChoice
+}
+
+func (c learningController) prepareMatchingChoice(matchingChoice []models.MatchingChoiceDB) interface{} {
+	pairItem1List := make([]interface{}, 0)
+	pairItem2List := make([]interface{}, 0)
+	for _, v := range matchingChoice {
+		pairItem1List = append(pairItem1List, v.PairItem1)
+		pairItem2List = append(pairItem2List, v.PairItem2)
+	}
+	utils.NewHelper().Shuffle(pairItem1List)
+	utils.NewHelper().Shuffle(pairItem2List)
+	prepared := map[string]interface{}{
+		"items_left":  pairItem1List,
+		"items_right": pairItem2List,
+	}
+	return prepared
+}
+
+func (c learningController) prepareCompletionChoice(completionChoice []models.CompletionChoiceDB) interface{} {
+	contents := make([]interface{}, 0)
+	questions := make([]interface{}, 0)
+	for _, v := range completionChoice {
+		contents = append(contents, v.Content)
+		questions = append(questions, map[string]interface{}{
+			"first": v.QuestionFirst,
+			"last":  v.QuestionLast,
+		})
+	}
+	utils.NewHelper().Shuffle(contents)
+	utils.NewHelper().Shuffle(questions)
+	prepared := map[string]interface{}{
+		"contents":  contents,
+		"questions": questions,
+	}
+	return prepared
+}
+
+func (c learningController) prepareChoice(typeID int, choice interface{}) interface{} {
+	if typeID == 1 {
+		return c.prepareMatchingChoice(choice.([]models.MatchingChoiceDB))
+	} else if typeID == 2 {
+		return c.prepareMultipleChoice(choice.([]models.MultipleChoiceDB))
+	} else if typeID == 3 {
+		return c.prepareCompletionChoice(choice.([]models.CompletionChoiceDB))
+	} else {
+		return nil
+	}
+}
+
+func (c learningController) GetActivity(id int) (*models.ActivityResponse, error) {
+
+	activity, err := c.learningRepo.GetActivity(id)
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
+	}
+
+	choice, err := c.getChoice(activity.ID, activity.TypeID)
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
+	}
+
+	preparedChoice := c.prepareChoice(activity.TypeID, choice)
+
+	res := models.ActivityResponse{
+		Activity: *activity,
+		Choice:   preparedChoice,
+	}
+
+	return &res, nil
 }
