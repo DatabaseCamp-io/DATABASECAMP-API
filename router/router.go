@@ -43,6 +43,7 @@ func (r router) setupLearning(db database.IDatabase, userRepo repository.IUserRe
 	{
 		group.Get("/video", learningHandler.GetVideo)
 		group.Get("/overview", learningHandler.GetOverview)
+		group.Get("/overview", learningHandler.GetActivity)
 	}
 }
 

@@ -15,6 +15,7 @@ type learningHandler struct {
 type ILearningHandler interface {
 	GetVideo(c *fiber.Ctx) error
 	GetOverview(c *fiber.Ctx) error
+	GetActivity(c *fiber.Ctx) error
 }
 
 func NewLearningHandler(controller controller.ILearningController) learningHandler {
@@ -33,6 +34,15 @@ func (h learningHandler) GetVideo(c *fiber.Ctx) error {
 func (h learningHandler) GetOverview(c *fiber.Ctx) error {
 	id := c.Locals("id")
 	response, err := h.controller.GetOverview(utils.NewType().ParseInt(id))
+	if err != nil {
+		return handleError(c, err)
+	}
+	return c.Status(http.StatusOK).JSON(response)
+}
+
+func (h learningHandler) GetActivity(c *fiber.Ctx) error {
+	id := c.Locals("id")
+	response, err := h.controller.GetActivity(utils.NewType().ParseInt(id))
 	if err != nil {
 		return handleError(c, err)
 	}

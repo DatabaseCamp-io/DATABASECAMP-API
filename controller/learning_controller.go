@@ -36,6 +36,7 @@ type learningController struct {
 type ILearningController interface {
 	GetVideoLecture(id int) (*models.VideoLectureResponse, error)
 	GetOverview(id int) (*models.OverviewResponse, error)
+	GetActivity(id int) (interface{}, error)
 }
 
 func NewLearningController(
@@ -282,4 +283,8 @@ func (c learningController) GetOverview(id int) (*models.OverviewResponse, error
 	data := c.prepareOverview(info)
 	res := c.prepareOverviewResponse(info, data)
 	return &res, nil
+}
+
+func (c learningController) GetActivity(id int) (interface{}, error) {
+	return nil, nil
 }

@@ -10,6 +10,11 @@ var TableName = struct {
 	ContentExam         string
 	UserBadge           string
 	Badge               string
+	Activity            string
+	ActivityType        string
+	MatchingChoice      string
+	CompletionChoice    string
+	MultipleChoice      string
 }{
 	"User",
 	"Content",
@@ -20,12 +25,19 @@ var TableName = struct {
 	"ContentExam",
 	"UserBadge",
 	"Badge",
+	"Activity",
+	"ActivityType",
+	"MatchingChoice",
+	"CompletionChoice",
+	"MultipleChoice",
 }
 
 var IDName = struct {
-	User string
+	User     string
+	Activity string
 }{
 	"user_id",
+	"activity_id",
 }
 
 var ViewName = struct {

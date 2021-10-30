@@ -30,6 +30,33 @@ type OverviewDB struct {
 	ContentName string `gorm:"column:content_name" json:"content_name"`
 }
 
+type MultipleChoiceDB struct {
+	ID        int    `gorm:"primaryKey;column:multiple_choice_id" json:"multiple_choice_id"`
+	Content   string `gorm:"column:content" json:"content"`
+	IsCorrect bool   `gorm:"column:is_correct" json:"is_correct"`
+}
+
+type CompletionChoiceDB struct {
+	ID            int    `gorm:"primaryKey;column:completion_choice_id" json:"completion_choice_id"`
+	Content       string `gorm:"column:content" json:"content"`
+	QuestionFirst string `gorm:"column:question_first" json:"question_first"`
+	QuestionLast  string `gorm:"column:question_last" json:"question_last"`
+}
+
+type MatchingChoiceDB struct {
+	ID        int    `gorm:"primaryKey;column:matching_choice_id" json:"matching_choice_id"`
+	PairItem1 string `gorm:"column:pair_item1" json:"pair_item1"`
+	PairItem2 string `gorm:"column:pair_item2" json:"pair_item2"`
+}
+
+type ActivityDB struct {
+	ID       int    `gorm:"primaryKey;column:activity_id" json:"activity_id"`
+	TypeID   int    `gorm:"column:activity_type_id" json:"activity_type_id"`
+	Order    int    `gorm:"column:activity_order" json:"activity_order"`
+	Story    string `gorm:"column:story" json:"story"`
+	Question string `gorm:"column:question" json:"question"`
+}
+
 type LearningProgressionDB struct {
 	UserID           int       `gorm:"column:user_id" json:"user_id"`
 	ActivityID       int       `gorm:"column:activity_id" json:"activity_id"`
