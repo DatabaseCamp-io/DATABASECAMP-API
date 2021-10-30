@@ -325,6 +325,7 @@ func (c learningController) prepareCompletionChoice(completionChoice []models.Co
 	for _, v := range completionChoice {
 		contents = append(contents, v.Content)
 		questions = append(questions, map[string]interface{}{
+			"id":    v.ID,
 			"first": v.QuestionFirst,
 			"last":  v.QuestionLast,
 		})
