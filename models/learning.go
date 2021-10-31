@@ -2,6 +2,7 @@ package models
 
 import (
 	"DatabaseCamp/errs"
+	"fmt"
 	"time"
 )
 
@@ -99,6 +100,11 @@ type PairItem struct {
 	Item2 *string `json:"item2"`
 }
 
+type PairContent struct {
+	ID      *int    `json:"completion_choice_id"`
+	Content *string `json:"content"`
+}
+
 type MatchingChoiceAnswerRequest struct {
 	ActivityID *int       `json:"activity_id"`
 	Answer     []PairItem `json:"answer"`
@@ -112,6 +118,34 @@ func (r MatchingChoiceAnswerRequest) validatePairItem(pairItem PairItem) error {
 }
 
 func (r MatchingChoiceAnswerRequest) Validate() error {
+	if r.ActivityID == nil {
+		return errs.NewBadRequestError("ไม่พบไอดีของกิจกรรมในคำร้องขอ", "Activity ID Not Found")
+	} else if len(r.Answer) == 0 {
+		return errs.NewBadRequestError("ไม่พบคำตอบในคำร้องขอ", "Answer Not Found")
+	} else {
+		for _, v := range r.Answer {
+			e := r.validatePairItem(v)
+			if e != nil {
+				return e
+			}
+		}
+	}
+	return nil
+}
+
+type CompletionAnswerRequest struct {
+	ActivityID *int          `json:"activity_id"`
+	Answer     []PairContent `json:"answer"`
+}
+
+func (r CompletionAnswerRequest) validatePairItem(pairContent PairContent) error {
+	if pairContent.Content == nil || pairContent.ID == nil {
+		return errs.NewBadRequestError("ไม่พบคำตอบในคำร้องขอ", "Answer Not Found")
+	}
+	return nil
+}
+
+func (r CompletionAnswerRequest) Validate() error {
 	if r.ActivityID == nil {
 		return errs.NewBadRequestError("ไม่พบไอดีของกิจกรรมในคำร้องขอ", "Activity ID Not Found")
 	} else if len(r.Answer) == 0 {
