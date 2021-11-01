@@ -177,6 +177,7 @@ func (c learningController) prepareOverview(info *models.OverviewInfo) overviewD
 					activity: []*int{_v.ActivityID},
 				}
 				c = _c
+				g.content[v.ContentID] = c
 			} else {
 				c.activity = append(c.activity, _v.ActivityID)
 			}
