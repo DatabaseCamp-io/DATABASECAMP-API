@@ -309,8 +309,15 @@ func (c learningController) getChoice(activityID int, typeID int) (interface{}, 
 }
 
 func (c learningController) prepareMultipleChoice(multipleChoice []models.MultipleChoiceDB) interface{} {
+	preparedChoices := make([]map[string]interface{}, 0)
 	utils.NewHelper().Shuffle(multipleChoice)
-	return multipleChoice
+	for _, v := range multipleChoice {
+		preparedChoice, _ := utils.NewType().StructToMap(v)
+		delete(preparedChoice, "is_correct")
+		preparedChoices = append(preparedChoices, preparedChoice)
+	}
+
+	return preparedChoices
 }
 
 func (c learningController) prepareMatchingChoice(matchingChoice []models.MatchingChoiceDB) interface{} {
@@ -358,6 +365,24 @@ func (c learningController) prepareChoice(typeID int, choice interface{}) interf
 		return c.prepareCompletionChoice(choice.([]models.CompletionChoiceDB))
 	} else {
 		return nil
+	}
+}
+
+func (c learningController) loadActivityInfo(activityID int) {
+	var wg sync.WaitGroup
+	var err error
+	activity := models.ActivityDB{}
+	concurrent := models.Concurrent{Wg: &wg, Err: &err}
+	wg.Add(2)
+	go c.loadActivityAsync(&concurrent, activityID, &activity)
+}
+
+func (c learningController) loadActivityAsync(concurrent *models.Concurrent, activityID int, activity *models.ActivityDB) {
+	defer concurrent.Wg.Done()
+	var err error
+	activity, err = c.learningRepo.GetActivity(activityID)
+	if err != nil {
+		*concurrent.Err = err
 	}
 }
 
