@@ -17,6 +17,20 @@ var Exam = struct {
 	"POST",
 }
 
+type HintDB struct {
+	ID          int    `gorm:"primaryKey;column:hint_id" json:"hint_id"`
+	ActivityID  int    `gorm:"column:activity_id" json:"activity_id"`
+	Content     string `gorm:"column:content" json:"content"`
+	PointReduce int    `gorm:"column:point_reduce" json:"point_reduce"`
+	Level       int    `gorm:"column:level" json:"level"`
+}
+
+type UserHintDB struct {
+	UserID           int       `gorm:"primaryKey;column:user_id" json:"user_id"`
+	HintID           int       `gorm:"primaryKey;column:hint_id" json:"hint_id"`
+	CreatedTimestamp time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
+}
+
 type ContentDB struct {
 	ID        int    `gorm:"primaryKey;column:content_id" json:"content_id"`
 	GroupID   int    `gorm:"column:content_group_id" json:"content_group_id"`

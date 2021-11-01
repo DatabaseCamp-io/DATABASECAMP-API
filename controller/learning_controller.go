@@ -11,6 +11,12 @@ import (
 	"time"
 )
 
+type hintInfo struct {
+	activityHints []models.HintDB
+	userHints     []models.UserHintDB
+	user          models.User
+}
+
 type content struct {
 	id       int
 	name     string
@@ -39,7 +45,8 @@ type ILearningController interface {
 	GetVideoLecture(id int) (*models.VideoLectureResponse, error)
 	GetOverview(id int) (*models.OverviewResponse, error)
 	GetActivity(id int) (*models.ActivityResponse, error)
-	CheckMatchingAnswer(userID int, request models.MatchingChoiceAnswerRequest) (interface{}, error)
+	CheckMatchingAnswer(userID int, request models.MatchingChoiceAnswerRequest) (*models.AnswerResponse, error)
+	UseHint(userID int, activityID int) (*models.HintDB, error)
 }
 
 func NewLearningController(
@@ -386,7 +393,7 @@ func (c learningController) SaveProgression(userID int, activityID int) (*models
 	return c.userRepo.InsertLearningProgression(progression)
 }
 
-func (c learningController) CheckMatchingAnswer(userID int, request models.MatchingChoiceAnswerRequest) (interface{}, error) {
+func (c learningController) CheckMatchingAnswer(userID int, request models.MatchingChoiceAnswerRequest) (*models.AnswerResponse, error) {
 	choice, err := c.getChoice(*request.ActivityID, 1)
 	if err != nil {
 		logs.New().Error(err)
@@ -422,5 +429,98 @@ func (c learningController) CheckMatchingAnswer(userID int, request models.Match
 		}
 	}
 
-	return response, nil
+	return &response, nil
+}
+
+func (c learningController) loadHintInfo(userID int, activityID int) (hintInfo, error) {
+	var wg sync.WaitGroup
+	var err error
+	concurrent := models.Concurrent{Wg: &wg, Err: &err}
+	userHints := make([]models.UserHintDB, 0)
+	activityHints := make([]models.HintDB, 0)
+	user := models.User{}
+	wg.Add(3)
+	go c.loadActivityHints(&concurrent, activityID, &activityHints)
+	go c.loadUserHintsAsync(&concurrent, userID, activityID, &userHints)
+	go c.loadUser(&concurrent, userID, &user)
+	wg.Wait()
+	hintInfo := hintInfo{
+		activityHints: activityHints,
+		userHints:     userHints,
+		user:          user,
+	}
+	return hintInfo, err
+}
+
+func (c learningController) loadUser(concurrent *models.Concurrent, userID int, user *models.User) {
+	defer concurrent.Wg.Done()
+	userDB, e := c.userRepo.GetUserByID(userID)
+	if e != nil {
+		*concurrent.Err = e
+	}
+	user = &userDB
+}
+
+func (c learningController) loadUserHintsAsync(concurrent *models.Concurrent, userID int, activityID int, hints *[]models.UserHintDB) {
+	defer concurrent.Wg.Done()
+	userHints, e := c.userRepo.GetUserHint(userID, activityID)
+	if e != nil {
+		*concurrent.Err = e
+	}
+	*hints = append(*hints, userHints...)
+}
+
+func (c learningController) loadActivityHints(concurrent *models.Concurrent, activityID int, hints *[]models.HintDB) {
+	defer concurrent.Wg.Done()
+	activityHints, e := c.learningRepo.GetActivityHints(activityID)
+	if e != nil {
+		*concurrent.Err = e
+	}
+	*hints = append(*hints, activityHints...)
+}
+
+func (c learningController) isUsedHint(userHints []models.UserHintDB, hintID int) bool {
+	for _, userHint := range userHints {
+		if userHint.HintID == hintID {
+			return true
+		}
+	}
+	return false
+}
+
+func (c learningController) getNextLevelHint(info hintInfo) *models.HintDB {
+	for _, activityHint := range info.activityHints {
+		if c.isUsedHint(info.userHints, activityHint.ID) {
+			return &activityHint
+		}
+	}
+	return nil
+}
+
+func (c learningController) insertUserHint(userID int, hintID int) error {
+	hint := models.UserHintDB{
+		UserID:           userID,
+		HintID:           hintID,
+		CreatedTimestamp: time.Now().Local(),
+	}
+	_, err := c.userRepo.InsertUserHint(hint)
+	return err
+}
+
+func (c learningController) UseHint(userID int, activityID int) (*models.HintDB, error) {
+	hintInfo, err := c.loadHintInfo(userID, activityID)
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewNotFoundError("ไม่พบคำใบ้ของกิจกรรม", "Activity Hints Not Found")
+	}
+	nextLevelHint := c.getNextLevelHint(hintInfo)
+	if hintInfo.user.Point < nextLevelHint.PointReduce {
+		return nil, errs.NewBadRequestError("แต้มไม่เพียงพอในการขอคำใบ้", "Not Enough Points")
+	}
+	err = c.insertUserHint(userID, nextLevelHint.ID)
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+	}
+	return nextLevelHint, nil
 }

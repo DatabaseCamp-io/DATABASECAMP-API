@@ -17,6 +17,7 @@ type ILearningRepository interface {
 	GetMatchingChoice(activityID int) ([]models.MatchingChoiceDB, error)
 	GetMultipleChoice(activityID int) ([]models.MultipleChoiceDB, error)
 	GetCompletionChoice(activityID int) ([]models.CompletionChoiceDB, error)
+	GetActivityHints(activityID int) ([]models.HintDB, error)
 }
 
 func NewLearningRepository(db database.IDatabase) learningRepository {
@@ -112,4 +113,17 @@ func (r learningRepository) GetCompletionChoice(activityID int) ([]models.Comple
 		Error
 
 	return completionChoice, err
+}
+
+func (r learningRepository) GetActivityHints(activityID int) ([]models.HintDB, error) {
+	hints := make([]models.HintDB, 0)
+
+	err := r.database.GetDB().
+		Table(models.TableName.Hint).
+		Where(models.IDName.Activity+" = ?", activityID).
+		Order("level ASC").
+		Find(&hints).
+		Error
+
+	return hints, err
 }

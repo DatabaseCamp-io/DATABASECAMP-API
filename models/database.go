@@ -15,6 +15,8 @@ var TableName = struct {
 	MatchingChoice      string
 	CompletionChoice    string
 	MultipleChoice      string
+	Hint                string
+	UserHint            string
 }{
 	"User",
 	"Content",
@@ -30,14 +32,18 @@ var TableName = struct {
 	"MatchingChoice",
 	"CompletionChoice",
 	"MultipleChoice",
+	"Hint",
+	"UserHint",
 }
 
 var IDName = struct {
 	User     string
 	Activity string
+	Hint     string
 }{
 	"user_id",
 	"activity_id",
+	"hint_id",
 }
 
 var ViewName = struct {
