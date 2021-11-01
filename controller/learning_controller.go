@@ -47,6 +47,7 @@ type ILearningController interface {
 	GetActivity(id int) (*models.ActivityResponse, error)
 	CheckMatchingAnswer(userID int, request models.MatchingChoiceAnswerRequest) (*models.AnswerResponse, error)
 	UseHint(userID int, activityID int) (*models.HintDB, error)
+	CheckCompletionAnswer(userID int, request models.CompletionAnswerRequest) (interface{}, error)
 }
 
 func NewLearningController(
@@ -523,4 +524,43 @@ func (c learningController) UseHint(userID int, activityID int) (*models.HintDB,
 		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
 	}
 	return nextLevelHint, nil
+}
+
+func (c learningController) CheckCompletionAnswer(userID int, request models.CompletionAnswerRequest) (interface{}, error) {
+	choice, err := c.getChoice(*request.ActivityID, 3)
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
+	}
+
+	CompletionContent := choice.([]models.CompletionChoiceDB)
+	isCorrect := true
+
+	if len(CompletionContent) != len(request.Answer) {
+		return nil, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
+	}
+
+	for _, correct := range CompletionContent {
+		for _, answer := range request.Answer {
+			if (correct.ID == *answer.ID) && (correct.Content != *answer.Content) {
+				isCorrect = false
+				break
+			}
+		}
+	}
+
+	response := models.AnswerResponse{
+		ActivityID: *request.ActivityID,
+		IsCorrect:  isCorrect,
+	}
+
+	if isCorrect {
+		_, err = c.SaveProgression(userID, *request.ActivityID)
+		if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
+			logs.New().Error(err)
+			return nil, errs.NewInternalServerError("เกิดข้อผิดพลาดในการบันทึกกิจกรรม", "Saved Activity Failed")
+		}
+	}
+
+	return response, nil
 }

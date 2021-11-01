@@ -46,6 +46,7 @@ func (r router) setupLearning(db database.IDatabase, userRepo repository.IUserRe
 		group.Get("/activity/:id", learningHandler.GetActivity)
 		group.Post("/activity/hint/:id", learningHandler.UseHint)
 		group.Post("/activity/matching/check-answer", learningHandler.CheckMatchingAnswer)
+		group.Post("/activity/completion/check-answer", learningHandler.CheckCompletionAnswer)
 	}
 }
 

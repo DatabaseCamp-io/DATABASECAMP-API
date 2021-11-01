@@ -85,3 +85,25 @@ func (h learningHandler) UseHint(c *fiber.Ctx) error {
 
 	return c.Status(http.StatusOK).JSON(response)
 }
+
+func (h learningHandler) CheckCompletionAnswer(c *fiber.Ctx) error {
+	id := c.Locals("id")
+	request := models.CompletionAnswerRequest{}
+
+	err := bindRequest(c, &request)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	err = request.Validate()
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	response, err := h.controller.CheckCompletionAnswer(utils.NewType().ParseInt(id), request)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.Status(http.StatusOK).JSON(response)
+}
