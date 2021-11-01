@@ -23,7 +23,8 @@ func (r learningRepository) GetContent(id int) (*models.ContentDB, error) {
 	content := models.ContentDB{}
 	err := r.database.GetDB().
 		Table(models.TableName.Content).
-		Create(&content).
+		Where(models.IDName.Content+" = ?", id).
+		Find(&content).
 		Error
 	return &content, err
 }

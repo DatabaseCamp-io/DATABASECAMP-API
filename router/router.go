@@ -41,7 +41,7 @@ func (r router) setupLearning(db database.IDatabase, userRepo repository.IUserRe
 	group := r.app.Group("learning")
 	group.Use(jwt.JwtVerify)
 	{
-		group.Get("/video", learningHandler.GetVideo)
+		group.Get("/video/:id", learningHandler.GetVideo)
 		group.Get("/overview", learningHandler.GetOverview)
 	}
 }

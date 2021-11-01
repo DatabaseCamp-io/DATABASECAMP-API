@@ -57,7 +57,7 @@ func (s awsService) getObjectInput(imageKey string) *s3.GetObjectInput {
 func (s awsService) GetFileLink(imageKey string) (string, error) {
 	svc := s3.New(s.Sess)
 	req, _ := svc.GetObjectRequest(s.getObjectInput(imageKey))
-	expireTime := 5 * time.Minute
+	expireTime := 60 * time.Minute
 	url, err := req.Presign(expireTime)
 	return url, err
 }

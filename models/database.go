@@ -23,9 +23,11 @@ var TableName = struct {
 }
 
 var IDName = struct {
-	User string
+	User    string
+	Content string
 }{
 	"user_id",
+	"content_id",
 }
 
 var ViewName = struct {
