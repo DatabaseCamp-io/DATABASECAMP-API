@@ -71,6 +71,7 @@ type ActivityDB struct {
 	TypeID   int    `gorm:"column:activity_type_id" json:"activity_type_id"`
 	Order    int    `gorm:"column:activity_order" json:"activity_order"`
 	Story    string `gorm:"column:story" json:"story"`
+	Point    int    `gorm:"column:point" json:"point"`
 	Question string `gorm:"column:question" json:"question"`
 }
 
@@ -104,8 +105,9 @@ type ExamResultDB struct {
 }
 
 type ActivityHint struct {
-	TotalHint int      `json:"total_hint"`
-	UsedHints []HintDB `json:"used_hints"`
+	TotalHint     int      `json:"total_hint"`
+	UsedHints     []HintDB `json:"used_hints"`
+	NextHintPoint *int     `json:"next_hint_point"`
 }
 
 type ActivityResponse struct {

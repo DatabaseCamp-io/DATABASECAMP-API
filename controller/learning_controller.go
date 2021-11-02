@@ -407,7 +407,22 @@ func (c learningController) loadActivityAsync(concurrent *models.Concurrent, act
 }
 
 func (c learningController) prepareActivityHint(info activityInfo) *models.ActivityHint {
-	return nil
+	var nextHintPoint *int
+	usedHint := make([]models.HintDB, 0)
+
+	for _, v := range info.activityHints {
+		if c.isUsedHint(info.userHints, v.ID) {
+			usedHint = append(usedHint, v)
+		} else if nextHintPoint == nil {
+			nextHintPoint = &v.PointReduce
+		}
+	}
+
+	return &models.ActivityHint{
+		TotalHint:     len(info.activityHints),
+		UsedHints:     usedHint,
+		NextHintPoint: nextHintPoint,
+	}
 }
 
 func (c learningController) GetActivity(userID int, activityID int) (*models.ActivityResponse, error) {
@@ -505,11 +520,11 @@ func (c learningController) loadHintInfo(userID int, activityID int) (hintInfo, 
 
 func (c learningController) loadUser(concurrent *models.Concurrent, userID int, user *models.User) {
 	defer concurrent.Wg.Done()
-	userDB, err := c.userRepo.GetUserByID(userID)
+	var err error
+	*user, err = c.userRepo.GetUserByID(userID)
 	if err != nil {
 		*concurrent.Err = err
 	}
-	user = &userDB
 }
 
 func (c learningController) loadUserHintsAsync(concurrent *models.Concurrent, userID int, activityID int, hints *[]models.UserHintDB) {
