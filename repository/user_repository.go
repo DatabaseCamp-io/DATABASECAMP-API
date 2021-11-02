@@ -22,10 +22,21 @@ type IUserRepository interface {
 	GetUserBadgeIDPair(id int) ([]models.UserBadgeIDPair, error)
 	GetAllPointranking() ([]models.PointRanking, error)
 	UserPointranking(id int) (*models.PointRanking, error)
+	InsertLearningProgression(progression models.LearningProgressionDB) (*models.LearningProgressionDB, error)
+	GetUserHint(userID int, activityID int) ([]models.UserHintDB, error)
+	InsertUserHint(userHint models.UserHintDB) (*models.UserHintDB, error)
 }
 
 func NewUserRepository(db database.IDatabase) userRepository {
 	return userRepository{database: db}
+}
+
+func (r userRepository) InsertLearningProgression(progression models.LearningProgressionDB) (*models.LearningProgressionDB, error) {
+	err := r.database.GetDB().
+		Table(models.TableName.LearningProgression).
+		Create(&progression).
+		Error
+	return &progression, err
 }
 
 func (r userRepository) Insert(user models.User) (models.User, error) {
@@ -138,4 +149,30 @@ func (r userRepository) UserPointranking(id int) (*models.PointRanking, error) {
 		Find(&ranking).
 		Error
 	return &ranking, err
+}
+
+func (r userRepository) GetUserHint(userID int, activityID int) ([]models.UserHintDB, error) {
+	userhint := make([]models.UserHintDB, 0)
+
+	hintSubquery := r.database.GetDB().
+		Select("hint_id").
+		Table(models.TableName.Hint).
+		Where(models.IDName.Activity+" = ?", activityID)
+
+	err := r.database.GetDB().
+		Table(models.TableName.UserHint).
+		Where(models.IDName.Hint+" IN (?)", hintSubquery).
+		Where(models.IDName.User+" = ?", userID).
+		Find(&userhint).
+		Error
+
+	return userhint, err
+}
+
+func (r userRepository) InsertUserHint(userHint models.UserHintDB) (*models.UserHintDB, error) {
+	err := r.database.GetDB().
+		Table(models.TableName.UserHint).
+		Create(&userHint).
+		Error
+	return &userHint, err
 }
