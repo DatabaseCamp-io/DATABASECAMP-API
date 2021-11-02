@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"DatabaseCamp/errs"
+	"time"
+)
 
 type ExamType string
 
@@ -12,6 +15,20 @@ var Exam = struct {
 	"PRE",
 	"MINI",
 	"POST",
+}
+
+type HintDB struct {
+	ID          int    `gorm:"primaryKey;column:hint_id" json:"hint_id"`
+	ActivityID  int    `gorm:"column:activity_id" json:"activity_id"`
+	Content     string `gorm:"column:content" json:"content"`
+	PointReduce int    `gorm:"column:point_reduce" json:"point_reduce"`
+	Level       int    `gorm:"column:level" json:"level"`
+}
+
+type UserHintDB struct {
+	UserID           int       `gorm:"primaryKey;column:user_id" json:"user_id"`
+	HintID           int       `gorm:"primaryKey;column:hint_id" json:"hint_id"`
+	CreatedTimestamp time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
 }
 
 type ContentDB struct {
@@ -30,7 +47,36 @@ type OverviewDB struct {
 	ContentName string `gorm:"column:content_name" json:"content_name"`
 }
 
+type MultipleChoiceDB struct {
+	ID        int    `gorm:"primaryKey;column:multiple_choice_id" json:"multiple_choice_id"`
+	Content   string `gorm:"column:content" json:"content"`
+	IsCorrect bool   `gorm:"column:is_correct" json:"is_correct"`
+}
+
+type CompletionChoiceDB struct {
+	ID            int    `gorm:"primaryKey;column:completion_choice_id" json:"completion_choice_id"`
+	Content       string `gorm:"column:content" json:"content"`
+	QuestionFirst string `gorm:"column:question_first" json:"question_first"`
+	QuestionLast  string `gorm:"column:question_last" json:"question_last"`
+}
+
+type MatchingChoiceDB struct {
+	ID        int    `gorm:"primaryKey;column:matching_choice_id" json:"matching_choice_id"`
+	PairItem1 string `gorm:"column:pair_item1" json:"pair_item1"`
+	PairItem2 string `gorm:"column:pair_item2" json:"pair_item2"`
+}
+
+type ActivityDB struct {
+	ID       int    `gorm:"primaryKey;column:activity_id" json:"activity_id"`
+	TypeID   int    `gorm:"column:activity_type_id" json:"activity_type_id"`
+	Order    int    `gorm:"column:activity_order" json:"activity_order"`
+	Story    string `gorm:"column:story" json:"story"`
+	Point    int    `gorm:"column:point" json:"point"`
+	Question string `gorm:"column:question" json:"question"`
+}
+
 type LearningProgressionDB struct {
+	ID               int       `gorm:"primaryKey;column:learning_progression_id" json:"learning_progression_id"`
 	UserID           int       `gorm:"column:user_id" json:"user_id"`
 	ActivityID       int       `gorm:"column:activity_id" json:"activity_id"`
 	CreatedTimestamp time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
@@ -56,6 +102,89 @@ type ExamResultDB struct {
 	Score            int       `gorm:"column:score" json:"score"`
 	IsPassed         bool      `gorm:"column:is_passed" json:"is_passed"`
 	CreatedTimestamp time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
+}
+
+type ActivityHint struct {
+	TotalHint     int      `json:"total_hint"`
+	UsedHints     []HintDB `json:"used_hints"`
+	NextHintPoint *int     `json:"next_hint_point"`
+}
+
+type ActivityResponse struct {
+	Activity ActivityDB   `json:"activity"`
+	Choice   interface{}  `json:"choice"`
+	Hint     ActivityHint `json:"hint"`
+}
+
+type PairItem struct {
+	Item1 *string `json:"item1"`
+	Item2 *string `json:"item2"`
+}
+
+type PairContent struct {
+	ID      *int    `json:"completion_choice_id"`
+	Content *string `json:"content"`
+}
+
+type MatchingChoiceAnswerRequest struct {
+	ActivityID *int       `json:"activity_id"`
+	Answer     []PairItem `json:"answer"`
+}
+
+func (r MatchingChoiceAnswerRequest) validatePairItem(pairItem PairItem) error {
+	if pairItem.Item1 == nil || pairItem.Item2 == nil {
+		return errs.NewBadRequestError("ไม่พบคำตอบในคำร้องขอ", "Answer Not Found")
+	}
+	return nil
+}
+
+func (r MatchingChoiceAnswerRequest) Validate() error {
+	if r.ActivityID == nil {
+		return errs.NewBadRequestError("ไม่พบไอดีของกิจกรรมในคำร้องขอ", "Activity ID Not Found")
+	} else if len(r.Answer) == 0 {
+		return errs.NewBadRequestError("ไม่พบคำตอบในคำร้องขอ", "Answer Not Found")
+	} else {
+		for _, v := range r.Answer {
+			e := r.validatePairItem(v)
+			if e != nil {
+				return e
+			}
+		}
+	}
+	return nil
+}
+
+type CompletionAnswerRequest struct {
+	ActivityID *int          `json:"activity_id"`
+	Answer     []PairContent `json:"answer"`
+}
+
+func (r CompletionAnswerRequest) validatePairItem(pairContent PairContent) error {
+	if pairContent.Content == nil || pairContent.ID == nil {
+		return errs.NewBadRequestError("ไม่พบคำตอบในคำร้องขอ", "Answer Not Found")
+	}
+	return nil
+}
+
+func (r CompletionAnswerRequest) Validate() error {
+	if r.ActivityID == nil {
+		return errs.NewBadRequestError("ไม่พบไอดีของกิจกรรมในคำร้องขอ", "Activity ID Not Found")
+	} else if len(r.Answer) == 0 {
+		return errs.NewBadRequestError("ไม่พบคำตอบในคำร้องขอ", "Answer Not Found")
+	} else {
+		for _, v := range r.Answer {
+			e := r.validatePairItem(v)
+			if e != nil {
+				return e
+			}
+		}
+	}
+	return nil
+}
+
+type AnswerResponse struct {
+	ActivityID int  `json:"activity_id"`
+	IsCorrect  bool `json:"is_correct"`
 }
 
 type VideoLectureResponse struct {
