@@ -119,7 +119,7 @@ func (c userController) GetUserRanking(id int) (*models.PointRanking, error) {
 	return &response, nil
 }
 
-func (c userController) LeaderBoard() ([]models.PointRanking, error) {
+func (c userController) GetLeaderBoard() ([]models.PointRanking, error) {
 	response := make([]models.PointRanking, 0)
 	ranking, err := c.repo.GetAllPointranking()
 	if err != nil || ranking == nil {

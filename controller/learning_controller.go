@@ -211,7 +211,7 @@ func (c learningController) getRecommendGroupFromExam(info *models.OverviewInfo)
 
 func (c learningController) calculateProgress(progress int, total int) int {
 	if total == 0 {
-		return 0
+		return 100
 	} else {
 		return (progress / total) * 100
 	}
@@ -237,9 +237,11 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 	for ko, vo := range data.group {
 		content := make([]models.ContentOverview, 0)
 		_isLasted := false
+		_isGroupLasted := false
 		countUserActivity := 0
 		countActivity := 0
 		for kc, vc := range vo.content {
+
 			countActivity += data.activityCount[kc]
 			countUserActivity += userActivityCount[kc]
 			_isLasted = lastedActivityID == kc
@@ -251,6 +253,7 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 				Progress:    progress,
 			})
 			if _isLasted {
+				_isGroupLasted = true
 				lastedGroup = &models.LastedGroup{
 					GroupID:     ko,
 					ContentID:   kc,
@@ -268,10 +271,11 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 				isRecommend = false
 			}
 		}
+
 		contentGroupOverview = append(contentGroupOverview, models.ContentGroupOverview{
 			GroupID:     ko,
 			IsRecommend: isRecommend,
-			IsLasted:    _isLasted,
+			IsLasted:    _isGroupLasted,
 			GroupName:   vo.name,
 			Progress:    c.calculateProgress(countUserActivity, countActivity),
 			Contents:    content,
