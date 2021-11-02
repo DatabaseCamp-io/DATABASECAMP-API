@@ -14,6 +14,7 @@ type learningHandler struct {
 }
 
 type ILearningHandler interface {
+	GetContentRoadmap(c *fiber.Ctx) error
 	GetVideo(c *fiber.Ctx) error
 	GetOverview(c *fiber.Ctx) error
 	GetActivity(c *fiber.Ctx) error
@@ -23,6 +24,16 @@ type ILearningHandler interface {
 
 func NewLearningHandler(controller controller.ILearningController) learningHandler {
 	return learningHandler{controller: controller}
+}
+
+func (h learningHandler) GetContentRoadmap(c *fiber.Ctx) error {
+	userID := utils.NewType().ParseInt(c.Locals("id"))
+	contentID := utils.NewType().ParseInt(c.Params("id"))
+	response, err := h.controller.GetContentRoadmap(userID, contentID)
+	if err != nil {
+		return handleError(c, err)
+	}
+	return c.Status(http.StatusOK).JSON(response)
 }
 
 func (h learningHandler) GetVideo(c *fiber.Ctx) error {
