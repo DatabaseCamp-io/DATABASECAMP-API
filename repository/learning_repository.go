@@ -18,6 +18,7 @@ type ILearningRepository interface {
 	GetMultipleChoice(activityID int) ([]models.MultipleChoiceDB, error)
 	GetCompletionChoice(activityID int) ([]models.CompletionChoiceDB, error)
 	GetActivityHints(activityID int) ([]models.HintDB, error)
+	GetContentActivity(contentID int) ([]models.ActivityDB, error)
 }
 
 func NewLearningRepository(db database.IDatabase) learningRepository {
@@ -66,6 +67,18 @@ func (r learningRepository) GetContentExam(examType models.ExamType) ([]models.C
 		Find(&contentExam).
 		Error
 	return contentExam, err
+}
+
+func (r learningRepository) GetContentActivity(contentID int) ([]models.ActivityDB, error) {
+	activity := make([]models.ActivityDB, 0)
+
+	err := r.database.GetDB().
+		Table(models.TableName.Activity).
+		Where(models.IDName.Content+" = ?", contentID).
+		Find(&activity).
+		Error
+
+	return activity, err
 }
 
 func (r learningRepository) GetActivity(id int) (*models.ActivityDB, error) {

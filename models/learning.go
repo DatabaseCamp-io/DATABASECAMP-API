@@ -182,6 +182,12 @@ func (r CompletionAnswerRequest) Validate() error {
 	return nil
 }
 
+type RoadmapItem struct {
+	ActivityID int  `json:"activity_id"`
+	IsLearned  bool `json:"is_learned"`
+	Order      int  `json:"order"`
+}
+
 type AnswerResponse struct {
 	ActivityID int  `json:"activity_id"`
 	IsCorrect  bool `json:"is_correct"`
