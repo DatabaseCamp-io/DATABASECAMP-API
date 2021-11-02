@@ -103,9 +103,15 @@ type ExamResultDB struct {
 	CreatedTimestamp time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
 }
 
+type ActivityHint struct {
+	TotalHint int      `json:"total_hint"`
+	UsedHints []HintDB `json:"used_hints"`
+}
+
 type ActivityResponse struct {
-	Activity ActivityDB  `json:"activity"`
-	Choice   interface{} `json:"choice"`
+	Activity ActivityDB   `json:"activity"`
+	Choice   interface{}  `json:"choice"`
+	Hint     ActivityHint `json:"hint"`
 }
 
 type PairItem struct {

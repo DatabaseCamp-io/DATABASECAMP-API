@@ -11,6 +11,12 @@ import (
 	"time"
 )
 
+type activityInfo struct {
+	activityHints []models.HintDB
+	userHints     []models.UserHintDB
+	activity      models.ActivityDB
+}
+
 type hintInfo struct {
 	activityHints []models.HintDB
 	userHints     []models.UserHintDB
@@ -44,7 +50,7 @@ type learningController struct {
 type ILearningController interface {
 	GetVideoLecture(id int) (*models.VideoLectureResponse, error)
 	GetOverview(id int) (*models.OverviewResponse, error)
-	GetActivity(id int) (*models.ActivityResponse, error)
+	GetActivity(userID int, activityID int) (*models.ActivityResponse, error)
 	CheckMatchingAnswer(userID int, request models.MatchingChoiceAnswerRequest) (*models.AnswerResponse, error)
 	UseHint(userID int, activityID int) (*models.HintDB, error)
 	CheckCompletionAnswer(userID int, request models.CompletionAnswerRequest) (interface{}, error)
@@ -368,43 +374,62 @@ func (c learningController) prepareChoice(typeID int, choice interface{}) interf
 	}
 }
 
-func (c learningController) loadActivityInfo(activityID int) {
+func (c learningController) loadActivityInfo(userID int, activityID int) (*activityInfo, error) {
 	var wg sync.WaitGroup
 	var err error
-	activity := models.ActivityDB{}
+	var activity *models.ActivityDB
 	concurrent := models.Concurrent{Wg: &wg, Err: &err}
-	wg.Add(2)
+	userHints := make([]models.UserHintDB, 0)
+	activityHints := make([]models.HintDB, 0)
+	wg.Add(3)
 	go c.loadActivityAsync(&concurrent, activityID, &activity)
+	go c.loadActivityHints(&concurrent, activityID, &activityHints)
+	go c.loadUserHintsAsync(&concurrent, userID, activityID, &userHints)
+	wg.Wait()
+	if err != nil {
+		return nil, err
+	}
+	info := activityInfo{
+		activityHints: activityHints,
+		userHints:     userHints,
+		activity:      *activity,
+	}
+	return &info, nil
 }
 
-func (c learningController) loadActivityAsync(concurrent *models.Concurrent, activityID int, activity *models.ActivityDB) {
+func (c learningController) loadActivityAsync(concurrent *models.Concurrent, activityID int, activity **models.ActivityDB) {
 	defer concurrent.Wg.Done()
 	var err error
-	activity, err = c.learningRepo.GetActivity(activityID)
+	*activity, err = c.learningRepo.GetActivity(activityID)
 	if err != nil {
 		*concurrent.Err = err
 	}
 }
 
-func (c learningController) GetActivity(id int) (*models.ActivityResponse, error) {
+func (c learningController) prepareActivityHint(info activityInfo) *models.ActivityHint {
+	return nil
+}
 
-	activity, err := c.learningRepo.GetActivity(id)
+func (c learningController) GetActivity(userID int, activityID int) (*models.ActivityResponse, error) {
+	info, err := c.loadActivityInfo(userID, activityID)
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
 	}
 
-	choice, err := c.getChoice(activity.ID, activity.TypeID)
+	choice, err := c.getChoice(info.activity.ID, info.activity.TypeID)
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
 	}
 
-	preparedChoice := c.prepareChoice(activity.TypeID, choice)
+	preparedChoice := c.prepareChoice(info.activity.TypeID, choice)
+	activityHint := c.prepareActivityHint(*info)
 
 	res := models.ActivityResponse{
-		Activity: *activity,
+		Activity: info.activity,
 		Choice:   preparedChoice,
+		Hint:     *activityHint,
 	}
 
 	return &res, nil
@@ -461,10 +486,10 @@ func (c learningController) CheckMatchingAnswer(userID int, request models.Match
 func (c learningController) loadHintInfo(userID int, activityID int) (hintInfo, error) {
 	var wg sync.WaitGroup
 	var err error
+	var user models.User
 	concurrent := models.Concurrent{Wg: &wg, Err: &err}
 	userHints := make([]models.UserHintDB, 0)
 	activityHints := make([]models.HintDB, 0)
-	user := models.User{}
 	wg.Add(3)
 	go c.loadActivityHints(&concurrent, activityID, &activityHints)
 	go c.loadUserHintsAsync(&concurrent, userID, activityID, &userHints)
@@ -480,9 +505,9 @@ func (c learningController) loadHintInfo(userID int, activityID int) (hintInfo, 
 
 func (c learningController) loadUser(concurrent *models.Concurrent, userID int, user *models.User) {
 	defer concurrent.Wg.Done()
-	userDB, e := c.userRepo.GetUserByID(userID)
-	if e != nil {
-		*concurrent.Err = e
+	userDB, err := c.userRepo.GetUserByID(userID)
+	if err != nil {
+		*concurrent.Err = err
 	}
 	user = &userDB
 }

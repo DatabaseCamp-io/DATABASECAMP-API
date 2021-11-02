@@ -44,8 +44,9 @@ func (h learningHandler) GetOverview(c *fiber.Ctx) error {
 }
 
 func (h learningHandler) GetActivity(c *fiber.Ctx) error {
-	id := c.Params("id")
-	response, err := h.controller.GetActivity(utils.NewType().ParseInt(id))
+	userID := utils.NewType().ParseInt(c.Locals("id"))
+	activityID := utils.NewType().ParseInt(c.Params("id"))
+	response, err := h.controller.GetActivity(userID, activityID)
 	if err != nil {
 		return handleError(c, err)
 	}
