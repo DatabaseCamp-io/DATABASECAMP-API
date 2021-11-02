@@ -5,37 +5,55 @@ import (
 	"DatabaseCamp/database"
 	"DatabaseCamp/handler"
 	"DatabaseCamp/repository"
+	"DatabaseCamp/services"
 
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
 )
 
 type router struct {
-	echo *echo.Echo
+	app *fiber.App
 }
 
 var instantiated *router = nil
 
-func New(e *echo.Echo) *router {
+func New(app *fiber.App) *router {
 	if instantiated == nil {
-		instantiated = &router{echo: e}
+		instantiated = &router{app: app}
 		instantiated.init()
 	}
 	return instantiated
 }
 
 func (r router) init() {
-	r.setupUser()
+	db := database.New()
+	userRepo := repository.NewUserRepository(db)
+	jwt := handler.NewJwtMiddleware(userRepo)
+	r.setupLearning(db, userRepo, jwt)
+	r.setupUser(db, userRepo, jwt)
 }
 
-func (r router) setupUser() {
-	db := database.New()
-	repository := repository.NewUserRepository(db)
-	controller := controller.NewUserController(repository)
-	jwt := handler.NewJwtMiddleware(repository)
-	handler := handler.NewUserHandler(controller, jwt)
-	group := r.echo.Group("user")
+func (r router) setupLearning(db database.IDatabase, userRepo repository.IUserRepository, jwt handler.IJwt) {
+
+	repo := repository.NewLearningRepository(db)
+	service := services.GetAwsServiceInstance()
+	controller := controller.NewLearningController(repo, userRepo, service)
+	learningHandler := handler.NewLearningHandler(controller)
+	group := r.app.Group("learning")
+	group.Use(jwt.JwtVerify)
 	{
-		group.POST("/register/", handler.Register)
-		group.POST("/login/", handler.Login)
+		group.Get("/video/:id", learningHandler.GetVideo)
+		group.Get("/overview", learningHandler.GetOverview)
+	}
+}
+
+func (r router) setupUser(db database.IDatabase, repo repository.IUserRepository, jwt handler.IJwt) {
+	controller := controller.NewUserController(repo)
+	userHandler := handler.NewUserHandler(controller, jwt)
+	group := r.app.Group("user")
+	{
+		group.Post("/register", userHandler.Register)
+		group.Post("/login", userHandler.Login)
+		group.Get("/info", jwt.JwtVerify, userHandler.GetInfo)
+		group.Get("/profile/:id", jwt.JwtVerify, userHandler.GetProfile)
 	}
 }

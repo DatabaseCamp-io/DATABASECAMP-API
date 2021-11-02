@@ -52,6 +52,44 @@ func (r UserRequest) ValidateLogin() error {
 		err = errs.NewBadRequestError("รูปแบบ email ไม่ถูกต้อง", "Email Invalid")
 	} else if r.Password == "" {
 		err = errs.NewBadRequestError("ไม่พบรหัสผ่านในคำร้องขอ", "Password Not Found")
+	} else if len(r.Password) < 8 {
+		err = errs.NewBadRequestError("ความยาวของรหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร", "Password length must be at least 8 characters")
 	}
 	return err
+}
+
+type ProfileResponse struct {
+	ID               int       `json:"user_id"`
+	Name             string    `json:"name"`
+	Point            int       `json:"point"`
+	ActivityCount    int       `json:"activity_count"`
+	Badges           []Badge   `json:"badges"`
+	CreatedTimestamp time.Time ` json:"created_timestamp"`
+}
+
+type Badge struct {
+	ID        int    `gorm:"primaryKey;column:badge_id" json:"badge_id"`
+	ImagePath string `gorm:"column:icon_path" json:"icon_path"`
+	Name      string `gorm:"column:name" json:"name"`
+	IsCollect bool   `json:"is_collect"`
+}
+
+type ProfileDB struct {
+	ID               int       `gorm:"primaryKey;column:user_id" json:"user_id"`
+	Name             string    `gorm:"column:name" json:"name"`
+	Point            int       `gorm:"column:point" json:"point"`
+	ActivityCount    int       `gorm:"column:activity_count" json:"activity_count"`
+	CreatedTimestamp time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
+}
+
+type UserBadgeIDPair struct {
+	UserID  int `gorm:"primaryKey;column:user_id" json:"user_id"`
+	BadgeID int `gorm:"primaryKey;column:badge_id" json:"badge_id"`
+}
+
+type PointRanking struct {
+	ID      int    `gorm:"primaryKey;column:user_id" json:"user_id"`
+	Name    string `gorm:"column:name" json:"name"`
+	Point   int    `gorm:"column:point" json:"point"`
+	Ranking int    `gorm:"column:ranking" json:"ranking"`
 }

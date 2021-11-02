@@ -3,9 +3,10 @@ package handler
 import (
 	"DatabaseCamp/controller"
 	"DatabaseCamp/models"
+	"DatabaseCamp/utils"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
 )
 
 type userHandler struct {
@@ -14,15 +15,19 @@ type userHandler struct {
 }
 
 type IUserHandler interface {
-	Register(c echo.Context) error
-	Login(c echo.Context) error
+	Register(c *fiber.Ctx) error
+	Login(c *fiber.Ctx) error
+	GetProfile(c *fiber.Ctx) error
+	GetInfo(c *fiber.Ctx) error
+	GetBadge(c *fiber.Ctx) error
+	GetUserRanking(c *fiber.Ctx) error
 }
 
 func NewUserHandler(controller controller.IUserController, jwt IJwt) userHandler {
 	return userHandler{controller: controller, jwt: jwt}
 }
 
-func (h userHandler) Register(c echo.Context) error {
+func (h userHandler) Register(c *fiber.Ctx) error {
 	request := models.UserRequest{}
 
 	err := bindRequest(c, &request)
@@ -47,10 +52,10 @@ func (h userHandler) Register(c echo.Context) error {
 
 	response.AccessToken = token
 
-	return c.JSON(http.StatusOK, response)
+	return c.Status(http.StatusOK).JSON(response)
 }
 
-func (h userHandler) Login(c echo.Context) error {
+func (h userHandler) Login(c *fiber.Ctx) error {
 	request := models.UserRequest{}
 
 	err := bindRequest(c, &request)
@@ -75,5 +80,32 @@ func (h userHandler) Login(c echo.Context) error {
 
 	response.AccessToken = token
 
-	return c.JSON(http.StatusOK, response)
+	return c.Status(http.StatusOK).JSON(response)
+}
+
+func (h userHandler) GetProfile(c *fiber.Ctx) error {
+	id := c.Params("id")
+	response, err := h.controller.GetProfile(utils.NewType().ParseInt(id))
+	if err != nil {
+		return handleError(c, err)
+	}
+	return c.Status(http.StatusOK).JSON(response)
+}
+
+func (h userHandler) GetInfo(c *fiber.Ctx) error {
+	id := c.Locals("id")
+	response, err := h.controller.GetProfile(utils.NewType().ParseInt(id))
+	if err != nil {
+		return handleError(c, err)
+	}
+	return c.Status(http.StatusOK).JSON(response)
+}
+
+func (h userHandler) GetUserRanking(c *fiber.Ctx) error {
+	id := c.Params("id")
+	response, err := h.controller.GetProfile(utils.NewType().ParseInt(id))
+	if err != nil {
+		return handleError(c, err)
+	}
+	return c.Status(http.StatusOK).JSON(response)
 }

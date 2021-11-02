@@ -4,16 +4,14 @@ import (
 	"DatabaseCamp/database"
 	"DatabaseCamp/logs"
 	"DatabaseCamp/router"
-	"net/http"
 	"os"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
-
-var allowOrigin []string
 
 func setupTimeZone() error {
 	location, err := time.LoadLocation("Asia/Bangkok")
@@ -24,35 +22,26 @@ func setupTimeZone() error {
 	return nil
 }
 
-func getCORSConfig() middleware.CORSConfig {
-	return middleware.CORSConfig{
-		AllowOrigins: allowOrigin,
-		AllowMethods: []string{
-			http.MethodGet,
-			http.MethodPut,
-			http.MethodPost,
-			http.MethodDelete,
-			http.MethodOptions,
-		},
+func getConfig() fiber.Config {
+	return fiber.Config{
+		Prefork:       false,
+		CaseSensitive: true,
+		StrictRouting: true,
+		ServerHeader:  "Fiber",
+		AppName:       "Database Camp",
 	}
 }
 
-func setupEcho() error {
-	e := echo.New()
+func setupFiber() error {
+	app := fiber.New(getConfig())
 
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORSWithConfig(getCORSConfig()))
-	e.Pre(middleware.AddTrailingSlash())
+	app.Use(cors.New())
+	app.Use(recover.New())
 
-	router.New(e)
+	router.New(app)
+	err := app.Listen(":" + os.Getenv("PORT"))
 
-	err := e.Start(":" + os.Getenv("PORT"))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func main() {
@@ -76,7 +65,7 @@ func main() {
 	}
 	defer db.CloseDB()
 
-	err = setupEcho()
+	err = setupFiber()
 	if err != nil {
 		logs.New().Error(err)
 		return
