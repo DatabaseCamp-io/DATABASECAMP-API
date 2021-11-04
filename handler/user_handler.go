@@ -103,7 +103,7 @@ func (h userHandler) GetInfo(c *fiber.Ctx) error {
 
 func (h userHandler) GetUserRanking(c *fiber.Ctx) error {
 	id := c.Locals("id")
-	response, err := h.controller.GetProfile(utils.NewType().ParseInt(id))
+	response, err := h.controller.GetRanking(utils.NewType().ParseInt(id))
 	if err != nil {
 		return handleError(c, err)
 	}

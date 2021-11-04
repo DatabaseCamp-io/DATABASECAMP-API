@@ -17,6 +17,7 @@ type IUserController interface {
 	Register(request models.UserRequest) (*models.UserResponse, error)
 	Login(request models.UserRequest) (*models.UserResponse, error)
 	GetProfile(userID int) (*models.ProfileResponse, error)
+	GetRanking(id int) (interface{}, error)
 }
 
 func NewUserController(repo repository.IUserRepository) userController {
@@ -109,22 +110,39 @@ func (c userController) isCollectBadge(badgeID int, userBadgeGain []models.UserB
 	return false
 }
 
-func (c userController) GetUserRanking(id int) (*models.PointRanking, error) {
-	response := models.PointRanking{}
+func (c userController) getUserRanking(id int) (*models.PointRanking, error) {
 	user, err := c.repo.UserPointranking(id)
 	if err != nil || user == nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่พบผู้ใช้", "Profile Not Found")
 	}
-	return &response, nil
+	return user, nil
 }
 
-func (c userController) GetLeaderBoard() ([]models.PointRanking, error) {
-	response := make([]models.PointRanking, 0)
+func (c userController) getLeaderBoard() ([]models.PointRanking, error) {
 	ranking, err := c.repo.GetAllPointranking()
 	if err != nil || ranking == nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่มีตารางคะแนน", "LeaderBoard Not Found")
 	}
-	return response, nil
+	return ranking, nil
+}
+
+func (c userController) GetRanking(id int) (interface{}, error) {
+	userRanking, err := c.getUserRanking(id)
+	if err != nil {
+		return nil, err
+	}
+
+	leaderBoard, err := c.getLeaderBoard()
+	if err != nil {
+		return nil, err
+	}
+
+	result := map[string]interface{}{
+		"user_ranking": userRanking,
+		"leader_board": leaderBoard,
+	}
+
+	return result, nil
 }
