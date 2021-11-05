@@ -67,12 +67,13 @@ type MatchingChoiceDB struct {
 }
 
 type ActivityDB struct {
-	ID       int    `gorm:"primaryKey;column:activity_id" json:"activity_id"`
-	TypeID   int    `gorm:"column:activity_type_id" json:"activity_type_id"`
-	Order    int    `gorm:"column:activity_order" json:"activity_order"`
-	Story    string `gorm:"column:story" json:"story"`
-	Point    int    `gorm:"column:point" json:"point"`
-	Question string `gorm:"column:question" json:"question"`
+	ID        int    `gorm:"primaryKey;column:activity_id" json:"activity_id"`
+	TypeID    int    `gorm:"column:activity_type_id" json:"activity_type_id"`
+	ContentID int    `gorm:"column:content_id" json:"content_id"`
+	Order     int    `gorm:"column:activity_order" json:"activity_order"`
+	Story     string `gorm:"column:story" json:"story"`
+	Point     int    `gorm:"column:point" json:"point"`
+	Question  string `gorm:"column:question" json:"question"`
 }
 
 type LearningProgressionDB struct {
