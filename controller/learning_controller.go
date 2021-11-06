@@ -586,7 +586,7 @@ func (c learningController) isUsedHint(userHints []models.UserHintDB, hintID int
 
 func (c learningController) getNextLevelHint(info hintInfo) *models.HintDB {
 	for _, activityHint := range info.activityHints {
-		if c.isUsedHint(info.userHints, activityHint.ID) {
+		if !c.isUsedHint(info.userHints, activityHint.ID) {
 			return &activityHint
 		}
 	}
