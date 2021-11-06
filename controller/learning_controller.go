@@ -609,9 +609,15 @@ func (c learningController) UseHint(userID int, activityID int) (*models.HintDB,
 		return nil, errs.NewNotFoundError("ไม่พบคำใบ้ของกิจกรรม", "Activity Hints Not Found")
 	}
 	nextLevelHint := c.getNextLevelHint(hintInfo)
+
+	if nextLevelHint == nil {
+		return nil, errs.NewBadRequestError("ได้ใช้คำใบ้ทั้งหมดของกิจกรรมแล้ว", "Activity Hints Has Been Used")
+	}
+
 	if hintInfo.user.Point < nextLevelHint.PointReduce {
 		return nil, errs.NewBadRequestError("แต้มไม่เพียงพอในการขอคำใบ้", "Not Enough Points")
 	}
+
 	err = c.insertUserHint(userID, nextLevelHint.ID)
 	if err != nil {
 		logs.New().Error(err)
