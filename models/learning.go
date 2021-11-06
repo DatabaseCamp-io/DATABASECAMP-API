@@ -228,3 +228,9 @@ type OverviewResponse struct {
 	LastedGroup          *LastedGroup           `json:"lasted_group"`
 	ContentGroupOverview []ContentGroupOverview `json:"content_group_overview"`
 }
+
+type RoadmapResponse struct {
+	ContentID   int           `json:"content_id"`
+	ContentName string        `json:"content_name"`
+	Items       []RoadmapItem `json:"items"`
+}

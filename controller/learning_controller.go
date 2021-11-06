@@ -12,6 +12,7 @@ import (
 )
 
 type roadmapInfo struct {
+	content         *models.ContentDB
 	contentActivity []models.ActivityDB
 	progression     []models.LearningProgressionDB
 }
@@ -59,7 +60,7 @@ type ILearningController interface {
 	CheckMatchingAnswer(userID int, request models.MatchingChoiceAnswerRequest) (*models.AnswerResponse, error)
 	UseHint(userID int, activityID int) (*models.HintDB, error)
 	CheckCompletionAnswer(userID int, request models.CompletionAnswerRequest) (interface{}, error)
-	GetContentRoadmap(userID int, contentID int) (interface{}, error)
+	GetContentRoadmap(userID int, contentID int) (*models.RoadmapResponse, error)
 }
 
 func NewLearningController(
@@ -139,7 +140,7 @@ func (c learningController) loadOverviewAsync(concurrent *models.Concurrent, ove
 	*overview = append(*overview, result...)
 }
 
-func (c learningController) loadContentActivity(concurrent *models.Concurrent, contentID int, activity *[]models.ActivityDB) {
+func (c learningController) loadContentActivityAsync(concurrent *models.Concurrent, contentID int, activity *[]models.ActivityDB) {
 	defer concurrent.Wg.Done()
 	result, err := c.learningRepo.GetContentActivity(contentID)
 	if err != nil {
@@ -665,19 +666,31 @@ func (c learningController) CheckCompletionAnswer(userID int, request models.Com
 	return response, nil
 }
 
+func (c learningController) loadContentAsync(concurrent *models.Concurrent, contentID int, content **models.ContentDB) {
+	defer concurrent.Wg.Done()
+	result, err := c.learningRepo.GetContent(contentID)
+	if err != nil {
+		*concurrent.Err = err
+	}
+	*content = result
+}
+
 func (c learningController) loadRoadmapInfo(userID int, contentID int) (roadmapInfo, error) {
 	var wg sync.WaitGroup
 	var err error
 	concurrent := models.Concurrent{Wg: &wg, Err: &err}
+	var content *models.ContentDB
 	contentActivity := make([]models.ActivityDB, 0)
 	learningProgression := make([]models.LearningProgressionDB, 0)
-	wg.Add(2)
+	wg.Add(3)
 	go c.loadLearningProgressionAsync(&concurrent, &learningProgression, userID)
-	go c.loadContentActivity(&concurrent, contentID, &contentActivity)
+	go c.loadContentActivityAsync(&concurrent, contentID, &contentActivity)
+	go c.loadContentAsync(&concurrent, contentID, &content)
 	wg.Wait()
 	info := roadmapInfo{
 		contentActivity: contentActivity,
 		progression:     learningProgression,
+		content:         content,
 	}
 	return info, err
 }
@@ -691,21 +704,27 @@ func (c learningController) isLearnedActivity(progression []models.LearningProgr
 	return false
 }
 
-func (c learningController) prepareRoadmap(info roadmapInfo) []models.RoadmapItem {
-	roadmap := make([]models.RoadmapItem, 0)
+func (c learningController) prepareRoadmap(info roadmapInfo) *models.RoadmapResponse {
+	items := make([]models.RoadmapItem, 0)
 
 	for _, v := range info.contentActivity {
-		roadmap = append(roadmap, models.RoadmapItem{
+		items = append(items, models.RoadmapItem{
 			ActivityID: v.ID,
 			IsLearned:  c.isLearnedActivity(info.progression, v.ID),
 			Order:      v.Order,
 		})
 	}
 
-	return roadmap
+	res := models.RoadmapResponse{
+		ContentID:   info.content.ID,
+		ContentName: info.content.Name,
+		Items:       items,
+	}
+
+	return &res
 }
 
-func (c learningController) GetContentRoadmap(userID int, contentID int) (interface{}, error) {
+func (c learningController) GetContentRoadmap(userID int, contentID int) (*models.RoadmapResponse, error) {
 	info, err := c.loadRoadmapInfo(userID, contentID)
 	if err != nil {
 		logs.New().Error(err)
