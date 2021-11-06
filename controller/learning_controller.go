@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"DatabaseCamp/database"
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
 	"DatabaseCamp/models"
@@ -593,19 +594,9 @@ func (c learningController) getNextLevelHint(info hintInfo) *models.HintDB {
 	return nil
 }
 
-func (c learningController) insertUserHint(userID int, hintID int) error {
-	hint := models.UserHintDB{
-		UserID:           userID,
-		HintID:           hintID,
-		CreatedTimestamp: time.Now().Local(),
-	}
-	_, err := c.userRepo.InsertUserHint(hint)
-	return err
-}
-
 func (c learningController) UseHint(userID int, activityID int) (*models.HintDB, error) {
 	hintInfo, err := c.loadHintInfo(userID, activityID)
-	if err != nil {
+	if err != nil || len(hintInfo.activityHints) == 0 {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่พบคำใบ้ของกิจกรรม", "Activity Hints Not Found")
 	}
@@ -619,12 +610,65 @@ func (c learningController) UseHint(userID int, activityID int) (*models.HintDB,
 		return nil, errs.NewBadRequestError("แต้มไม่เพียงพอในการขอคำใบ้", "Not Enough Points")
 	}
 
-	err = c.insertUserHint(userID, nextLevelHint.ID)
+	updatePoint := hintInfo.user.Point - nextLevelHint.PointReduce
+
+	err = c.useHintTransaction(userID, updatePoint, nextLevelHint.ID)
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
 	}
 	return nextLevelHint, nil
+}
+
+func (c learningController) useHintTransaction(userID int, updatePoint int, hintID int) error {
+	var wg sync.WaitGroup
+	var err error
+	tx := database.NewTransaction()
+
+	ct := models.ConcurrentTransaction{
+		Concurrent: &models.Concurrent{
+			Wg:  &wg,
+			Err: &err,
+		},
+		Transaction: tx,
+	}
+
+	wg.Add(2)
+	go c.updateUserPointAsyncTrasaction(&ct, userID, updatePoint)
+	go c.insertUserHintAsyncTransaction(&ct, userID, hintID)
+	wg.Wait()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+	tx.Close()
+
+	return nil
+}
+
+func (c learningController) updateUserPointAsyncTrasaction(ct *models.ConcurrentTransaction, userID int, updatePoint int) {
+	defer ct.Concurrent.Wg.Done()
+	updateData := map[string]interface{}{
+		"point": updatePoint,
+	}
+	err := c.userRepo.UpdatesByIDTrasantion(ct.Transaction, userID, updateData)
+	if err != nil {
+		*ct.Concurrent.Err = err
+	}
+}
+
+func (c learningController) insertUserHintAsyncTransaction(ct *models.ConcurrentTransaction, userID int, hintID int) {
+	defer ct.Concurrent.Wg.Done()
+	hint := models.UserHintDB{
+		UserID:           userID,
+		HintID:           hintID,
+		CreatedTimestamp: time.Now().Local(),
+	}
+	_, err := c.userRepo.InsertUserHintTransaction(ct.Transaction, hint)
+	if err != nil {
+		*ct.Concurrent.Err = err
+	}
 }
 
 func (c learningController) CheckCompletionAnswer(userID int, request models.CompletionAnswerRequest) (interface{}, error) {

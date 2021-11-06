@@ -15,6 +15,7 @@ type IUserRepository interface {
 	GetUserByEmail(email string) (models.User, error)
 	GetUserByID(id int) (models.User, error)
 	UpdatesByID(id int, updateData map[string]interface{}) error
+	UpdatesByIDTrasantion(tx database.ITransaction, id int, updateData map[string]interface{}) error
 	GetProfile(id int) (*models.ProfileDB, error)
 	GetLearningProgression(id int) ([]models.LearningProgressionDB, error)
 	GetFailedExam(id int) ([]models.ExamResultDB, error)
@@ -25,6 +26,7 @@ type IUserRepository interface {
 	InsertLearningProgression(progression models.LearningProgressionDB) (*models.LearningProgressionDB, error)
 	GetUserHint(userID int, activityID int) ([]models.UserHintDB, error)
 	InsertUserHint(userHint models.UserHintDB) (*models.UserHintDB, error)
+	InsertUserHintTransaction(tx database.ITransaction, userHint models.UserHintDB) (*models.UserHintDB, error)
 }
 
 func NewUserRepository(db database.IDatabase) userRepository {
@@ -69,6 +71,16 @@ func (r userRepository) GetUserByID(id int) (models.User, error) {
 
 func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) error {
 	err := r.database.GetDB().
+		Table(models.TableName.User).
+		Select("", utils.NewHelper().GetKeyList(updateData)).
+		Where(models.IDName.User+" = ?", id).
+		Updates(updateData).
+		Error
+	return err
+}
+
+func (r userRepository) UpdatesByIDTrasantion(tx database.ITransaction, id int, updateData map[string]interface{}) error {
+	err := tx.GetDB().
 		Table(models.TableName.User).
 		Select("", utils.NewHelper().GetKeyList(updateData)).
 		Where(models.IDName.User+" = ?", id).
@@ -171,6 +183,14 @@ func (r userRepository) GetUserHint(userID int, activityID int) ([]models.UserHi
 
 func (r userRepository) InsertUserHint(userHint models.UserHintDB) (*models.UserHintDB, error) {
 	err := r.database.GetDB().
+		Table(models.TableName.UserHint).
+		Create(&userHint).
+		Error
+	return &userHint, err
+}
+
+func (r userRepository) InsertUserHintTransaction(tx database.ITransaction, userHint models.UserHintDB) (*models.UserHintDB, error) {
+	err := tx.GetDB().
 		Table(models.TableName.UserHint).
 		Create(&userHint).
 		Error
