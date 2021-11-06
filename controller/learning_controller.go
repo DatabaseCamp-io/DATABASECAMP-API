@@ -12,6 +12,11 @@ import (
 	"time"
 )
 
+type checkAnswerInfo struct {
+	choice   interface{}
+	activity *models.ActivityDB
+}
+
 type roadmapInfo struct {
 	content         *models.ContentDB
 	contentActivity []models.ActivityDB
@@ -481,23 +486,76 @@ func (c learningController) GetActivity(userID int, activityID int) (*models.Act
 	return &res, nil
 }
 
-func (c learningController) SaveProgression(userID int, activityID int) (*models.LearningProgressionDB, error) {
+func (c learningController) finishActivityTrasaction(userID int, activityID int, addPoint int) error {
+	tx := database.NewTransaction()
+
 	progression := models.LearningProgressionDB{
 		UserID:           userID,
 		ActivityID:       activityID,
 		CreatedTimestamp: time.Now().Local(),
 	}
-	return c.userRepo.InsertLearningProgression(progression)
+	_, err := c.userRepo.InsertLearningProgressionTransaction(tx, progression)
+	if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
+		tx.Rollback()
+		return err
+	}
+
+	if !utils.NewHelper().IsSqlDuplicateError(err) {
+		err = c.userRepo.ChangePointTransaction(tx, userID, addPoint, models.Mode.Add)
+	}
+
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+	tx.Close()
+
+	return nil
+}
+
+func (c learningController) loadCheckAnswerInfo(activityID int, activityType int) (*checkAnswerInfo, error) {
+	var wg sync.WaitGroup
+	var err error
+	var activity *models.ActivityDB
+	var choice interface{}
+	concurrent := models.Concurrent{
+		Wg:  &wg,
+		Err: &err,
+	}
+	wg.Add(2)
+	go c.loadActivityAsync(&concurrent, activityID, &activity)
+	go c.getChioceAsync(&concurrent, activityID, activityType, &choice)
+	wg.Wait()
+	if err != nil {
+		return nil, err
+	}
+
+	info := checkAnswerInfo{
+		choice:   choice,
+		activity: activity,
+	}
+
+	return &info, nil
+}
+
+func (c learningController) getChioceAsync(concurrent *models.Concurrent, activityID int, activityType int, choice *interface{}) {
+	defer concurrent.Wg.Done()
+	var err error
+	*choice, err = c.getChoice(activityID, activityType)
+	if err != nil {
+		*concurrent.Err = err
+	}
 }
 
 func (c learningController) CheckMatchingAnswer(userID int, request models.MatchingChoiceAnswerRequest) (*models.AnswerResponse, error) {
-	choice, err := c.getChoice(*request.ActivityID, 1)
-	if err != nil {
+	info, err := c.loadCheckAnswerInfo(*request.ActivityID, 1)
+	if err != nil || info.activity == nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
 	}
 
-	matchingChoice := choice.([]models.MatchingChoiceDB)
+	matchingChoice := info.choice.([]models.MatchingChoiceDB)
 	isCorrect := true
 
 	if len(matchingChoice) != len(request.Answer) {
@@ -519,7 +577,7 @@ func (c learningController) CheckMatchingAnswer(userID int, request models.Match
 	}
 
 	if isCorrect {
-		_, err = c.SaveProgression(userID, *request.ActivityID)
+		err = c.finishActivityTrasaction(userID, *request.ActivityID, info.activity.Point)
 		if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
 			logs.New().Error(err)
 			return nil, errs.NewInternalServerError("เกิดข้อผิดพลาดในการบันทึกกิจกรรม", "Saved Activity Failed")
@@ -610,9 +668,7 @@ func (c learningController) UseHint(userID int, activityID int) (*models.HintDB,
 		return nil, errs.NewBadRequestError("แต้มไม่เพียงพอในการขอคำใบ้", "Not Enough Points")
 	}
 
-	updatePoint := hintInfo.user.Point - nextLevelHint.PointReduce
-
-	err = c.useHintTransaction(userID, updatePoint, nextLevelHint.ID)
+	err = c.useHintTransaction(userID, nextLevelHint.PointReduce, nextLevelHint.ID)
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
@@ -620,7 +676,7 @@ func (c learningController) UseHint(userID int, activityID int) (*models.HintDB,
 	return nextLevelHint, nil
 }
 
-func (c learningController) useHintTransaction(userID int, updatePoint int, hintID int) error {
+func (c learningController) useHintTransaction(userID int, reducePoint int, hintID int) error {
 	var wg sync.WaitGroup
 	var err error
 	tx := database.NewTransaction()
@@ -634,7 +690,7 @@ func (c learningController) useHintTransaction(userID int, updatePoint int, hint
 	}
 
 	wg.Add(2)
-	go c.updateUserPointAsyncTrasaction(&ct, userID, updatePoint)
+	go c.updateUserPointAsyncTrasaction(&ct, userID, reducePoint, models.Mode.Reduce)
 	go c.insertUserHintAsyncTransaction(&ct, userID, hintID)
 	wg.Wait()
 	if err != nil {
@@ -647,12 +703,9 @@ func (c learningController) useHintTransaction(userID int, updatePoint int, hint
 	return nil
 }
 
-func (c learningController) updateUserPointAsyncTrasaction(ct *models.ConcurrentTransaction, userID int, updatePoint int) {
+func (c learningController) updateUserPointAsyncTrasaction(ct *models.ConcurrentTransaction, userID int, updatePoint int, mode models.ChangePointMode) {
 	defer ct.Concurrent.Wg.Done()
-	updateData := map[string]interface{}{
-		"point": updatePoint,
-	}
-	err := c.userRepo.UpdatesByIDTrasantion(ct.Transaction, userID, updateData)
+	err := c.userRepo.ChangePointTransaction(ct.Transaction, userID, updatePoint, mode)
 	if err != nil {
 		*ct.Concurrent.Err = err
 	}
@@ -672,13 +725,13 @@ func (c learningController) insertUserHintAsyncTransaction(ct *models.Concurrent
 }
 
 func (c learningController) CheckCompletionAnswer(userID int, request models.CompletionAnswerRequest) (interface{}, error) {
-	choice, err := c.getChoice(*request.ActivityID, 3)
-	if err != nil {
+	info, err := c.loadCheckAnswerInfo(*request.ActivityID, 1)
+	if err != nil || info.activity == nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
 	}
 
-	CompletionContent := choice.([]models.CompletionChoiceDB)
+	CompletionContent := info.choice.([]models.CompletionChoiceDB)
 	isCorrect := true
 
 	if len(CompletionContent) != len(request.Answer) {
@@ -700,7 +753,7 @@ func (c learningController) CheckCompletionAnswer(userID int, request models.Com
 	}
 
 	if isCorrect {
-		_, err = c.SaveProgression(userID, *request.ActivityID)
+		err = c.finishActivityTrasaction(userID, *request.ActivityID, info.activity.Point)
 		if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
 			logs.New().Error(err)
 			return nil, errs.NewInternalServerError("เกิดข้อผิดพลาดในการบันทึกกิจกรรม", "Saved Activity Failed")

@@ -4,6 +4,7 @@ import (
 	"DatabaseCamp/database"
 	"DatabaseCamp/models"
 	"DatabaseCamp/utils"
+	"fmt"
 )
 
 type userRepository struct {
@@ -14,31 +15,23 @@ type IUserRepository interface {
 	Insert(user models.User) (models.User, error)
 	GetUserByEmail(email string) (models.User, error)
 	GetUserByID(id int) (models.User, error)
-	UpdatesByID(id int, updateData map[string]interface{}) error
-	UpdatesByIDTrasantion(tx database.ITransaction, id int, updateData map[string]interface{}) error
 	GetProfile(id int) (*models.ProfileDB, error)
 	GetLearningProgression(id int) ([]models.LearningProgressionDB, error)
 	GetFailedExam(id int) ([]models.ExamResultDB, error)
 	GetAllBadge() ([]models.Badge, error)
+	UpdatesByID(id int, updateData map[string]interface{}) error
 	GetUserBadgeIDPair(id int) ([]models.UserBadgeIDPair, error)
 	GetAllPointranking() ([]models.PointRanking, error)
 	UserPointranking(id int) (*models.PointRanking, error)
-	InsertLearningProgression(progression models.LearningProgressionDB) (*models.LearningProgressionDB, error)
 	GetUserHint(userID int, activityID int) ([]models.UserHintDB, error)
 	InsertUserHint(userHint models.UserHintDB) (*models.UserHintDB, error)
 	InsertUserHintTransaction(tx database.ITransaction, userHint models.UserHintDB) (*models.UserHintDB, error)
+	InsertLearningProgressionTransaction(tx database.ITransaction, progression models.LearningProgressionDB) (*models.LearningProgressionDB, error)
+	ChangePointTransaction(tx database.ITransaction, userID int, point int, mode models.ChangePointMode) error
 }
 
 func NewUserRepository(db database.IDatabase) userRepository {
 	return userRepository{database: db}
-}
-
-func (r userRepository) InsertLearningProgression(progression models.LearningProgressionDB) (*models.LearningProgressionDB, error) {
-	err := r.database.GetDB().
-		Table(models.TableName.LearningProgression).
-		Create(&progression).
-		Error
-	return &progression, err
 }
 
 func (r userRepository) Insert(user models.User) (models.User, error) {
@@ -47,6 +40,16 @@ func (r userRepository) Insert(user models.User) (models.User, error) {
 		Create(&user).
 		Error
 	return user, err
+}
+
+func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) error {
+	err := r.database.GetDB().
+		Table(models.TableName.User).
+		Select("", utils.NewHelper().GetKeyList(updateData)).
+		Where(models.IDName.User+" = ?", id).
+		Updates(updateData).
+		Error
+	return err
 }
 
 func (r userRepository) GetUserByEmail(email string) (models.User, error) {
@@ -67,26 +70,6 @@ func (r userRepository) GetUserByID(id int) (models.User, error) {
 		Find(&user).
 		Error
 	return user, err
-}
-
-func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) error {
-	err := r.database.GetDB().
-		Table(models.TableName.User).
-		Select("", utils.NewHelper().GetKeyList(updateData)).
-		Where(models.IDName.User+" = ?", id).
-		Updates(updateData).
-		Error
-	return err
-}
-
-func (r userRepository) UpdatesByIDTrasantion(tx database.ITransaction, id int, updateData map[string]interface{}) error {
-	err := tx.GetDB().
-		Table(models.TableName.User).
-		Select("", utils.NewHelper().GetKeyList(updateData)).
-		Where(models.IDName.User+" = ?", id).
-		Updates(updateData).
-		Error
-	return err
 }
 
 func (r userRepository) GetProfile(id int) (*models.ProfileDB, error) {
@@ -195,4 +178,25 @@ func (r userRepository) InsertUserHintTransaction(tx database.ITransaction, user
 		Create(&userHint).
 		Error
 	return &userHint, err
+}
+
+func (r userRepository) InsertLearningProgressionTransaction(tx database.ITransaction, progression models.LearningProgressionDB) (*models.LearningProgressionDB, error) {
+	err := tx.GetDB().
+		Table(models.TableName.LearningProgression).
+		Create(&progression).
+		Error
+	return &progression, err
+}
+
+func (r userRepository) ChangePointTransaction(tx database.ITransaction, userID int, point int, mode models.ChangePointMode) error {
+	statement := fmt.Sprintf("UPDATE %s SET point = point %s %d WHERE %s = %d",
+		models.TableName.User,
+		mode,
+		point,
+		models.IDName.User,
+		userID,
+	)
+	temp := map[string]interface{}{}
+	err := tx.GetDB().Raw(statement).Find(&temp).Error
+	return err
 }

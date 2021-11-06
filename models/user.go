@@ -6,6 +6,16 @@ import (
 	"time"
 )
 
+type ChangePointMode string
+
+var Mode = struct {
+	Add    ChangePointMode
+	Reduce ChangePointMode
+}{
+	"+",
+	"-",
+}
+
 type User struct {
 	ID                    int       `gorm:"primaryKey;column:user_id" json:"user_id"`
 	Name                  string    `gorm:"column:name" json:"name"`
