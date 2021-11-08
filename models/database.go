@@ -41,11 +41,13 @@ var IDName = struct {
 	Activity string
 	Hint     string
 	Content  string
+	Exam     string
 }{
 	"user_id",
 	"activity_id",
 	"hint_id",
 	"content_id",
+	"exam_id",
 }
 
 var ViewName = struct {

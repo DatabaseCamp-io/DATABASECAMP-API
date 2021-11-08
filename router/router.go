@@ -36,11 +36,13 @@ func (r router) init() {
 func (r router) setupExam(db database.IDatabase, jwt handler.IJwt) {
 	repo := repository.NewExamRepository(db)
 	controller := controller.NewExamController(repo)
-	_ = handler.NewExamHandler(controller)
+	examHandler := handler.NewExamHandler(controller)
 	group := r.app.Group("exam")
 	group.Use(jwt.JwtVerify)
 	{
-
+		group.Get("/:type", examHandler.GetExam)
+		group.Get("/overview", examHandler.GetExamOverview)
+		group.Post("/check/:type", examHandler.CheckExam)
 	}
 }
 
@@ -73,6 +75,5 @@ func (r router) setupUser(db database.IDatabase, repo repository.IUserRepository
 		group.Get("/info", jwt.JwtVerify, userHandler.GetInfo)
 		group.Get("/profile/:id", jwt.JwtVerify, userHandler.GetProfile)
 		group.Get("/ranking", jwt.JwtVerify, userHandler.GetUserRanking)
-
 	}
 }

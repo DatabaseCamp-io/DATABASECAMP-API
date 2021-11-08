@@ -5,18 +5,6 @@ import (
 	"time"
 )
 
-type ExamType string
-
-var Exam = struct {
-	Pretest  ExamType
-	MiniExam ExamType
-	Posttest ExamType
-}{
-	"PRE",
-	"MINI",
-	"POST",
-}
-
 type HintDB struct {
 	ID          int    `gorm:"primaryKey;column:hint_id" json:"hint_id"`
 	ActivityID  int    `gorm:"column:activity_id" json:"activity_id"`
