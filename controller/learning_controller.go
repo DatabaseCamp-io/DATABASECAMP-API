@@ -725,7 +725,7 @@ func (c learningController) insertUserHintAsyncTransaction(ct *models.Concurrent
 }
 
 func (c learningController) CheckCompletionAnswer(userID int, request models.CompletionAnswerRequest) (interface{}, error) {
-	info, err := c.loadCheckAnswerInfo(*request.ActivityID, 1)
+	info, err := c.loadCheckAnswerInfo(*request.ActivityID, 3)
 	if err != nil || info.activity == nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
@@ -735,7 +735,7 @@ func (c learningController) CheckCompletionAnswer(userID int, request models.Com
 	isCorrect := true
 
 	if len(CompletionContent) != len(request.Answer) {
-		return nil, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
+		return nil, errs.NewBadRequestError("จำนวนของคำตอบไม่ถูกต้อง", "Number of Answer Incorrect")
 	}
 
 	for _, correct := range CompletionContent {
