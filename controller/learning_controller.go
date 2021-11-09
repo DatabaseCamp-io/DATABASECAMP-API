@@ -237,17 +237,17 @@ func (c learningController) prepareOverview(info *models.OverviewInfo) overviewD
 	return overviewData
 }
 
-func (c learningController) getRecommendGroupFromExam(info *models.OverviewInfo) map[int]bool {
-	recommendedGroup := map[int]bool{}
-	examGroupMap := map[int]int{}
-	for _, v := range info.ContentExam {
-		examGroupMap[v.ActivityID] = v.GroupID
-	}
-	for _, v := range info.ExamResult {
-		recommendedGroup[examGroupMap[v.ActivityID]] = true
-	}
-	return recommendedGroup
-}
+// func (c learningController) getRecommendGroupFromExam(info *models.OverviewInfo) map[int]bool {
+// 	recommendedGroup := map[int]bool{}
+// 	examGroupMap := map[int]int{}
+// 	for _, v := range info.ContentExam {
+// 		examGroupMap[v.ActivityID] = v.GroupID
+// 	}
+// 	for _, v := range info.ExamResult {
+// 		recommendedGroup[examGroupMap[v.ActivityID]] = true
+// 	}
+// 	return recommendedGroup
+// }
 
 func (c learningController) calculateProgress(progress int, total int) int {
 	if total == 0 {
@@ -265,7 +265,7 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 	contentGroupOverview := make([]models.ContentGroupOverview, 0)
 
 	countRecommend := 0
-	recommendGroup := c.getRecommendGroupFromExam(info)
+	//recommendGroup := c.getRecommendGroupFromExam(info)
 
 	for i, v := range info.LearningProgression {
 		if i == 0 {
@@ -304,7 +304,7 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 			}
 		}
 
-		isRecommend := recommendGroup[ko]
+		isRecommend := false
 		if isRecommend {
 			countRecommend++
 			if countRecommend > 3 {
@@ -350,61 +350,14 @@ func (c learningController) getChoice(activityID int, typeID int) (interface{}, 
 	}
 }
 
-func (c learningController) prepareMultipleChoice(multipleChoice []models.MultipleChoiceDB) interface{} {
-	preparedChoices := make([]map[string]interface{}, 0)
-	utils.NewHelper().Shuffle(multipleChoice)
-	for _, v := range multipleChoice {
-		preparedChoice, _ := utils.NewType().StructToMap(v)
-		delete(preparedChoice, "is_correct")
-		preparedChoices = append(preparedChoices, preparedChoice)
-	}
-
-	return preparedChoices
-}
-
-func (c learningController) prepareMatchingChoice(matchingChoice []models.MatchingChoiceDB) interface{} {
-	pairItem1List := make([]interface{}, 0)
-	pairItem2List := make([]interface{}, 0)
-	for _, v := range matchingChoice {
-		pairItem1List = append(pairItem1List, v.PairItem1)
-		pairItem2List = append(pairItem2List, v.PairItem2)
-	}
-	utils.NewHelper().Shuffle(pairItem1List)
-	utils.NewHelper().Shuffle(pairItem2List)
-	prepared := map[string]interface{}{
-		"items_left":  pairItem1List,
-		"items_right": pairItem2List,
-	}
-	return prepared
-}
-
-func (c learningController) prepareCompletionChoice(completionChoice []models.CompletionChoiceDB) interface{} {
-	contents := make([]interface{}, 0)
-	questions := make([]interface{}, 0)
-	for _, v := range completionChoice {
-		contents = append(contents, v.Content)
-		questions = append(questions, map[string]interface{}{
-			"id":    v.ID,
-			"first": v.QuestionFirst,
-			"last":  v.QuestionLast,
-		})
-	}
-	utils.NewHelper().Shuffle(contents)
-	utils.NewHelper().Shuffle(questions)
-	prepared := map[string]interface{}{
-		"contents":  contents,
-		"questions": questions,
-	}
-	return prepared
-}
-
 func (c learningController) prepareChoice(typeID int, choice interface{}) interface{} {
+	activityManager := services.NewActivityManager()
 	if typeID == 1 {
-		return c.prepareMatchingChoice(choice.([]models.MatchingChoiceDB))
+		return activityManager.PrepareMatchingChoice(choice.([]models.MatchingChoiceDB))
 	} else if typeID == 2 {
-		return c.prepareMultipleChoice(choice.([]models.MultipleChoiceDB))
+		return activityManager.PrepareMultipleChoice(choice.([]models.MultipleChoiceDB))
 	} else if typeID == 3 {
-		return c.prepareCompletionChoice(choice.([]models.CompletionChoiceDB))
+		return activityManager.PrepareCompletionChoice(choice.([]models.CompletionChoiceDB))
 	} else {
 		return nil
 	}

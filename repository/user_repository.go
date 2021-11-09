@@ -28,6 +28,8 @@ type IUserRepository interface {
 	InsertUserHintTransaction(tx database.ITransaction, userHint models.UserHintDB) (*models.UserHintDB, error)
 	InsertLearningProgressionTransaction(tx database.ITransaction, progression models.LearningProgressionDB) (*models.LearningProgressionDB, error)
 	ChangePointTransaction(tx database.ITransaction, userID int, point int, mode models.ChangePointMode) error
+	GetCollectedBadge(userID int) ([]models.CorrectedBadgeDB, error)
+	GetExamResult(userID int) ([]models.ExamResultDB, error)
 }
 
 func NewUserRepository(db database.IDatabase) userRepository {
@@ -199,4 +201,53 @@ func (r userRepository) ChangePointTransaction(tx database.ITransaction, userID 
 	temp := map[string]interface{}{}
 	err := tx.GetDB().Raw(statement).Find(&temp).Error
 	return err
+}
+
+func (r userRepository) GetCollectedBadge(userID int) ([]models.CorrectedBadgeDB, error) {
+	correctedBadge := make([]models.CorrectedBadgeDB, 0)
+	err := r.database.GetDB().
+		Table(models.TableName.Badge).
+		Select(
+			models.TableName.Badge+".badge_id AS badge_id",
+			models.TableName.Badge+".name AS badge_name",
+			models.TableName.UserBadge+".user_id AS user_id",
+		).
+		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s AND %s.%s = %d",
+			models.TableName.UserBadge,
+			models.TableName.UserBadge,
+			models.IDName.Badge,
+			models.TableName.Badge,
+			models.IDName.Badge,
+			models.TableName.UserBadge,
+			models.IDName.User,
+			userID,
+		)).
+		Find(&correctedBadge).
+		Error
+	return correctedBadge, err
+}
+
+func (r userRepository) GetExamResult(userID int) ([]models.ExamResultDB, error) {
+	examResults := make([]models.ExamResultDB, 0)
+	err := r.database.GetDB().
+		Table(models.TableName.ExamResult).
+		Select(
+			models.TableName.ExamResult+".exam_result_id AS exam_result_id",
+			models.TableName.ExamResult+".exam_id AS exam_id",
+			models.TableName.ExamResult+".user_id AS user_id",
+			models.TableName.ExamResult+".is_passed AS is_passed",
+			models.TableName.ExamResult+".created_timestamp AS created_timestamp",
+			models.TableName.ExamResultActivity+".score AS score",
+		).
+		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
+			models.TableName.ExamResultActivity,
+			models.TableName.ExamResultActivity,
+			models.IDName.ExamResult,
+			models.TableName.ExamResult,
+			models.IDName.ExamResult,
+		)).
+		Where(models.IDName.User+" = ?", userID).
+		Find(&examResults).
+		Error
+	return examResults, err
 }
