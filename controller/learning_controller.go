@@ -63,10 +63,9 @@ type ILearningController interface {
 	GetVideoLecture(id int) (*models.VideoLectureResponse, error)
 	GetOverview(id int) (*models.OverviewResponse, error)
 	GetActivity(userID int, activityID int) (*models.ActivityResponse, error)
-	CheckMatchingAnswer(userID int, request models.MatchingChoiceAnswerRequest) (*models.AnswerResponse, error)
 	UseHint(userID int, activityID int) (*models.HintDB, error)
-	CheckCompletionAnswer(userID int, request models.CompletionAnswerRequest) (interface{}, error)
 	GetContentRoadmap(userID int, contentID int) (*models.RoadmapResponse, error)
+	CheckAnswer(userID int, activityID int, typeID int, answer interface{}) (*models.AnswerResponse, error)
 }
 
 func NewLearningController(
@@ -251,7 +250,7 @@ func (c learningController) prepareOverview(info *models.OverviewInfo) overviewD
 
 func (c learningController) calculateProgress(progress int, total int) int {
 	if total == 0 {
-		return 100
+		return 0
 	} else {
 		return (progress / total) * 100
 	}
@@ -467,7 +466,7 @@ func (c learningController) finishActivityTrasaction(userID int, activityID int,
 	return nil
 }
 
-func (c learningController) loadCheckAnswerInfo(activityID int, activityType int) (*checkAnswerInfo, error) {
+func (c learningController) loadCheckAnswerInfo(activityID int, activityTypeID int) (*checkAnswerInfo, error) {
 	var wg sync.WaitGroup
 	var err error
 	var activity *models.ActivityDB
@@ -478,7 +477,7 @@ func (c learningController) loadCheckAnswerInfo(activityID int, activityType int
 	}
 	wg.Add(2)
 	go c.loadActivityAsync(&concurrent, activityID, &activity)
-	go c.getChioceAsync(&concurrent, activityID, activityType, &choice)
+	go c.getChioceAsync(&concurrent, activityID, activityTypeID, &choice)
 	wg.Wait()
 	if err != nil {
 		return nil, err
@@ -501,36 +500,64 @@ func (c learningController) getChioceAsync(concurrent *models.Concurrent, activi
 	}
 }
 
-func (c learningController) CheckMatchingAnswer(userID int, request models.MatchingChoiceAnswerRequest) (*models.AnswerResponse, error) {
-	info, err := c.loadCheckAnswerInfo(*request.ActivityID, 1)
+func (c learningController) isMatchingCorrect(info checkAnswerInfo, answer interface{}) (bool, error) {
+	matchingChoices := info.choice.([]models.MatchingChoiceDB)
+	_answer := answer.([]models.PairItem)
+	if len(matchingChoices) != len(_answer) {
+		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
+	}
+	return services.NewActivityManager().IsMatchingCorrect(matchingChoices, _answer), nil
+}
+
+func (c learningController) isMultipleCorrect(info checkAnswerInfo, answer interface{}) (bool, error) {
+	multipleChoices := info.choice.([]models.MultipleChoiceDB)
+	return services.NewActivityManager().IsMultipleCorrect(multipleChoices, utils.NewType().ParseInt(answer)), nil
+}
+
+func (c learningController) isCompletionCorrect(info checkAnswerInfo, answer interface{}) (bool, error) {
+	completionChoices := info.choice.([]models.CompletionChoiceDB)
+	_answer := answer.([]models.PairContent)
+	if len(completionChoices) != len(_answer) {
+		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
+	}
+	return services.NewActivityManager().IsCompletionCorrect(completionChoices, _answer), nil
+}
+
+func (c learningController) isAnswerCorrect(typeID int, info checkAnswerInfo, answer interface{}) (bool, error) {
+	if typeID == 1 {
+		return c.isMatchingCorrect(info, answer)
+	} else if typeID == 2 {
+		return c.isMultipleCorrect(info, answer)
+	} else if typeID == 3 {
+		return c.isCompletionCorrect(info, answer)
+	} else {
+		return false, errs.NewBadRequestError("ประเภทของกิจกรรมไม่ถูกต้อง", "Invalid Activity Type")
+	}
+}
+
+func (c learningController) CheckAnswer(userID int, activityID int, typeID int, answer interface{}) (*models.AnswerResponse, error) {
+	info, err := c.loadCheckAnswerInfo(activityID, typeID)
 	if err != nil || info.activity == nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
 	}
 
-	matchingChoice := info.choice.([]models.MatchingChoiceDB)
-	isCorrect := true
-
-	if len(matchingChoice) != len(request.Answer) {
-		return nil, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
+	if info.activity.TypeID != typeID {
+		return nil, errs.NewNotFoundError("ประเภทของกิจกรรมไม่ถูกต้อง", "Invalid Activity Type")
 	}
 
-	for _, correct := range matchingChoice {
-		for _, answer := range request.Answer {
-			if (correct.PairItem1 == *answer.Item1) && (correct.PairItem2 != *answer.Item2) {
-				isCorrect = false
-				break
-			}
-		}
+	isCorrect, err := c.isAnswerCorrect(typeID, *info, answer)
+	if err != nil {
+		return nil, err
 	}
 
 	response := models.AnswerResponse{
-		ActivityID: *request.ActivityID,
+		ActivityID: activityID,
 		IsCorrect:  isCorrect,
 	}
 
 	if isCorrect {
-		err = c.finishActivityTrasaction(userID, *request.ActivityID, info.activity.Point)
+		err = c.finishActivityTrasaction(userID, activityID, info.activity.Point)
 		if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
 			logs.New().Error(err)
 			return nil, errs.NewInternalServerError("เกิดข้อผิดพลาดในการบันทึกกิจกรรม", "Saved Activity Failed")
@@ -675,45 +702,6 @@ func (c learningController) insertUserHintAsyncTransaction(ct *models.Concurrent
 	if err != nil {
 		*ct.Concurrent.Err = err
 	}
-}
-
-func (c learningController) CheckCompletionAnswer(userID int, request models.CompletionAnswerRequest) (interface{}, error) {
-	info, err := c.loadCheckAnswerInfo(*request.ActivityID, 1)
-	if err != nil || info.activity == nil {
-		logs.New().Error(err)
-		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
-	}
-
-	CompletionContent := info.choice.([]models.CompletionChoiceDB)
-	isCorrect := true
-
-	if len(CompletionContent) != len(request.Answer) {
-		return nil, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
-	}
-
-	for _, correct := range CompletionContent {
-		for _, answer := range request.Answer {
-			if (correct.ID == *answer.ID) && (correct.Content != *answer.Content) {
-				isCorrect = false
-				break
-			}
-		}
-	}
-
-	response := models.AnswerResponse{
-		ActivityID: *request.ActivityID,
-		IsCorrect:  isCorrect,
-	}
-
-	if isCorrect {
-		err = c.finishActivityTrasaction(userID, *request.ActivityID, info.activity.Point)
-		if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
-			logs.New().Error(err)
-			return nil, errs.NewInternalServerError("เกิดข้อผิดพลาดในการบันทึกกิจกรรม", "Saved Activity Failed")
-		}
-	}
-
-	return response, nil
 }
 
 func (c learningController) loadContentAsync(concurrent *models.Concurrent, contentID int, content **models.ContentDB) {

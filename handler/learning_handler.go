@@ -64,28 +64,6 @@ func (h learningHandler) GetActivity(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
-func (h learningHandler) CheckMatchingAnswer(c *fiber.Ctx) error {
-	id := c.Locals("id")
-	request := models.MatchingChoiceAnswerRequest{}
-
-	err := bindRequest(c, &request)
-	if err != nil {
-		return handleError(c, err)
-	}
-
-	err = request.Validate()
-	if err != nil {
-		return handleError(c, err)
-	}
-
-	response, err := h.controller.CheckMatchingAnswer(utils.NewType().ParseInt(id), request)
-	if err != nil {
-		return handleError(c, err)
-	}
-
-	return c.Status(http.StatusOK).JSON(response)
-}
-
 func (h learningHandler) UseHint(c *fiber.Ctx) error {
 	userID := utils.NewType().ParseInt(c.Locals("id"))
 	activityID := utils.NewType().ParseInt(c.Params("id"))
@@ -98,8 +76,52 @@ func (h learningHandler) UseHint(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+func (h learningHandler) CheckMatchingAnswer(c *fiber.Ctx) error {
+	userID := utils.NewType().ParseInt(c.Locals("id"))
+	request := models.MatchingChoiceAnswerRequest{}
+
+	err := bindRequest(c, &request)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	err = request.Validate()
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	response, err := h.controller.CheckAnswer(userID, *request.ActivityID, 1, request.Answer)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.Status(http.StatusOK).JSON(response)
+}
+
+func (h learningHandler) CheckMultipleAnswer(c *fiber.Ctx) error {
+	userID := utils.NewType().ParseInt(c.Locals("id"))
+	request := models.MultipleChoiceAnswerRequest{}
+
+	err := bindRequest(c, &request)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	err = request.Validate()
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	response, err := h.controller.CheckAnswer(userID, *request.ActivityID, 2, *request.Answer)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.Status(http.StatusOK).JSON(response)
+}
+
 func (h learningHandler) CheckCompletionAnswer(c *fiber.Ctx) error {
-	id := c.Locals("id")
+	userID := utils.NewType().ParseInt(c.Locals("id"))
 	request := models.CompletionAnswerRequest{}
 
 	err := bindRequest(c, &request)
@@ -112,7 +134,7 @@ func (h learningHandler) CheckCompletionAnswer(c *fiber.Ctx) error {
 		return handleError(c, err)
 	}
 
-	response, err := h.controller.CheckCompletionAnswer(utils.NewType().ParseInt(id), request)
+	response, err := h.controller.CheckAnswer(userID, *request.ActivityID, 3, request.Answer)
 	if err != nil {
 		return handleError(c, err)
 	}

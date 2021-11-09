@@ -12,6 +12,9 @@ type IActivityManager interface {
 	PrepareMultipleChoice(multipleChoice []models.MultipleChoiceDB) interface{}
 	PrepareMatchingChoice(matchingChoice []models.MatchingChoiceDB) interface{}
 	PrepareCompletionChoice(completionChoice []models.CompletionChoiceDB) interface{}
+	IsMatchingCorrect(choices []models.MatchingChoiceDB, answer []models.PairItem)
+	IsCompletionCorrect(choices []models.CompletionChoiceDB, answer []models.PairContent)
+	IsMultipleCorrect(choices []models.MultipleChoiceDB, answer int)
 }
 
 func NewActivityManager() *activityManager {
@@ -64,4 +67,35 @@ func (m activityManager) PrepareCompletionChoice(completionChoice []models.Compl
 		"questions": questions,
 	}
 	return prepared
+}
+
+func (m activityManager) IsMatchingCorrect(choices []models.MatchingChoiceDB, answer []models.PairItem) bool {
+	for _, correct := range choices {
+		for _, answer := range answer {
+			if (correct.PairItem1 == *answer.Item1) && (correct.PairItem2 != *answer.Item2) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (m activityManager) IsCompletionCorrect(choices []models.CompletionChoiceDB, answer []models.PairContent) bool {
+	for _, correct := range choices {
+		for _, answer := range answer {
+			if (correct.ID == *answer.ID) && (correct.Content != *answer.Content) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (m activityManager) IsMultipleCorrect(choices []models.MultipleChoiceDB, answer int) bool {
+	for _, v := range choices {
+		if v.IsCorrect && v.ID == answer {
+			return true
+		}
+	}
+	return false
 }
