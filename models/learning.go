@@ -115,6 +115,20 @@ type PairContent struct {
 	Content *string `json:"content"`
 }
 
+type MultipleChoiceAnswerRequest struct {
+	ActivityID *int `json:"activity_id"`
+	Answer     *int `json:"answer"`
+}
+
+func (r MultipleChoiceAnswerRequest) Validate() error {
+	if r.ActivityID == nil {
+		return errs.NewBadRequestError("ไม่พบไอดีของกิจกรรมในคำร้องขอ", "Activity ID Not Found")
+	} else if r.Answer == nil {
+		return errs.NewBadRequestError("ไม่พบคำตอบในคำร้องขอ", "Answer Not Found")
+	}
+	return nil
+}
+
 type MatchingChoiceAnswerRequest struct {
 	ActivityID *int       `json:"activity_id"`
 	Answer     []PairItem `json:"answer"`
