@@ -11,14 +11,25 @@ import (
 
 type examController struct {
 	examRepo repository.IExamRepository
+	userRepo repository.IUserRepository
 }
 
 type IExamController interface {
 	GetExam(examID int, userID int) (interface{}, error)
+	GetOverview(userID int) (interface{}, error)
 }
 
-func NewExamController(examRepo repository.IExamRepository) examController {
-	return examController{examRepo: examRepo}
+func NewExamController(examRepo repository.IExamRepository, userRepo repository.IUserRepository) examController {
+	return examController{examRepo: examRepo, userRepo: userRepo}
+}
+
+func (c examController) loadOverviewInfo(userID int) {
+	// userBadges := make([]models.Badge, 0)
+	// exam := make([]models.ExamDB, 0)
+}
+
+func (c examController) GetOverview(userID int) interface{} {
+	return nil
 }
 
 func (c examController) GetExam(examID int, userID int) (interface{}, error) {
@@ -81,6 +92,26 @@ func (c examController) prepareChoices(activityID int, typeID int, activityChoic
 	return nil
 }
 
+func (c examController) getChoice(examActivity models.ExamActivity) interface{} {
+	if examActivity.ActivityTypeID == 1 {
+		choice := models.MatchingChoiceDB{}
+		utils.NewType().StructToStruct(examActivity, &choice)
+		return choice
+	} else if examActivity.ActivityTypeID == 2 {
+		choice := models.MultipleChoiceDB{}
+		examActivity.Content = examActivity.MultipleChoiceContent
+		utils.NewType().StructToStruct(examActivity, &choice)
+		return choice
+	} else if examActivity.ActivityTypeID == 3 {
+		choice := models.CompletionChoiceDB{}
+		examActivity.Content = examActivity.CompletionChoiceContent
+		utils.NewType().StructToStruct(examActivity, &choice)
+		return choice
+	} else {
+		return nil
+	}
+}
+
 func (c examController) prepareExam(examActivity []models.ExamActivity) interface{} {
 	exam := models.ExamDB{}
 	activityChoiceMap := map[int]interface{}{}
@@ -107,25 +138,5 @@ func (c examController) prepareExam(examActivity []models.ExamActivity) interfac
 	return map[string]interface{}{
 		"exam":     exam,
 		"activity": activityResponse,
-	}
-}
-
-func (c examController) getChoice(examActivity models.ExamActivity) interface{} {
-	if examActivity.ActivityTypeID == 1 {
-		choice := models.MatchingChoiceDB{}
-		utils.NewType().StructToStruct(examActivity, &choice)
-		return choice
-	} else if examActivity.ActivityTypeID == 2 {
-		choice := models.MultipleChoiceDB{}
-		examActivity.Content = examActivity.MultipleChoiceContent
-		utils.NewType().StructToStruct(examActivity, &choice)
-		return choice
-	} else if examActivity.ActivityTypeID == 3 {
-		choice := models.CompletionChoiceDB{}
-		examActivity.Content = examActivity.CompletionChoiceContent
-		utils.NewType().StructToStruct(examActivity, &choice)
-		return choice
-	} else {
-		return nil
 	}
 }

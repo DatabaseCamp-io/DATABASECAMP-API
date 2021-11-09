@@ -40,4 +40,7 @@ type ExamDB struct {
 	Type             string    `gorm:"column:type" json:"exam_type"`
 	Instruction      string    `gorm:"column:instruction" json:"instruction"`
 	CreatedTimestamp time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
+	ContentGroupID   int       `gorm:"column:content_group_id" json:"content_group_id"`
+	ContentGroupName string    `gorm:"column:content_group_name" json:"content_group_name"`
+	BadgeID          int       `gorm:"column:badge_id" json:"badge_id"`
 }

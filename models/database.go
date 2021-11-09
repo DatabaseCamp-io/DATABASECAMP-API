@@ -42,12 +42,14 @@ var IDName = struct {
 	Hint     string
 	Content  string
 	Exam     string
+	MiniExam string
 }{
 	"user_id",
 	"activity_id",
 	"hint_id",
 	"content_id",
 	"exam_id",
+	"mini_exam_id",
 }
 
 var ViewName = struct {

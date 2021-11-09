@@ -12,10 +12,36 @@ type examRepository struct {
 
 type IExamRepository interface {
 	GetExamActivity(examID int) ([]models.ExamActivity, error)
+	GetExamOverview() ([]models.ExamDB, error)
 }
 
 func NewExamRepository(db database.IDatabase) examRepository {
 	return examRepository{database: db}
+}
+
+func (r examRepository) GetExamOverview() ([]models.ExamDB, error) {
+	exam := make([]models.ExamDB, 0)
+	err := r.database.GetDB().
+		Table(models.TableName.Exam).
+		Select(
+			models.TableName.Exam+".exam_id AS exam_id",
+			models.TableName.Exam+".type AS exam_type",
+			models.TableName.Exam+".instruction AS instruction",
+			models.TableName.Exam+".created_timestamp AS created_timestamp",
+			models.TableName.ContentGroup+".content_group_id AS content_group_id",
+			models.TableName.ContentGroup+".content_group_name AS content_group_name",
+			models.TableName.ContentGroup+".badge_id AS badge_id",
+		).
+		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
+			models.TableName.ContentGroup,
+			models.TableName.ContentGroup,
+			models.IDName.Exam,
+			models.TableName.Exam,
+			models.IDName.MiniExam,
+		)).
+		Find(&exam).
+		Error
+	return exam, err
 }
 
 func (r examRepository) GetExamActivity(examID int) ([]models.ExamActivity, error) {

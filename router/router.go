@@ -33,9 +33,9 @@ func (r router) init() {
 	r.setupExam(db, jwt)
 }
 
-func (r router) setupExam(db database.IDatabase, jwt handler.IJwt) {
+func (r router) setupExam(db database.IDatabase, userRepo repository.IUserRepository, jwt handler.IJwt) {
 	repo := repository.NewExamRepository(db)
-	controller := controller.NewExamController(repo)
+	controller := controller.NewExamController(repo, userRepo)
 	examHandler := handler.NewExamHandler(controller)
 	group := r.app.Group("exam")
 	group.Use(jwt.JwtVerify)
