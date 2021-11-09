@@ -44,3 +44,24 @@ type ExamDB struct {
 	ContentGroupName string    `gorm:"column:content_group_name" json:"content_group_name"`
 	BadgeID          int       `gorm:"column:badge_id" json:"badge_id"`
 }
+
+type ExamResultOverview struct {
+	CreatedTimestamp time.Time `json:"created_timestamp"`
+	Score            int       `json:"score"`
+	IsPassed         bool      `json:"is_passed"`
+}
+
+type ExamOverview struct {
+	ExamID           int                   `json:"exam_id"`
+	ExamType         string                `json:"exam_type"`
+	ContentGroupID   *int                  `json:"content_group_id,omitempty"`
+	ContentGroupName *string               `json:"content_group_name,omitempty"`
+	CanDo            *bool                 `json:"can_do,omitempty"`
+	Results          *[]ExamResultOverview `json:"results"`
+}
+
+type ExamOverviewResponse struct {
+	PreExam   *ExamOverview   `json:"pre_exam"`
+	MiniExam  *[]ExamOverview `json:"mini_exam"`
+	FinalExam *ExamOverview   `json:"final_exam"`
+}

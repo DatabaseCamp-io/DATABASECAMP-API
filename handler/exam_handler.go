@@ -37,5 +37,10 @@ func (h examHandler) CheckExam(c *fiber.Ctx) error {
 }
 
 func (h examHandler) GetExamOverview(c *fiber.Ctx) error {
-	return nil
+	userID := utils.NewType().ParseInt(c.Locals("id"))
+	response, err := h.controller.GetOverview(userID)
+	if err != nil {
+		return handleError(c, err)
+	}
+	return c.Status(http.StatusOK).JSON(response)
 }

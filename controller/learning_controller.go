@@ -237,17 +237,17 @@ func (c learningController) prepareOverview(info *models.OverviewInfo) overviewD
 	return overviewData
 }
 
-func (c learningController) getRecommendGroupFromExam(info *models.OverviewInfo) map[int]bool {
-	recommendedGroup := map[int]bool{}
-	examGroupMap := map[int]int{}
-	for _, v := range info.ContentExam {
-		examGroupMap[v.ActivityID] = v.GroupID
-	}
-	for _, v := range info.ExamResult {
-		recommendedGroup[examGroupMap[v.ActivityID]] = true
-	}
-	return recommendedGroup
-}
+// func (c learningController) getRecommendGroupFromExam(info *models.OverviewInfo) map[int]bool {
+// 	recommendedGroup := map[int]bool{}
+// 	examGroupMap := map[int]int{}
+// 	for _, v := range info.ContentExam {
+// 		examGroupMap[v.ActivityID] = v.GroupID
+// 	}
+// 	for _, v := range info.ExamResult {
+// 		recommendedGroup[examGroupMap[v.ActivityID]] = true
+// 	}
+// 	return recommendedGroup
+// }
 
 func (c learningController) calculateProgress(progress int, total int) int {
 	if total == 0 {
@@ -265,7 +265,7 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 	contentGroupOverview := make([]models.ContentGroupOverview, 0)
 
 	countRecommend := 0
-	recommendGroup := c.getRecommendGroupFromExam(info)
+	//recommendGroup := c.getRecommendGroupFromExam(info)
 
 	for i, v := range info.LearningProgression {
 		if i == 0 {
@@ -304,7 +304,7 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 			}
 		}
 
-		isRecommend := recommendGroup[ko]
+		isRecommend := false
 		if isRecommend {
 			countRecommend++
 			if countRecommend > 3 {

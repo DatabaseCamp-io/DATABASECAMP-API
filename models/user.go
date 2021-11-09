@@ -103,3 +103,9 @@ type PointRanking struct {
 	Point   int    `gorm:"column:point" json:"point"`
 	Ranking int    `gorm:"column:ranking" json:"ranking"`
 }
+
+type CorrectedBadgeDB struct {
+	BadgeID int  `gorm:"column:badge_id" json:"badge_id"`
+	Name    int  `gorm:"column:name" json:"name"`
+	UserID  *int `gorm:"column:user_id" json:"user_id"`
+}

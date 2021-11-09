@@ -7,7 +7,14 @@ import (
 	"DatabaseCamp/repository"
 	"DatabaseCamp/services"
 	"DatabaseCamp/utils"
+	"sync"
 )
+
+type examOverviewInfo struct {
+	correctedBadge []models.CorrectedBadgeDB
+	exam           []models.ExamDB
+	examResults    []models.ExamResultDB
+}
 
 type examController struct {
 	examRepo repository.IExamRepository
@@ -16,20 +23,145 @@ type examController struct {
 
 type IExamController interface {
 	GetExam(examID int, userID int) (interface{}, error)
-	GetOverview(userID int) (interface{}, error)
+	GetOverview(userID int) (*models.ExamOverviewResponse, error)
 }
 
 func NewExamController(examRepo repository.IExamRepository, userRepo repository.IUserRepository) examController {
 	return examController{examRepo: examRepo, userRepo: userRepo}
 }
 
-func (c examController) loadOverviewInfo(userID int) {
-	// userBadges := make([]models.Badge, 0)
-	// exam := make([]models.ExamDB, 0)
+func (c examController) loadOverviewInfo(userID int) (*examOverviewInfo, error) {
+	var wg sync.WaitGroup
+	var err error
+	concurrent := models.Concurrent{Wg: &wg, Err: &err}
+	correctedBadge := make([]models.CorrectedBadgeDB, 0)
+	exam := make([]models.ExamDB, 0)
+	examResults := make([]models.ExamResultDB, 0)
+	wg.Add(3)
+	go c.loadCorrectedBadgeAsync(&concurrent, userID, &correctedBadge)
+	go c.loadExamAsync(&concurrent, &exam)
+	go c.loadExamResultAsync(&concurrent, userID, &examResults)
+	wg.Wait()
+	if err != nil {
+		return nil, err
+	}
+
+	info := examOverviewInfo{
+		correctedBadge: correctedBadge,
+		exam:           exam,
+		examResults:    examResults,
+	}
+
+	return &info, nil
 }
 
-func (c examController) GetOverview(userID int) interface{} {
-	return nil
+func (c examController) loadExamResultAsync(concurrent *models.Concurrent, userID int, examResults *[]models.ExamResultDB) {
+	defer concurrent.Wg.Done()
+	result, err := c.userRepo.GetExamResult(userID)
+	if err != nil {
+		*concurrent.Err = err
+	}
+	*examResults = append(*examResults, result...)
+}
+
+func (c examController) loadExamAsync(concurrent *models.Concurrent, exam *[]models.ExamDB) {
+	defer concurrent.Wg.Done()
+	result, err := c.examRepo.GetExamOverview()
+	if err != nil {
+		*concurrent.Err = err
+	}
+	*exam = append(*exam, result...)
+}
+
+func (c examController) loadCorrectedBadgeAsync(concurrent *models.Concurrent, userID int, correctedBadge *[]models.CorrectedBadgeDB) {
+	defer concurrent.Wg.Done()
+	result, err := c.userRepo.GetCollectedBadge(userID)
+	if err != nil {
+		*concurrent.Err = err
+	}
+	*correctedBadge = append(*correctedBadge, result...)
+}
+
+func (c examController) countExamScore(examResults []models.ExamResultDB) map[int]int {
+	examCountScore := map[int]int{}
+	for _, v := range examResults {
+		examCountScore[v.ID] += v.Score
+	}
+	return examCountScore
+}
+
+func (c examController) canDoFianlExam(info examOverviewInfo) bool {
+	for _, v := range info.correctedBadge {
+		if v.UserID == nil {
+			return false
+		}
+	}
+	return true
+}
+
+func (c examController) prepareExamResultMap(info examOverviewInfo) map[int]*[]models.ExamResultOverview {
+	examResultMap := map[int]*[]models.ExamResultOverview{}
+	examCountScore := c.countExamScore(info.examResults)
+	for _, v := range info.examResults {
+		if examResultMap[v.ExamID] == nil {
+			temp := make([]models.ExamResultOverview, 0)
+			examResultMap[v.ExamID] = &temp
+		}
+		*examResultMap[v.ExamID] = append(*examResultMap[v.ExamID], models.ExamResultOverview{
+			CreatedTimestamp: v.CreatedTimestamp,
+			Score:            examCountScore[v.ID],
+			IsPassed:         v.IsPassed,
+		})
+	}
+	return examResultMap
+}
+
+func (c examController) prepareExamOverview(info examOverviewInfo) *models.ExamOverviewResponse {
+	res := models.ExamOverviewResponse{}
+	examResultMap := c.prepareExamResultMap(info)
+
+	for _, v := range info.exam {
+		if v.Type == string(models.Exam.Pretest) {
+			res.PreExam = &models.ExamOverview{
+				ExamID:   v.ID,
+				ExamType: v.Type,
+				Results:  examResultMap[v.ID],
+			}
+		} else if v.Type == string(models.Exam.MiniExam) {
+			if res.MiniExam == nil {
+				temp := make([]models.ExamOverview, 0)
+				res.MiniExam = &temp
+			}
+
+			*res.MiniExam = append(*res.MiniExam, models.ExamOverview{
+				ExamID:           v.ID,
+				ExamType:         v.Type,
+				ContentGroupID:   &v.ContentGroupID,
+				ContentGroupName: &v.ContentGroupName,
+				Results:          examResultMap[v.ID],
+			})
+		} else if v.Type == string(models.Exam.Posttest) {
+			cando := c.canDoFianlExam(info)
+			res.FinalExam = &models.ExamOverview{
+				ExamID:   v.ID,
+				ExamType: v.Type,
+				CanDo:    &cando,
+				Results:  examResultMap[v.ID],
+			}
+		}
+	}
+
+	return &res
+}
+
+func (c examController) GetOverview(userID int) (*models.ExamOverviewResponse, error) {
+	info, err := c.loadOverviewInfo(userID)
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+	}
+
+	return c.prepareExamOverview(*info), nil
 }
 
 func (c examController) GetExam(examID int, userID int) (interface{}, error) {

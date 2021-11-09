@@ -30,7 +30,7 @@ func (r router) init() {
 	jwt := handler.NewJwtMiddleware(userRepo)
 	r.setupLearning(db, userRepo, jwt)
 	r.setupUser(db, userRepo, jwt)
-	r.setupExam(db, jwt)
+	r.setupExam(db, userRepo, jwt)
 }
 
 func (r router) setupExam(db database.IDatabase, userRepo repository.IUserRepository, jwt handler.IJwt) {
@@ -40,9 +40,9 @@ func (r router) setupExam(db database.IDatabase, userRepo repository.IUserReposi
 	group := r.app.Group("exam")
 	group.Use(jwt.JwtVerify)
 	{
-		group.Get("/:type", examHandler.GetExam)
+		group.Get("/proposition/:id", examHandler.GetExam)
 		group.Get("/overview", examHandler.GetExamOverview)
-		group.Post("/check/:type", examHandler.CheckExam)
+		group.Post("/check/:id", examHandler.CheckExam)
 	}
 }
 

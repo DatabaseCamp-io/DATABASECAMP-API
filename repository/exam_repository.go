@@ -25,19 +25,19 @@ func (r examRepository) GetExamOverview() ([]models.ExamDB, error) {
 		Table(models.TableName.Exam).
 		Select(
 			models.TableName.Exam+".exam_id AS exam_id",
-			models.TableName.Exam+".type AS exam_type",
+			models.TableName.Exam+".type AS type",
 			models.TableName.Exam+".instruction AS instruction",
 			models.TableName.Exam+".created_timestamp AS created_timestamp",
 			models.TableName.ContentGroup+".content_group_id AS content_group_id",
-			models.TableName.ContentGroup+".content_group_name AS content_group_name",
+			models.TableName.ContentGroup+".name AS content_group_name",
 			models.TableName.ContentGroup+".badge_id AS badge_id",
 		).
 		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
 			models.TableName.ContentGroup,
 			models.TableName.ContentGroup,
-			models.IDName.Exam,
-			models.TableName.Exam,
 			models.IDName.MiniExam,
+			models.TableName.Exam,
+			models.IDName.Exam,
 		)).
 		Find(&exam).
 		Error
@@ -102,7 +102,7 @@ func (r examRepository) GetExamActivity(examID int) ([]models.ExamActivity, erro
 			models.TableName.Activity,
 			models.IDName.Activity,
 		)).
-		Where(models.IDName.Exam+"  = ?", examID).
+		Where(models.TableName.Exam+"."+models.IDName.Exam+"  = ?", examID).
 		Find(&examActivity).
 		Error
 	return examActivity, err
