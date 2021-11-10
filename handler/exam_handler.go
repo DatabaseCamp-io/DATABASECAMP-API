@@ -2,6 +2,7 @@ package handler
 
 import (
 	"DatabaseCamp/controller"
+	"DatabaseCamp/models"
 	"DatabaseCamp/utils"
 	"net/http"
 
@@ -33,7 +34,25 @@ func (h examHandler) GetExam(c *fiber.Ctx) error {
 }
 
 func (h examHandler) CheckExam(c *fiber.Ctx) error {
-	return nil
+	userID := utils.NewType().ParseInt(c.Locals("id"))
+	request := models.ExamAnswerRequest{}
+
+	err := bindRequest(c, &request)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	err = request.Validate()
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	response, err := h.controller.CheckExam(userID, request)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.Status(http.StatusOK).JSON(response)
 }
 
 func (h examHandler) GetExamOverview(c *fiber.Ctx) error {

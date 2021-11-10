@@ -18,7 +18,7 @@ type IUserRepository interface {
 	GetProfile(id int) (*models.ProfileDB, error)
 	GetLearningProgression(id int) ([]models.LearningProgressionDB, error)
 	GetFailedExam(id int) ([]models.ExamResultDB, error)
-	GetAllBadge() ([]models.Badge, error)
+	GetAllBadge() ([]models.BadgeDB, error)
 	UpdatesByID(id int, updateData map[string]interface{}) error
 	GetUserBadgeIDPair(id int) ([]models.UserBadgeIDPair, error)
 	GetAllPointranking() ([]models.PointRanking, error)
@@ -30,6 +30,7 @@ type IUserRepository interface {
 	ChangePointTransaction(tx database.ITransaction, userID int, point int, mode models.ChangePointMode) error
 	GetCollectedBadge(userID int) ([]models.CorrectedBadgeDB, error)
 	GetExamResult(userID int) ([]models.ExamResultDB, error)
+	InsertUserBadgeTransaction(tx database.ITransaction, userBadge models.UserBadgeDB) (models.UserBadgeDB, error)
 }
 
 func NewUserRepository(db database.IDatabase) userRepository {
@@ -109,8 +110,8 @@ func (r userRepository) GetFailedExam(id int) ([]models.ExamResultDB, error) {
 	return exam, err
 }
 
-func (r userRepository) GetAllBadge() ([]models.Badge, error) {
-	badge := make([]models.Badge, 0)
+func (r userRepository) GetAllBadge() ([]models.BadgeDB, error) {
+	badge := make([]models.BadgeDB, 0)
 	err := r.database.GetDB().
 		Table(models.TableName.Badge).
 		Find(&badge).
@@ -250,4 +251,12 @@ func (r userRepository) GetExamResult(userID int) ([]models.ExamResultDB, error)
 		Find(&examResults).
 		Error
 	return examResults, err
+}
+
+func (r userRepository) InsertUserBadgeTransaction(tx database.ITransaction, userBadge models.UserBadgeDB) (models.UserBadgeDB, error) {
+	err := tx.GetDB().
+		Table(models.TableName.UserBadge).
+		Create(&userBadge).
+		Error
+	return userBadge, err
 }

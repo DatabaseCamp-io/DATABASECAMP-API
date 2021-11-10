@@ -13,6 +13,8 @@ type examRepository struct {
 type IExamRepository interface {
 	GetExamActivity(examID int) ([]models.ExamActivity, error)
 	GetExamOverview() ([]models.ExamDB, error)
+	InsertExamResultTransaction(tx database.ITransaction, examResult models.ExamResultDB) (models.ExamResultDB, error)
+	InsertExamResultActivityTransaction(tx database.ITransaction, examResultActivity []models.ExamResultActivityDB) ([]models.ExamResultActivityDB, error)
 }
 
 func NewExamRepository(db database.IDatabase) examRepository {
@@ -57,6 +59,7 @@ func (r examRepository) GetExamActivity(examID int) ([]models.ExamActivity, erro
 			models.TableName.Activity+".activity_type_id AS activity_type_id",
 			models.TableName.Activity+".question AS question",
 			models.TableName.Activity+".story AS story",
+			models.TableName.Activity+".point AS point",
 			models.TableName.MatchingChoice+".pair_item1 AS pair_item1",
 			models.TableName.MatchingChoice+".pair_item2 AS pair_item2",
 			models.TableName.CompletionChoice+".content AS completion_choice_content",
@@ -116,4 +119,21 @@ func (r examRepository) GetExamActivity(examID int) ([]models.ExamActivity, erro
 		Find(&examActivity).
 		Error
 	return examActivity, err
+}
+
+func (r examRepository) InsertExamResultTransaction(tx database.ITransaction, examResult models.ExamResultDB) (models.ExamResultDB, error) {
+	err := tx.GetDB().
+		Table(models.TableName.ExamResult).
+		Create(&examResult).
+		Error
+	return examResult, err
+}
+
+func (r examRepository) InsertExamResultActivityTransaction(tx database.ITransaction, examResultActivity []models.ExamResultActivityDB) ([]models.ExamResultActivityDB, error) {
+	err := tx.GetDB().
+		Table(models.TableName.ExamResultActivity).
+		Create(&examResultActivity).
+		Error
+
+	return examResultActivity, err
 }

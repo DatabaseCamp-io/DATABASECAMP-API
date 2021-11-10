@@ -94,7 +94,7 @@ func (c userController) GetProfile(id int) (*models.ProfileResponse, error) {
 	return &response, nil
 }
 
-func (c userController) calculateUserBadge(allBadge []models.Badge, userBadgeGain []models.UserBadgeIDPair) []models.Badge {
+func (c userController) calculateUserBadge(allBadge []models.BadgeDB, userBadgeGain []models.UserBadgeIDPair) []models.BadgeDB {
 	for i, v := range allBadge {
 		allBadge[i].IsCollect = c.isCollectBadge(v.ID, userBadgeGain)
 	}

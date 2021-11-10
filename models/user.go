@@ -73,11 +73,16 @@ type ProfileResponse struct {
 	Name             string    `json:"name"`
 	Point            int       `json:"point"`
 	ActivityCount    int       `json:"activity_count"`
-	Badges           []Badge   `json:"badges"`
+	Badges           []BadgeDB `json:"badges"`
 	CreatedTimestamp time.Time ` json:"created_timestamp"`
 }
 
-type Badge struct {
+type UserBadgeDB struct {
+	UserID  int `gorm:"primaryKey;column:user_id" json:"user_id"`
+	BadgeID int `gorm:"primaryKey;column:badge_id" json:"badge_id"`
+}
+
+type BadgeDB struct {
 	ID        int    `gorm:"primaryKey;column:badge_id" json:"badge_id"`
 	ImagePath string `gorm:"column:icon_path" json:"icon_path"`
 	Name      string `gorm:"column:name" json:"name"`

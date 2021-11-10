@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"DatabaseCamp/database"
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
 	"DatabaseCamp/models"
@@ -8,6 +9,7 @@ import (
 	"DatabaseCamp/services"
 	"DatabaseCamp/utils"
 	"sync"
+	"time"
 )
 
 type examOverviewInfo struct {
@@ -24,6 +26,7 @@ type examController struct {
 type IExamController interface {
 	GetExam(examID int, userID int) (interface{}, error)
 	GetOverview(userID int) (*models.ExamOverviewResponse, error)
+	CheckExam(userID int, request models.ExamAnswerRequest) (*models.ExamResultOverview, error)
 }
 
 func NewExamController(examRepo repository.IExamRepository, userRepo repository.IUserRepository) examController {
@@ -96,6 +99,7 @@ func (c examController) canDoFianlExam(info examOverviewInfo) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -177,7 +181,9 @@ func (c examController) GetExam(examID int, userID int) (interface{}, error) {
 		return nil, errs.NewNotFoundError("ไม่พบข้อสอบ", "Exam Not Found")
 	}
 
-	return c.prepareExam(examActivity), nil
+	preparedExam, _ := c.prepareExam(examActivity)
+
+	return preparedExam, nil
 }
 
 func (c examController) initialActivityChoiceMap(activityID int, typeID int, activityChoiceMap map[int]interface{}) {
@@ -246,7 +252,7 @@ func (c examController) getChoice(examActivity models.ExamActivity) interface{} 
 	}
 }
 
-func (c examController) prepareExam(examActivity []models.ExamActivity) models.ExamResponse {
+func (c examController) prepareExam(examActivity []models.ExamActivity) (models.ExamResponse, map[int]interface{}) {
 	exam := models.ExamDB{}
 	activityChoiceMap := map[int]interface{}{}
 	activityMap := map[int]models.ActivityDB{}
@@ -272,7 +278,7 @@ func (c examController) prepareExam(examActivity []models.ExamActivity) models.E
 	return models.ExamResponse{
 		Exam:       exam,
 		Activities: activityResponse,
-	}
+	}, activityChoiceMap
 }
 
 func (c examController) checkExamActivityAsync(concurrent *models.Concurrent, preparedActivity models.ExamActivityResponse, answer models.ExamActivityAnswer, examResultActivity *[]models.ExamResultActivityDB) {
@@ -295,7 +301,7 @@ func (c examController) checkExamActivityAsync(concurrent *models.Concurrent, pr
 	concurrent.Mutex.Unlock()
 }
 
-func (c examController) checkExamActivities(preparedExam models.ExamResponse, request models.ExamAnswerRequest) ([]models.ExamResultActivityDB, error) {
+func (c examController) checkExamActivities(preparedExam models.ExamResponse, activityChoiceMap map[int]interface{}, request models.ExamAnswerRequest) ([]models.ExamResultActivityDB, error) {
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
 	var err error
@@ -309,7 +315,9 @@ func (c examController) checkExamActivities(preparedExam models.ExamResponse, re
 
 	wg.Add(len(preparedExam.Activities))
 	for _, v := range preparedExam.Activities {
-		go c.checkExamActivityAsync(&concurrent, v, answerMap[v.Info.ID], &examResultActivity)
+		_v := v
+		_v.Choices = activityChoiceMap[v.Info.ID]
+		go c.checkExamActivityAsync(&concurrent, _v, answerMap[v.Info.ID], &examResultActivity)
 	}
 	wg.Wait()
 
@@ -324,36 +332,108 @@ func (c examController) sumScore(examResultActivity []models.ExamResultActivityD
 	return sum
 }
 
-func (c examController) saveExamResult(userID int, examID int, examResultActivity []models.ExamResultActivityDB) {
-	//sumScore := c.sumScore(examResultActivity)
-	// examResult := models.ExamResultDB{
-	// 	ExamID:           examID,
-	// 	UserID:           userID,
-	// 	Score:            sumScore,
-	// 	IsPassed:         false,
-	// 	CreatedTimestamp: time.Time{},
-	// }
+func (c examController) isPassed(sumScore int, totalScore int) bool {
+	passedRate := 0.5
+	if totalScore == 0 {
+		return true
+	} else {
+		return (float64)(sumScore/totalScore) > passedRate
+	}
+
 }
 
-func (c examController) CheckExam(request models.ExamAnswerRequest) (interface{}, error) {
+func (c examController) addExamResultID(examResultID int, examResultActivity []models.ExamResultActivityDB) []models.ExamResultActivityDB {
+	newExamResultActivity := make([]models.ExamResultActivityDB, 0)
+	for _, v := range examResultActivity {
+		newExamResultActivity = append(newExamResultActivity, models.ExamResultActivityDB{
+			ExamResultID: examResultID,
+			ActivityID:   v.ActivityID,
+			Score:        v.Score,
+		})
+	}
+	return newExamResultActivity
+}
+
+func (c examController) saveExamResult(userID int, preparedExam models.ExamResponse, examResultActivity []models.ExamResultActivityDB) (*models.ExamResultOverview, error) {
+	tx := database.NewTransaction()
+	tx.Begin()
+
+	sumScore := c.sumScore(examResultActivity)
+	totalScore := c.calculateTotalScore(preparedExam.Activities)
+	isPassed := c.isPassed(sumScore, totalScore)
+	examResult := models.ExamResultDB{
+		ExamID:           preparedExam.Exam.ID,
+		UserID:           userID,
+		IsPassed:         isPassed,
+		CreatedTimestamp: time.Now().Local(),
+	}
+
+	insertedExamResult, err := c.examRepo.InsertExamResultTransaction(tx, examResult)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	_, err = c.examRepo.InsertExamResultActivityTransaction(tx, c.addExamResultID(insertedExamResult.ID, examResultActivity))
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if preparedExam.Exam.Type == string(models.Exam.MiniExam) && isPassed {
+		badge := models.UserBadgeDB{
+			UserID:  userID,
+			BadgeID: preparedExam.Exam.BadgeID,
+		}
+		_, err = c.userRepo.InsertUserBadgeTransaction(tx, badge)
+		if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	tx.Commit()
+	tx.Close()
+
+	result := models.ExamResultOverview{
+		CreatedTimestamp: insertedExamResult.CreatedTimestamp,
+		Score:            sumScore,
+		IsPassed:         isPassed,
+	}
+
+	return &result, nil
+}
+
+func (c examController) calculateTotalScore(activities []models.ExamActivityResponse) int {
+	sum := 0
+	for _, v := range activities {
+		sum += v.Info.Point
+	}
+	return sum
+}
+
+func (c examController) CheckExam(userID int, request models.ExamAnswerRequest) (*models.ExamResultOverview, error) {
 	examActivity, err := c.examRepo.GetExamActivity(*request.ExamID)
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
 	}
 
-	preparedExam := c.prepareExam(examActivity)
+	preparedExam, activityChoiceMap := c.prepareExam(examActivity)
 
 	if len(request.Activities) != len(preparedExam.Activities) {
 		return nil, errs.NewBadRequestError("จำนวนของกิจกรรมไม่ถูกต้อง", "Number of Activity Incorrect")
 	}
 
-	// examResultActivity, err := c.checkExamActivities(preparedExam, request)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	examResultActivity, err := c.checkExamActivities(preparedExam, activityChoiceMap, request)
+	if err != nil {
+		return nil, err
+	}
 
-	//c.saveExamResult(examResultActivity)
-	return nil, nil
+	result, err := c.saveExamResult(userID, preparedExam, examResultActivity)
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาดในการบันทึกข้อมูล", "Internal Server Error")
+	}
 
+	return result, nil
 }

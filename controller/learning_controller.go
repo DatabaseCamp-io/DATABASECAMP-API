@@ -440,6 +440,7 @@ func (c learningController) GetActivity(userID int, activityID int) (*models.Act
 
 func (c learningController) finishActivityTrasaction(userID int, activityID int, addPoint int) error {
 	tx := database.NewTransaction()
+	tx.Begin()
 
 	progression := models.LearningProgressionDB{
 		UserID:           userID,

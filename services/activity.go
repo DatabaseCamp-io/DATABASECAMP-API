@@ -102,11 +102,35 @@ func (m activityManager) IsMultipleCorrect(choices []models.MultipleChoiceDB, an
 	return false
 }
 
+func (m activityManager) convertToPairItem(raw interface{}) ([]models.PairItem, error) {
+	result := make([]models.PairItem, 0)
+	list, ok := raw.([]interface{})
+	if !ok {
+		return nil, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
+	}
+	for _, v := range list {
+		temp := models.PairItem{}
+		utils.NewType().StructToStruct(v, &temp)
+		err := temp.Validate()
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, temp)
+	}
+	return result, nil
+}
+
 func (m activityManager) checkMatchingCorrect(choice interface{}, answer interface{}) (bool, error) {
 	matchingChoices, choiceOK := choice.([]models.MatchingChoiceDB)
 	_answer, answerOK := answer.([]models.PairItem)
-
-	if len(matchingChoices) != len(_answer) || !choiceOK || !answerOK {
+	if !answerOK {
+		var err error
+		_answer, err = m.convertToPairItem(answer)
+		if err != nil {
+			return false, err
+		}
+	}
+	if len(matchingChoices) != len(_answer) || !choiceOK {
 		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
 	}
 	return m.IsMatchingCorrect(matchingChoices, _answer), nil
@@ -120,10 +144,35 @@ func (m activityManager) checkMultipleCorrect(choice interface{}, answer interfa
 	return m.IsMultipleCorrect(multipleChoices, utils.NewType().ParseInt(answer)), nil
 }
 
+func (m activityManager) convertToPairContent(raw interface{}) ([]models.PairContent, error) {
+	result := make([]models.PairContent, 0)
+	list, ok := raw.([]interface{})
+	if !ok {
+		return nil, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
+	}
+	for _, v := range list {
+		temp := models.PairContent{}
+		utils.NewType().StructToStruct(v, &temp)
+		err := temp.Validate()
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, temp)
+	}
+	return result, nil
+}
+
 func (m activityManager) checkCompletionCorrect(choice interface{}, answer interface{}) (bool, error) {
 	completionChoices, choiceOK := choice.([]models.CompletionChoiceDB)
 	_answer, answerOK := answer.([]models.PairContent)
-	if len(completionChoices) != len(_answer) || !choiceOK || !answerOK {
+	if !answerOK || !choiceOK {
+		var err error
+		_answer, err = m.convertToPairContent(answer)
+		if err != nil {
+			return false, err
+		}
+	}
+	if len(completionChoices) != len(_answer) {
 		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
 	}
 	return m.IsCompletionCorrect(completionChoices, _answer), nil

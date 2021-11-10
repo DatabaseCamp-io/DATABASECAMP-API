@@ -88,7 +88,7 @@ type ExamResultDB struct {
 	ID               int       `gorm:"primaryKey;column:exam_result_id" json:"exam_result_id"`
 	ExamID           int       `gorm:"column:exam_id" json:"exam_id"`
 	UserID           int       `gorm:"column:user_id" json:"user_id"`
-	Score            int       `gorm:"column:score" json:"score"`
+	Score            int       `gorm:"->;column:score" json:"score"`
 	IsPassed         bool      `gorm:"column:is_passed" json:"is_passed"`
 	CreatedTimestamp time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
 }
@@ -110,9 +110,25 @@ type PairItem struct {
 	Item2 *string `json:"item2"`
 }
 
+func (m PairItem) Validate() error {
+	if m.Item1 == nil || m.Item2 == nil {
+		return errs.NewBadRequestError("ไม่พบเนื้อหาของคำตอบในคำร้องขอ", "Content Answer Not Found")
+	}
+	return nil
+}
+
 type PairContent struct {
 	ID      *int    `json:"completion_choice_id"`
 	Content *string `json:"content"`
+}
+
+func (m PairContent) Validate() error {
+	if m.ID == nil {
+		return errs.NewBadRequestError("ไม่พบไอดีของช้อยในคำร้องขอ", "Choice ID Not Found")
+	} else if m.Content == nil {
+		return errs.NewBadRequestError("ไม่พบเนื้อหาของคำตอบในคำร้องขอ", "Content Answer Not Found")
+	}
+	return nil
 }
 
 type MultipleChoiceAnswerRequest struct {

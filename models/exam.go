@@ -23,6 +23,7 @@ type ExamActivity struct {
 	Instruction             string    `gorm:"column:instruction" json:"instruction"`
 	CreatedTimestamp        time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
 	ActivityID              int       `gorm:"column:activity_id" json:"activity_id"`
+	Point                   int       `gorm:"column:point" json:"point"`
 	ActivityTypeID          int       `gorm:"column:activity_type_id" json:"activity_type_id"`
 	Question                string    `gorm:"column:question" json:"question"`
 	Story                   string    `gorm:"column:story" json:"story"`
