@@ -133,11 +133,13 @@ func (c examController) prepareExamOverview(info examOverviewInfo) *models.ExamO
 				res.MiniExam = &temp
 			}
 
+			_v := v
+
 			*res.MiniExam = append(*res.MiniExam, models.ExamOverview{
 				ExamID:           v.ID,
 				ExamType:         v.Type,
-				ContentGroupID:   &v.ContentGroupID,
-				ContentGroupName: &v.ContentGroupName,
+				ContentGroupID:   &_v.ContentGroupID,
+				ContentGroupName: &_v.ContentGroupName,
 				Results:          examResultMap[v.ID],
 			})
 		} else if v.Type == string(models.Exam.Posttest) {
@@ -244,11 +246,11 @@ func (c examController) getChoice(examActivity models.ExamActivity) interface{} 
 	}
 }
 
-func (c examController) prepareExam(examActivity []models.ExamActivity) interface{} {
+func (c examController) prepareExam(examActivity []models.ExamActivity) models.ExamResponse {
 	exam := models.ExamDB{}
 	activityChoiceMap := map[int]interface{}{}
 	activityMap := map[int]models.ActivityDB{}
-	activityResponse := make([]interface{}, 0)
+	activityResponse := make([]models.ExamActivityResponse, 0)
 	for _, v := range examActivity {
 		activity := models.ActivityDB{}
 		utils.NewType().StructToStruct(v, &exam)
@@ -261,14 +263,67 @@ func (c examController) prepareExam(examActivity []models.ExamActivity) interfac
 	}
 
 	for k := range activityChoiceMap {
-		activityResponse = append(activityResponse, map[string]interface{}{
-			"info":    activityMap[k],
-			"choices": c.prepareChoices(k, activityMap[k].TypeID, activityChoiceMap),
+		activityResponse = append(activityResponse, models.ExamActivityResponse{
+			Info:    activityMap[k],
+			Choices: c.prepareChoices(k, activityMap[k].TypeID, activityChoiceMap),
 		})
 	}
 
-	return map[string]interface{}{
-		"exam":     exam,
-		"activity": activityResponse,
+	return models.ExamResponse{
+		Exam:       exam,
+		Activities: activityResponse,
 	}
+}
+
+func (c examController) checkExamActivityAsync(concurrent *models.Concurrent, preparedActivity models.ExamActivityResponse, answer models.ExamActivityAnswer, examResultActivity *[]models.ExamResultActivityDB) {
+	defer concurrent.Wg.Done()
+	if preparedActivity.Info.TypeID == 1 {
+
+	} else if preparedActivity.Info.TypeID == 2 {
+
+	} else if preparedActivity.Info.TypeID == 3 {
+
+	}
+}
+
+func (c examController) checkExamActivities(preparedExam models.ExamResponse, request models.ExamAnswerRequest) error {
+	var wg sync.WaitGroup
+	var mutex sync.Mutex
+	var err error
+	concurrent := models.Concurrent{Wg: &wg, Err: &err, Mutex: &mutex}
+	answerMap := map[int]models.ExamActivityAnswer{}
+	examResultActivity := make([]models.ExamResultActivityDB, 0)
+
+	for _, v := range request.Activities {
+		answerMap[v.ActivityID] = v
+	}
+
+	wg.Add(len(preparedExam.Activities))
+	for _, v := range preparedExam.Activities {
+		go c.checkExamActivityAsync(&concurrent, v, answerMap[v.Info.ID], &examResultActivity)
+	}
+	wg.Wait()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c examController) CheckExam(request models.ExamAnswerRequest) (interface{}, error) {
+	examActivity, err := c.examRepo.GetExamActivity(*request.ExamID)
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+	}
+
+	preparedExam := c.prepareExam(examActivity)
+
+	if len(request.Activities) != len(preparedExam.Activities) {
+		return nil, errs.NewBadRequestError("จำนวนของกิจกรรมไม่ถูกต้อง", "Number of Activity Incorrect")
+	}
+
+	c.checkExamActivities(preparedExam, request)
+	return nil, nil
+
 }
