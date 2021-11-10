@@ -1,6 +1,7 @@
 package services
 
 import (
+	"DatabaseCamp/errs"
 	"DatabaseCamp/models"
 	"DatabaseCamp/utils"
 )
@@ -15,6 +16,7 @@ type IActivityManager interface {
 	IsMatchingCorrect(choices []models.MatchingChoiceDB, answer []models.PairItem)
 	IsCompletionCorrect(choices []models.CompletionChoiceDB, answer []models.PairContent)
 	IsMultipleCorrect(choices []models.MultipleChoiceDB, answer int)
+	IsAnswerCorrect(typeID int, choice interface{}, answer interface{}) (bool, error)
 }
 
 func NewActivityManager() *activityManager {
@@ -98,4 +100,43 @@ func (m activityManager) IsMultipleCorrect(choices []models.MultipleChoiceDB, an
 		}
 	}
 	return false
+}
+
+func (m activityManager) checkMatchingCorrect(choice interface{}, answer interface{}) (bool, error) {
+	matchingChoices, choiceOK := choice.([]models.MatchingChoiceDB)
+	_answer, answerOK := answer.([]models.PairItem)
+
+	if len(matchingChoices) != len(_answer) || !choiceOK || !answerOK {
+		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
+	}
+	return m.IsMatchingCorrect(matchingChoices, _answer), nil
+}
+
+func (m activityManager) checkMultipleCorrect(choice interface{}, answer interface{}) (bool, error) {
+	multipleChoices, choiceOK := choice.([]models.MultipleChoiceDB)
+	if !choiceOK {
+		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
+	}
+	return m.IsMultipleCorrect(multipleChoices, utils.NewType().ParseInt(answer)), nil
+}
+
+func (m activityManager) checkCompletionCorrect(choice interface{}, answer interface{}) (bool, error) {
+	completionChoices, choiceOK := choice.([]models.CompletionChoiceDB)
+	_answer, answerOK := answer.([]models.PairContent)
+	if len(completionChoices) != len(_answer) || !choiceOK || !answerOK {
+		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
+	}
+	return m.IsCompletionCorrect(completionChoices, _answer), nil
+}
+
+func (m activityManager) IsAnswerCorrect(typeID int, choice interface{}, answer interface{}) (bool, error) {
+	if typeID == 1 {
+		return m.checkMatchingCorrect(choice, answer)
+	} else if typeID == 2 {
+		return m.checkMultipleCorrect(choice, answer)
+	} else if typeID == 3 {
+		return m.checkCompletionCorrect(choice, answer)
+	} else {
+		return false, errs.NewBadRequestError("ประเภทของกิจกรรมไม่ถูกต้อง", "Invalid Activity Type")
+	}
 }

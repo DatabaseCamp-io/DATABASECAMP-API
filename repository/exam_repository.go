@@ -66,6 +66,9 @@ func (r examRepository) GetExamActivity(examID int) ([]models.ExamActivity, erro
 			models.TableName.MultipleChoice+".multiple_choice_id AS multiple_choice_id",
 			models.TableName.MultipleChoice+".content AS multiple_choice_content",
 			models.TableName.MultipleChoice+".is_correct AS is_correct",
+			models.TableName.ContentGroup+".content_group_id AS content_group_id",
+			models.TableName.ContentGroup+".name AS content_group_name",
+			models.TableName.ContentGroup+".badge_id AS badge_id",
 		).
 		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
 			models.TableName.ContentExam,
@@ -101,6 +104,13 @@ func (r examRepository) GetExamActivity(examID int) ([]models.ExamActivity, erro
 			models.IDName.Activity,
 			models.TableName.Activity,
 			models.IDName.Activity,
+		)).
+		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
+			models.TableName.ContentGroup,
+			models.TableName.ContentGroup,
+			models.IDName.MiniExam,
+			models.TableName.Exam,
+			models.IDName.Exam,
 		)).
 		Where(models.TableName.Exam+"."+models.IDName.Exam+"  = ?", examID).
 		Find(&examActivity).

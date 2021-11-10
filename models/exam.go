@@ -36,6 +36,9 @@ type ExamActivity struct {
 	MultipleChoiceContent   string    `gorm:"column:multiple_choice_content" json:"multiple_choice_content"`
 	IsCorrect               bool      `gorm:"column:is_correct" json:"is_correct"`
 	Content                 string    `json:"content"`
+	ContentGroupID          int       `gorm:"column:content_group_id" json:"content_group_id"`
+	ContentGroupName        string    `gorm:"column:content_group_name" json:"content_group_name"`
+	BadgeID                 int       `gorm:"column:badge_id" json:"badge_id"`
 }
 
 type ExamDB struct {
@@ -107,7 +110,7 @@ type ExamResponse struct {
 }
 
 type ExamResultActivityDB struct {
-	ID         int `gorm:"primaryKey;column:exam_result_id" json:"exam_result_id"`
-	ActivityID int `gorm:"primaryKey;column:activity_id" json:"activity_id"`
-	Score      int `gorm:"column:score" json:"score"`
+	ExamResultID int `gorm:"primaryKey;column:exam_result_id" json:"exam_result_id"`
+	ActivityID   int `gorm:"primaryKey;column:activity_id" json:"activity_id"`
+	Score        int `gorm:"column:score" json:"score"`
 }

@@ -277,16 +277,25 @@ func (c examController) prepareExam(examActivity []models.ExamActivity) models.E
 
 func (c examController) checkExamActivityAsync(concurrent *models.Concurrent, preparedActivity models.ExamActivityResponse, answer models.ExamActivityAnswer, examResultActivity *[]models.ExamResultActivityDB) {
 	defer concurrent.Wg.Done()
-	if preparedActivity.Info.TypeID == 1 {
-
-	} else if preparedActivity.Info.TypeID == 2 {
-
-	} else if preparedActivity.Info.TypeID == 3 {
-
+	score := 0
+	activityManager := services.NewActivityManager()
+	isCorrect, err := activityManager.IsAnswerCorrect(preparedActivity.Info.TypeID, preparedActivity.Choices, answer.Answer)
+	if err != nil {
+		*concurrent.Err = err
+		return
 	}
+	if isCorrect {
+		score += preparedActivity.Info.Point
+	}
+	concurrent.Mutex.Lock()
+	*examResultActivity = append(*examResultActivity, models.ExamResultActivityDB{
+		ActivityID: preparedActivity.Info.ID,
+		Score:      score,
+	})
+	concurrent.Mutex.Unlock()
 }
 
-func (c examController) checkExamActivities(preparedExam models.ExamResponse, request models.ExamAnswerRequest) error {
+func (c examController) checkExamActivities(preparedExam models.ExamResponse, request models.ExamAnswerRequest) ([]models.ExamResultActivityDB, error) {
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
 	var err error
@@ -303,11 +312,27 @@ func (c examController) checkExamActivities(preparedExam models.ExamResponse, re
 		go c.checkExamActivityAsync(&concurrent, v, answerMap[v.Info.ID], &examResultActivity)
 	}
 	wg.Wait()
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return examResultActivity, err
+}
+
+func (c examController) sumScore(examResultActivity []models.ExamResultActivityDB) int {
+	sum := 0
+	for _, v := range examResultActivity {
+		sum += v.Score
+	}
+	return sum
+}
+
+func (c examController) saveExamResult(userID int, examID int, examResultActivity []models.ExamResultActivityDB) {
+	//sumScore := c.sumScore(examResultActivity)
+	// examResult := models.ExamResultDB{
+	// 	ExamID:           examID,
+	// 	UserID:           userID,
+	// 	Score:            sumScore,
+	// 	IsPassed:         false,
+	// 	CreatedTimestamp: time.Time{},
+	// }
 }
 
 func (c examController) CheckExam(request models.ExamAnswerRequest) (interface{}, error) {
@@ -323,7 +348,12 @@ func (c examController) CheckExam(request models.ExamAnswerRequest) (interface{}
 		return nil, errs.NewBadRequestError("จำนวนของกิจกรรมไม่ถูกต้อง", "Number of Activity Incorrect")
 	}
 
-	c.checkExamActivities(preparedExam, request)
+	// examResultActivity, err := c.checkExamActivities(preparedExam, request)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	//c.saveExamResult(examResultActivity)
 	return nil, nil
 
 }

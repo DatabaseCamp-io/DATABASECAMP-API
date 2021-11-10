@@ -500,8 +500,8 @@ func (c learningController) getChioceAsync(concurrent *models.Concurrent, activi
 	}
 }
 
-func (c learningController) isMatchingCorrect(info checkAnswerInfo, answer interface{}) (bool, error) {
-	matchingChoices := info.choice.([]models.MatchingChoiceDB)
+func (c learningController) isMatchingCorrect(choice interface{}, answer interface{}) (bool, error) {
+	matchingChoices := choice.([]models.MatchingChoiceDB)
 	_answer := answer.([]models.PairItem)
 	if len(matchingChoices) != len(_answer) {
 		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
@@ -509,13 +509,13 @@ func (c learningController) isMatchingCorrect(info checkAnswerInfo, answer inter
 	return services.NewActivityManager().IsMatchingCorrect(matchingChoices, _answer), nil
 }
 
-func (c learningController) isMultipleCorrect(info checkAnswerInfo, answer interface{}) (bool, error) {
-	multipleChoices := info.choice.([]models.MultipleChoiceDB)
+func (c learningController) isMultipleCorrect(choice interface{}, answer interface{}) (bool, error) {
+	multipleChoices := choice.([]models.MultipleChoiceDB)
 	return services.NewActivityManager().IsMultipleCorrect(multipleChoices, utils.NewType().ParseInt(answer)), nil
 }
 
-func (c learningController) isCompletionCorrect(info checkAnswerInfo, answer interface{}) (bool, error) {
-	completionChoices := info.choice.([]models.CompletionChoiceDB)
+func (c learningController) isCompletionCorrect(choice interface{}, answer interface{}) (bool, error) {
+	completionChoices := choice.([]models.CompletionChoiceDB)
 	_answer := answer.([]models.PairContent)
 	if len(completionChoices) != len(_answer) {
 		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
@@ -523,13 +523,13 @@ func (c learningController) isCompletionCorrect(info checkAnswerInfo, answer int
 	return services.NewActivityManager().IsCompletionCorrect(completionChoices, _answer), nil
 }
 
-func (c learningController) isAnswerCorrect(typeID int, info checkAnswerInfo, answer interface{}) (bool, error) {
+func (c learningController) isAnswerCorrect(typeID int, choice interface{}, answer interface{}) (bool, error) {
 	if typeID == 1 {
-		return c.isMatchingCorrect(info, answer)
+		return c.isMatchingCorrect(choice, answer)
 	} else if typeID == 2 {
-		return c.isMultipleCorrect(info, answer)
+		return c.isMultipleCorrect(choice, answer)
 	} else if typeID == 3 {
-		return c.isCompletionCorrect(info, answer)
+		return c.isCompletionCorrect(choice, answer)
 	} else {
 		return false, errs.NewBadRequestError("ประเภทของกิจกรรมไม่ถูกต้อง", "Invalid Activity Type")
 	}
@@ -546,7 +546,7 @@ func (c learningController) CheckAnswer(userID int, activityID int, typeID int, 
 		return nil, errs.NewNotFoundError("ประเภทของกิจกรรมไม่ถูกต้อง", "Invalid Activity Type")
 	}
 
-	isCorrect, err := c.isAnswerCorrect(typeID, *info, answer)
+	isCorrect, err := c.isAnswerCorrect(typeID, info.choice, answer)
 	if err != nil {
 		return nil, err
 	}
