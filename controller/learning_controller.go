@@ -8,7 +8,6 @@ import (
 	"DatabaseCamp/repository"
 	"DatabaseCamp/services"
 	"DatabaseCamp/utils"
-	"fmt"
 	"sync"
 	"time"
 )
@@ -267,7 +266,6 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 
 	countRecommend := 0
 	//recommendGroup := c.getRecommendGroupFromExam(info)
-	fmt.Println(info.LearningProgression)
 	for i, v := range info.LearningProgression {
 		if i == 0 {
 			lastedActivityID = v.ActivityID
@@ -279,11 +277,13 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 		content := make([]models.ContentOverview, 0)
 		_isLasted := false
 		_isGroupLasted := false
-		countUserActivity := 0
-		countActivity := 0
+		countUserActivityGroup := 0
+		countActivityGroup := 0
 
 		for kc, vc := range vo.content {
 			_isLasted = lastedActivityID == kc
+			countUserActivityGroup += userActivityCount[kc]
+			countActivityGroup += data.activityCount[kc]
 			progress := c.calculateProgress(userActivityCount[kc], data.activityCount[kc])
 
 			content = append(content, models.ContentOverview{
@@ -317,7 +317,7 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 			IsRecommend: isRecommend,
 			IsLasted:    _isGroupLasted,
 			GroupName:   vo.name,
-			Progress:    c.calculateProgress(countUserActivity, countActivity),
+			Progress:    c.calculateProgress(countUserActivityGroup, countActivityGroup),
 			Contents:    content,
 		})
 	}
