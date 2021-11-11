@@ -112,7 +112,7 @@ func (h userHandler) GetUserRanking(c *fiber.Ctx) error {
 }
 
 func (h userHandler) Edit(c *fiber.Ctx) error {
-	request := models.EditProfileRequest{}
+	request := models.UserRequest{}
 	userID := utils.NewType().ParseInt(c.Locals("id"))
 
 	err := bindRequest(c, &request)
@@ -120,7 +120,7 @@ func (h userHandler) Edit(c *fiber.Ctx) error {
 		return handleError(c, err)
 	}
 
-	err = request.Validate()
+	err = request.ValidateEdit()
 	if err != nil {
 		return handleError(c, err)
 	}

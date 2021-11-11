@@ -79,7 +79,7 @@ func (j jwtMiddleware) setClaims(c *fiber.Ctx, claims jwt.MapClaims) {
 
 func (j jwtMiddleware) validUser(token string, id int) bool {
 	user, err := j.repo.GetUserByID(id)
-	if err != nil || user == (models.User{}) {
+	if err != nil || user == (models.UserDB{}) {
 		return false
 	}
 

@@ -12,17 +12,17 @@ type userRepository struct {
 }
 
 type IUserRepository interface {
-	Insert(user models.User) (models.User, error)
-	GetUserByEmail(email string) (models.User, error)
-	GetUserByID(id int) (models.User, error)
+	Insert(user models.UserDB) (models.UserDB, error)
+	GetUserByEmail(email string) (models.UserDB, error)
+	GetUserByID(id int) (models.UserDB, error)
 	GetProfile(id int) (*models.ProfileDB, error)
 	GetLearningProgression(id int) ([]models.LearningProgressionDB, error)
 	GetFailedExam(id int) ([]models.ExamResultDB, error)
 	GetAllBadge() ([]models.BadgeDB, error)
 	UpdatesByID(id int, updateData map[string]interface{}) error
-	GetUserBadgeIDPair(id int) ([]models.UserBadgeIDPair, error)
-	GetAllPointranking() ([]models.PointRanking, error)
-	UserPointranking(id int) (*models.PointRanking, error)
+	GetUserBadgeIDPair(id int) ([]models.UserBadgeDB, error)
+	GetAllPointranking() ([]models.RankingDB, error)
+	UserPointranking(id int) (*models.RankingDB, error)
 	GetUserHint(userID int, activityID int) ([]models.UserHintDB, error)
 	InsertUserHint(userHint models.UserHintDB) (*models.UserHintDB, error)
 	InsertUserHintTransaction(tx database.ITransaction, userHint models.UserHintDB) (*models.UserHintDB, error)
@@ -38,7 +38,7 @@ func NewUserRepository(db database.IDatabase) userRepository {
 	return userRepository{database: db}
 }
 
-func (r userRepository) Insert(user models.User) (models.User, error) {
+func (r userRepository) Insert(user models.UserDB) (models.UserDB, error) {
 	err := r.database.GetDB().
 		Table(models.TableName.User).
 		Create(&user).
@@ -56,8 +56,8 @@ func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) e
 	return err
 }
 
-func (r userRepository) GetUserByEmail(email string) (models.User, error) {
-	user := models.User{}
+func (r userRepository) GetUserByEmail(email string) (models.UserDB, error) {
+	user := models.UserDB{}
 	err := r.database.GetDB().
 		Table(models.TableName.User).
 		Where("email = ?", email).
@@ -66,8 +66,8 @@ func (r userRepository) GetUserByEmail(email string) (models.User, error) {
 	return user, err
 }
 
-func (r userRepository) GetUserByID(id int) (models.User, error) {
-	user := models.User{}
+func (r userRepository) GetUserByID(id int) (models.UserDB, error) {
+	user := models.UserDB{}
 	err := r.database.GetDB().
 		Table(models.TableName.User).
 		Where(models.IDName.User+" = ?", id).
@@ -120,8 +120,8 @@ func (r userRepository) GetAllBadge() ([]models.BadgeDB, error) {
 	return badge, err
 }
 
-func (r userRepository) GetUserBadgeIDPair(id int) ([]models.UserBadgeIDPair, error) {
-	badgePair := make([]models.UserBadgeIDPair, 0)
+func (r userRepository) GetUserBadgeIDPair(id int) ([]models.UserBadgeDB, error) {
+	badgePair := make([]models.UserBadgeDB, 0)
 	err := r.database.GetDB().
 		Table(models.TableName.UserBadge).
 		Where(models.IDName.User+" = ?", id).
@@ -130,8 +130,8 @@ func (r userRepository) GetUserBadgeIDPair(id int) ([]models.UserBadgeIDPair, er
 	return badgePair, err
 }
 
-func (r userRepository) GetAllPointranking() ([]models.PointRanking, error) {
-	ranking := make([]models.PointRanking, 0)
+func (r userRepository) GetAllPointranking() ([]models.RankingDB, error) {
+	ranking := make([]models.RankingDB, 0)
 	err := r.database.GetDB().
 		Table(models.ViewName.Ranking).
 		Limit(20).
@@ -142,8 +142,8 @@ func (r userRepository) GetAllPointranking() ([]models.PointRanking, error) {
 	return ranking, err
 }
 
-func (r userRepository) UserPointranking(id int) (*models.PointRanking, error) {
-	ranking := models.PointRanking{}
+func (r userRepository) UserPointranking(id int) (*models.RankingDB, error) {
+	ranking := models.RankingDB{}
 	err := r.database.GetDB().
 		Table(models.ViewName.Ranking).
 		Where(models.IDName.User+" = ?", id).

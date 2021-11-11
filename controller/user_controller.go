@@ -18,16 +18,16 @@ type IUserController interface {
 	Login(request models.UserRequest) (*models.UserResponse, error)
 	GetProfile(userID int) (*models.ProfileResponse, error)
 	GetRanking(id int) (interface{}, error)
-	EditProfile(userID int, request models.EditProfileRequest) (interface{}, error)
+	EditProfile(userID int, request models.UserRequest) (interface{}, error)
 }
 
 func NewUserController(repo repository.IUserRepository) userController {
 	return userController{repo: repo}
 }
 
-func (c userController) setupUserModel(request models.UserRequest) models.User {
+func (c userController) setupUserModel(request models.UserRequest) models.UserDB {
 	hashedPassword := utils.NewHelper().HashAndSalt(request.Password)
-	return models.User{
+	return models.UserDB{
 		Name:                  request.Name,
 		Email:                 request.Email,
 		Password:              hashedPassword,
@@ -95,14 +95,14 @@ func (c userController) GetProfile(id int) (*models.ProfileResponse, error) {
 	return &response, nil
 }
 
-func (c userController) calculateUserBadge(allBadge []models.BadgeDB, userBadgeGain []models.UserBadgeIDPair) []models.BadgeDB {
+func (c userController) calculateUserBadge(allBadge []models.BadgeDB, userBadgeGain []models.UserBadgeDB) []models.BadgeDB {
 	for i, v := range allBadge {
 		allBadge[i].IsCollect = c.isCollectBadge(v.ID, userBadgeGain)
 	}
 	return allBadge
 }
 
-func (c userController) isCollectBadge(badgeID int, userBadgeGain []models.UserBadgeIDPair) bool {
+func (c userController) isCollectBadge(badgeID int, userBadgeGain []models.UserBadgeDB) bool {
 	for _, v := range userBadgeGain {
 		if v.BadgeID == badgeID {
 			return true
@@ -111,7 +111,7 @@ func (c userController) isCollectBadge(badgeID int, userBadgeGain []models.UserB
 	return false
 }
 
-func (c userController) getUserRanking(id int) (*models.PointRanking, error) {
+func (c userController) getUserRanking(id int) (*models.RankingDB, error) {
 	user, err := c.repo.UserPointranking(id)
 	if err != nil || user == nil {
 		logs.New().Error(err)
@@ -120,7 +120,7 @@ func (c userController) getUserRanking(id int) (*models.PointRanking, error) {
 	return user, nil
 }
 
-func (c userController) getLeaderBoard() ([]models.PointRanking, error) {
+func (c userController) getLeaderBoard() ([]models.RankingDB, error) {
 	ranking, err := c.repo.GetAllPointranking()
 	if err != nil || ranking == nil {
 		logs.New().Error(err)
@@ -148,8 +148,8 @@ func (c userController) GetRanking(id int) (interface{}, error) {
 	return result, nil
 }
 
-func (c userController) EditProfile(userID int, request models.EditProfileRequest) (interface{}, error) {
-	err := c.repo.UpdatesByID(userID, map[string]interface{}{"name": *request.Name})
+func (c userController) EditProfile(userID int, request models.UserRequest) (interface{}, error) {
+	err := c.repo.UpdatesByID(userID, map[string]interface{}{"name": request.Name})
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")

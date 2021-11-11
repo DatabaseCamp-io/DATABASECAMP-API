@@ -1,4 +1,5 @@
-profile view sql
+=============== Profile View SQL ===============
+
 SELECT
     `database_camp`.`User`.`user_id` AS `user_id`,
     `database_camp`.`User`.`name` AS `name`,
@@ -17,3 +18,20 @@ FROM
     )
 GROUP BY
     `database_camp`.`User`.`user_id`
+
+=============== Ranking View SQL ===============
+
+SELECT
+    `database_camp`.`User`.`user_id` AS `user_id`,
+    `database_camp`.`User`.`name` AS `name`,
+    `database_camp`.`User`.`email` AS `email`,
+    `database_camp`.`User`.`point` AS `point`,
+    row_number() over(
+    ORDER BY
+        `database_camp`.`User`.`point`
+    DESC
+) AS `ranking`
+FROM
+    `database_camp`.`User`
+WHERE
+    1

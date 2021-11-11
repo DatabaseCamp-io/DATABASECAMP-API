@@ -32,7 +32,7 @@ type activityInfo struct {
 type hintInfo struct {
 	activityHints []models.HintDB
 	userHints     []models.UserHintDB
-	user          models.User
+	user          models.UserDB
 }
 
 type content struct {
@@ -572,7 +572,7 @@ func (c learningController) CheckAnswer(userID int, activityID int, typeID int, 
 func (c learningController) loadHintInfo(userID int, activityID int) (hintInfo, error) {
 	var wg sync.WaitGroup
 	var err error
-	var user models.User
+	var user models.UserDB
 	concurrent := models.Concurrent{Wg: &wg, Err: &err}
 	userHints := make([]models.UserHintDB, 0)
 	activityHints := make([]models.HintDB, 0)
@@ -589,7 +589,7 @@ func (c learningController) loadHintInfo(userID int, activityID int) (hintInfo, 
 	return hintInfo, err
 }
 
-func (c learningController) loadUser(concurrent *models.Concurrent, userID int, user *models.User) {
+func (c learningController) loadUser(concurrent *models.Concurrent, userID int, user *models.UserDB) {
 	defer concurrent.Wg.Done()
 	var err error
 	*user, err = c.userRepo.GetUserByID(userID)
