@@ -395,6 +395,8 @@ func (c examController) saveExamResult(userID int, preparedExam models.ExamRespo
 	tx.Close()
 
 	result := models.ExamResultOverview{
+		ExamID:           preparedExam.Exam.ID,
+		ExamResultID:     insertedExamResult.ID,
 		CreatedTimestamp: insertedExamResult.CreatedTimestamp,
 		Score:            sumScore,
 		IsPassed:         isPassed,
