@@ -135,6 +135,8 @@ func (r userRepository) GetAllPointranking() ([]models.PointRanking, error) {
 	err := r.database.GetDB().
 		Table(models.ViewName.Ranking).
 		Limit(20).
+		Order("ranking ASC").
+		Order("name ASC").
 		Find(&ranking).
 		Error
 	return ranking, err

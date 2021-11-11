@@ -8,6 +8,7 @@ import (
 	"DatabaseCamp/repository"
 	"DatabaseCamp/services"
 	"DatabaseCamp/utils"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -222,8 +223,8 @@ func (c learningController) prepareOverview(info *models.OverviewInfo) overviewD
 			}
 		}
 		if v.ActivityID != nil {
+			activityCount[v.ContentID] += 1
 			activityContentMap[*v.ActivityID] = v.ContentID
-			activityCount[*v.ActivityID] += 1
 		}
 	}
 
@@ -252,7 +253,8 @@ func (c learningController) calculateProgress(progress int, total int) int {
 	if total == 0 {
 		return 0
 	} else {
-		return (progress / total) * 100
+		ratio := float64(progress) / float64(total)
+		return int(ratio * 100)
 	}
 
 }
@@ -265,12 +267,12 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 
 	countRecommend := 0
 	//recommendGroup := c.getRecommendGroupFromExam(info)
-
+	fmt.Println(info.LearningProgression)
 	for i, v := range info.LearningProgression {
 		if i == 0 {
 			lastedActivityID = v.ActivityID
 		}
-		userActivityCount[v.ActivityID]++
+		userActivityCount[data.activityContentMap[v.ActivityID]]++
 	}
 
 	for ko, vo := range data.group {
@@ -279,12 +281,11 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 		_isGroupLasted := false
 		countUserActivity := 0
 		countActivity := 0
-		for kc, vc := range vo.content {
 
-			countActivity += data.activityCount[kc]
-			countUserActivity += userActivityCount[kc]
+		for kc, vc := range vo.content {
 			_isLasted = lastedActivityID == kc
 			progress := c.calculateProgress(userActivityCount[kc], data.activityCount[kc])
+
 			content = append(content, models.ContentOverview{
 				ContentID:   kc,
 				ContentName: vc.name,
