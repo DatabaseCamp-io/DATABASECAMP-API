@@ -26,7 +26,6 @@ type BadgeDB struct {
 	ID        int    `gorm:"primaryKey;column:badge_id" json:"badge_id"`
 	ImagePath string `gorm:"column:icon_path" json:"icon_path"`
 	Name      string `gorm:"column:name" json:"name"`
-	IsCollect bool   `json:"is_collect"`
 }
 
 // Model mapped Probile view in the database

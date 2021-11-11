@@ -14,16 +14,6 @@ type userHandler struct {
 	jwt        IJwt
 }
 
-type IUserHandler interface {
-	Register(c *fiber.Ctx) error
-	Login(c *fiber.Ctx) error
-	Edit(c *fiber.Ctx) error
-	GetProfile(c *fiber.Ctx) error
-	GetInfo(c *fiber.Ctx) error
-	GetBadge(c *fiber.Ctx) error
-	GetUserRanking(c *fiber.Ctx) error
-}
-
 func NewUserHandler(controller controller.IUserController, jwt IJwt) userHandler {
 	return userHandler{controller: controller, jwt: jwt}
 }

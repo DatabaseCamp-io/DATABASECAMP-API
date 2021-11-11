@@ -13,12 +13,23 @@ type UserResponse struct {
 	UpdatedTimestamp time.Time ` json:"updated_timestamp"`
 }
 
-// Model for response profile
-type ProfileResponse struct {
+// Model for response get profile
+type GetProfileResponse struct {
 	ID               int       `json:"user_id"`
 	Name             string    `json:"name"`
 	Point            int       `json:"point"`
 	ActivityCount    int       `json:"activity_count"`
 	Badges           []BadgeDB `json:"badges"`
 	CreatedTimestamp time.Time ` json:"created_timestamp"`
+}
+
+// Model for response edit profile
+type EditProfileResponse struct {
+	UpdatedName string `json:"updated_name"`
+}
+
+// Model for response ranking
+type RankingResponse struct {
+	UserRanking RankingDB   `json:"user_ranking"`
+	LeaderBoard []RankingDB `json:"leader_board"`
 }

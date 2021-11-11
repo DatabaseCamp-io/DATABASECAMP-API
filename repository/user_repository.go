@@ -12,7 +12,7 @@ type userRepository struct {
 }
 
 type IUserRepository interface {
-	Insert(user models.UserDB) (models.UserDB, error)
+	Insert(user models.UserDB) (int, error)
 	GetUserByEmail(email string) (models.UserDB, error)
 	GetUserByID(id int) (models.UserDB, error)
 	GetProfile(id int) (*models.ProfileDB, error)
@@ -38,12 +38,12 @@ func NewUserRepository(db database.IDatabase) userRepository {
 	return userRepository{database: db}
 }
 
-func (r userRepository) Insert(user models.UserDB) (models.UserDB, error) {
+func (r userRepository) Insert(user models.UserDB) (int, error) {
 	err := r.database.GetDB().
 		Table(models.TableName.User).
 		Create(&user).
 		Error
-	return user, err
+	return user.ID, err
 }
 
 func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) error {
