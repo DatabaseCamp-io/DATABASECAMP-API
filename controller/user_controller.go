@@ -26,7 +26,7 @@ func NewUserController(repo repository.IUserRepository) userController {
 
 func (c userController) Register(request models.UserRequest) (*models.UserResponse, error) {
 	var err error
-	user := models.NewUserWithHashPassword(request)
+	user := models.NewUserByRequest(request)
 	user.ID, err = c.repo.Insert(user.ToDB())
 	if err != nil {
 		logs.New().Error(err)
