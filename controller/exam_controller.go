@@ -27,6 +27,7 @@ type IExamController interface {
 	GetExam(examID int, userID int) (interface{}, error)
 	GetOverview(userID int) (*models.ExamOverviewResponse, error)
 	CheckExam(userID int, request models.ExamAnswerRequest) (*models.ExamResultOverview, error)
+	GetExamResult(userID int, examResultID int) (*models.ExamResultOverview, error)
 }
 
 func NewExamController(examRepo repository.IExamRepository, userRepo repository.IUserRepository) examController {
@@ -103,10 +104,10 @@ func (c examController) canDoFianlExam(info examOverviewInfo) bool {
 	return true
 }
 
-func (c examController) prepareExamResultMap(info examOverviewInfo) map[int]*[]models.ExamResultOverview {
+func (c examController) prepareExamResultMap(examResults []models.ExamResultDB) map[int]*[]models.ExamResultOverview {
 	examResultMap := map[int]*[]models.ExamResultOverview{}
-	examCountScore := c.countExamScore(info.examResults)
-	for _, v := range info.examResults {
+	examCountScore := c.countExamScore(examResults)
+	for _, v := range examResults {
 		if examResultMap[v.ExamID] == nil {
 			temp := make([]models.ExamResultOverview, 0)
 			examResultMap[v.ExamID] = &temp
@@ -122,7 +123,7 @@ func (c examController) prepareExamResultMap(info examOverviewInfo) map[int]*[]m
 
 func (c examController) prepareExamOverview(info examOverviewInfo) *models.ExamOverviewResponse {
 	res := models.ExamOverviewResponse{}
-	examResultMap := c.prepareExamResultMap(info)
+	examResultMap := c.prepareExamResultMap(info.examResults)
 
 	for _, v := range info.exam {
 		if v.Type == string(models.Exam.Pretest) {
@@ -324,9 +325,9 @@ func (c examController) checkExamActivities(preparedExam models.ExamResponse, ac
 	return examResultActivity, err
 }
 
-func (c examController) sumScore(examResultActivity []models.ExamResultActivityDB) int {
+func (c examController) sumExamResultActivityScore(list []models.ExamResultActivityDB) int {
 	sum := 0
-	for _, v := range examResultActivity {
+	for _, v := range list {
 		sum += v.Score
 	}
 	return sum
@@ -358,7 +359,7 @@ func (c examController) saveExamResult(userID int, preparedExam models.ExamRespo
 	tx := database.NewTransaction()
 	tx.Begin()
 
-	sumScore := c.sumScore(examResultActivity)
+	sumScore := c.sumExamResultActivityScore(examResultActivity)
 	totalScore := c.calculateTotalScore(preparedExam.Activities)
 	isPassed := c.isPassed(sumScore, totalScore)
 	examResult := models.ExamResultDB{
@@ -438,4 +439,28 @@ func (c examController) CheckExam(userID int, request models.ExamAnswerRequest) 
 	}
 
 	return result, nil
+}
+
+func (c examController) sumExamResultScore(examResults []models.ExamResultDB) int {
+	sum := 0
+	for _, v := range examResults {
+		sum = v.Score
+	}
+	return sum
+}
+
+func (c examController) GetExamResult(userID int, examResultID int) (*models.ExamResultOverview, error) {
+	examResults, err := c.userRepo.GetExamResultByID(userID, examResultID)
+	if err != nil || len(examResults) == 0 {
+		logs.New().Error(err)
+		return nil, errs.NewNotFoundError("ไม่พบผลการสอบ", "Exam Result Not Found")
+	}
+	result := models.ExamResultOverview{
+		ExamID:           examResults[0].ExamID,
+		ExamResultID:     examResults[0].ID,
+		CreatedTimestamp: examResults[0].CreatedTimestamp,
+		Score:            c.sumExamResultScore(examResults),
+		IsPassed:         examResults[0].IsPassed,
+	}
+	return &result, nil
 }

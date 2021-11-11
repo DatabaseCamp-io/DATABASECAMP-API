@@ -30,6 +30,7 @@ type IUserRepository interface {
 	ChangePointTransaction(tx database.ITransaction, userID int, point int, mode models.ChangePointMode) error
 	GetCollectedBadge(userID int) ([]models.CorrectedBadgeDB, error)
 	GetExamResult(userID int) ([]models.ExamResultDB, error)
+	GetExamResultByID(userID int, examResultID int) ([]models.ExamResultDB, error)
 	InsertUserBadgeTransaction(tx database.ITransaction, userBadge models.UserBadgeDB) (models.UserBadgeDB, error)
 }
 
@@ -226,6 +227,32 @@ func (r userRepository) GetCollectedBadge(userID int) ([]models.CorrectedBadgeDB
 		Find(&correctedBadge).
 		Error
 	return correctedBadge, err
+}
+
+func (r userRepository) GetExamResultByID(userID int, examResultID int) ([]models.ExamResultDB, error) {
+	examResults := make([]models.ExamResultDB, 0)
+	err := r.database.GetDB().
+		Table(models.TableName.ExamResult).
+		Select(
+			models.TableName.ExamResult+".exam_result_id AS exam_result_id",
+			models.TableName.ExamResult+".exam_id AS exam_id",
+			models.TableName.ExamResult+".user_id AS user_id",
+			models.TableName.ExamResult+".is_passed AS is_passed",
+			models.TableName.ExamResult+".created_timestamp AS created_timestamp",
+			models.TableName.ExamResultActivity+".score AS score",
+		).
+		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
+			models.TableName.ExamResultActivity,
+			models.TableName.ExamResultActivity,
+			models.IDName.ExamResult,
+			models.TableName.ExamResult,
+			models.IDName.ExamResult,
+		)).
+		Where(models.IDName.User+" = ?", userID).
+		Where(models.TableName.ExamResult+"."+models.IDName.ExamResult+" = ?", examResultID).
+		Find(&examResults).
+		Error
+	return examResults, err
 }
 
 func (r userRepository) GetExamResult(userID int) ([]models.ExamResultDB, error) {

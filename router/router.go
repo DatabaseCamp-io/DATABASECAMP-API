@@ -42,6 +42,7 @@ func (r router) setupExam(db database.IDatabase, userRepo repository.IUserReposi
 	{
 		group.Get("/proposition/:id", examHandler.GetExam)
 		group.Get("/overview", examHandler.GetExamOverview)
+		group.Get("/result/:id", examHandler.GetExamResult)
 		group.Post("/check", examHandler.CheckExam)
 	}
 }

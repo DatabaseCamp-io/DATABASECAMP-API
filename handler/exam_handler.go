@@ -63,3 +63,13 @@ func (h examHandler) GetExamOverview(c *fiber.Ctx) error {
 	}
 	return c.Status(http.StatusOK).JSON(response)
 }
+
+func (h examHandler) GetExamResult(c *fiber.Ctx) error {
+	userID := utils.NewType().ParseInt(c.Locals("id"))
+	examResultID := utils.NewType().ParseInt(c.Params("id"))
+	response, err := h.controller.GetExamResult(userID, examResultID)
+	if err != nil {
+		return handleError(c, err)
+	}
+	return c.Status(http.StatusOK).JSON(response)
+}

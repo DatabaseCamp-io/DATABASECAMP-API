@@ -17,6 +17,15 @@ var Exam = struct {
 	"POST",
 }
 
+type ExamResultDB struct {
+	ID               int       `gorm:"primaryKey;column:exam_result_id" json:"exam_result_id"`
+	ExamID           int       `gorm:"column:exam_id" json:"exam_id"`
+	UserID           int       `gorm:"column:user_id" json:"user_id"`
+	Score            int       `gorm:"->;column:score" json:"score"`
+	IsPassed         bool      `gorm:"column:is_passed" json:"is_passed"`
+	CreatedTimestamp time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
+}
+
 type ExamActivity struct {
 	ExamID                  int       `gorm:"column:exam_id" json:"exam_id"`
 	ExamType                string    `gorm:"column:exam_type" json:"exam_type"`
