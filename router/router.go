@@ -74,6 +74,7 @@ func (r router) setupUser(db database.IDatabase, repo repository.IUserRepository
 	{
 		group.Post("/register", userHandler.Register)
 		group.Post("/login", userHandler.Login)
+		group.Put("/profile", jwt.JwtVerify, userHandler.Edit)
 		group.Get("/info", jwt.JwtVerify, userHandler.GetInfo)
 		group.Get("/profile/:id", jwt.JwtVerify, userHandler.GetProfile)
 		group.Get("/ranking", jwt.JwtVerify, userHandler.GetUserRanking)

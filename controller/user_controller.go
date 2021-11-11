@@ -18,6 +18,7 @@ type IUserController interface {
 	Login(request models.UserRequest) (*models.UserResponse, error)
 	GetProfile(userID int) (*models.ProfileResponse, error)
 	GetRanking(id int) (interface{}, error)
+	EditProfile(userID int, request models.EditProfileRequest) (interface{}, error)
 }
 
 func NewUserController(repo repository.IUserRepository) userController {
@@ -145,4 +146,15 @@ func (c userController) GetRanking(id int) (interface{}, error) {
 	}
 
 	return result, nil
+}
+
+func (c userController) EditProfile(userID int, request models.EditProfileRequest) (interface{}, error) {
+	err := c.repo.UpdatesByID(userID, map[string]interface{}{"name": *request.Name})
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+	}
+	return map[string]interface{}{
+		"updated_name": request.Name,
+	}, nil
 }

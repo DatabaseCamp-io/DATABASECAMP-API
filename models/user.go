@@ -114,3 +114,14 @@ type CorrectedBadgeDB struct {
 	Name    int  `gorm:"column:name" json:"name"`
 	UserID  *int `gorm:"column:user_id" json:"user_id"`
 }
+
+type EditProfileRequest struct {
+	Name *string
+}
+
+func (r EditProfileRequest) Validate() error {
+	if r.Name == nil {
+		return errs.NewBadRequestError("ไม่พบชื่อในคำร้องขอ", "Name Not Found")
+	}
+	return nil
+}
