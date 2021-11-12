@@ -394,10 +394,11 @@ func (c examController) saveExamResult(userID int, preparedExam models.ExamRespo
 
 	tx.Commit()
 	tx.Close()
-
 	result := models.ExamResultOverview{
 		ExamID:           preparedExam.Exam.ID,
 		ExamResultID:     insertedExamResult.ID,
+		ExamType:         preparedExam.Exam.Type,
+		ContentGroupName: preparedExam.Exam.ContentGroupName,
 		CreatedTimestamp: insertedExamResult.CreatedTimestamp,
 		Score:            sumScore,
 		IsPassed:         isPassed,
@@ -444,20 +445,32 @@ func (c examController) CheckExam(userID int, request models.ExamAnswerRequest) 
 func (c examController) sumExamResultScore(examResults []models.ExamResultDB) int {
 	sum := 0
 	for _, v := range examResults {
-		sum = v.Score
+		sum += v.Score
 	}
 	return sum
 }
 
 func (c examController) GetExamResult(userID int, examResultID int) (*models.ExamResultOverview, error) {
+
 	examResults, err := c.userRepo.GetExamResultByID(userID, examResultID)
 	if err != nil || len(examResults) == 0 {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่พบผลการสอบ", "Exam Result Not Found")
 	}
+
+	examActivity, err := c.examRepo.GetExamActivity(examResults[0].ExamID)
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+	}
+
+	preparedExam, _ := c.prepareExam(examActivity)
+
 	result := models.ExamResultOverview{
 		ExamID:           examResults[0].ExamID,
 		ExamResultID:     examResults[0].ID,
+		ExamType:         preparedExam.Exam.Type,
+		ContentGroupName: preparedExam.Exam.ContentGroupName,
 		CreatedTimestamp: examResults[0].CreatedTimestamp,
 		Score:            c.sumExamResultScore(examResults),
 		IsPassed:         examResults[0].IsPassed,

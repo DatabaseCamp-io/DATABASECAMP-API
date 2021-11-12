@@ -241,6 +241,7 @@ func (r userRepository) GetExamResultByID(userID int, examResultID int) ([]model
 			models.TableName.ExamResult+".user_id AS user_id",
 			models.TableName.ExamResult+".is_passed AS is_passed",
 			models.TableName.ExamResult+".created_timestamp AS created_timestamp",
+
 			models.TableName.ExamResultActivity+".score AS score",
 		).
 		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
