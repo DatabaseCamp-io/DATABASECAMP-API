@@ -11,7 +11,6 @@ type learningOverviewLoader struct {
 	userRepo              repository.IUserRepository
 	OverviewDB            []models.OverviewDB
 	LearningProgressionDB []models.LearningProgressionDB
-	ActivityDB            []models.ActivityDB
 }
 
 func NewLearningOverviewLoader(learningRepo repository.ILearningRepository, userRepo repository.IUserRepository) *learningOverviewLoader {
@@ -23,26 +22,26 @@ func (l *learningOverviewLoader) Load(userID int) error {
 	var err error
 	concurrent := models.Concurrent{Wg: &wg, Err: &err}
 	wg.Add(2)
-	go l.loadOverviewAsync(&concurrent, &l.OverviewDB)
-	go l.loadLearningProgressionAsync(&concurrent, userID, &l.LearningProgressionDB)
+	go l.loadOverviewAsync(&concurrent)
+	go l.loadLearningProgressionAsync(&concurrent, userID)
 	wg.Wait()
 	return err
 }
 
-func (l *learningOverviewLoader) loadOverviewAsync(concurrent *models.Concurrent, overview *[]models.OverviewDB) {
+func (l *learningOverviewLoader) loadOverviewAsync(concurrent *models.Concurrent) {
 	defer concurrent.Wg.Done()
 	result, err := l.learningRepo.GetOverview()
 	if err != nil {
 		*concurrent.Err = err
 	}
-	*overview = append(*overview, result...)
+	l.OverviewDB = append(l.OverviewDB, result...)
 }
 
-func (l *learningOverviewLoader) loadLearningProgressionAsync(concurrent *models.Concurrent, id int, learningProgression *[]models.LearningProgressionDB) {
+func (l *learningOverviewLoader) loadLearningProgressionAsync(concurrent *models.Concurrent, id int) {
 	defer concurrent.Wg.Done()
 	result, err := l.userRepo.GetLearningProgression(id)
 	if err != nil {
 		*concurrent.Err = err
 	}
-	*learningProgression = append(*learningProgression, result...)
+	l.LearningProgressionDB = append(l.LearningProgressionDB, result...)
 }
