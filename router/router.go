@@ -72,11 +72,11 @@ func (r router) setupUser(db database.IDatabase, repo repository.IUserRepository
 	userHandler := handler.NewUserHandler(controller, jwt)
 	group := r.app.Group("user")
 	{
-		group.Post("/register", userHandler.Register)
-		group.Post("/login", userHandler.Login)
-		group.Put("/profile", jwt.JwtVerify, userHandler.Edit)
-		group.Get("/info", jwt.JwtVerify, userHandler.GetInfo)
+		group.Get("/info", jwt.JwtVerify, userHandler.GetOwnProfile)
 		group.Get("/profile/:id", jwt.JwtVerify, userHandler.GetProfile)
 		group.Get("/ranking", jwt.JwtVerify, userHandler.GetUserRanking)
+		group.Put("/profile", jwt.JwtVerify, userHandler.Edit)
+		group.Post("/register", userHandler.Register)
+		group.Post("/login", userHandler.Login)
 	}
 }

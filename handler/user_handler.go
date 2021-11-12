@@ -83,7 +83,7 @@ func (h userHandler) GetProfile(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
-func (h userHandler) GetInfo(c *fiber.Ctx) error {
+func (h userHandler) GetOwnProfile(c *fiber.Ctx) error {
 	id := c.Locals("id")
 	response, err := h.controller.GetProfile(utils.NewType().ParseInt(id))
 	if err != nil {

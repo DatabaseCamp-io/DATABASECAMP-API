@@ -19,7 +19,7 @@ type GetProfileResponse struct {
 	Name             string    `json:"name"`
 	Point            int       `json:"point"`
 	ActivityCount    int       `json:"activity_count"`
-	Badges           []BadgeDB `json:"badges"`
+	Badges           []Badge   `json:"badges"`
 	CreatedTimestamp time.Time ` json:"created_timestamp"`
 }
 

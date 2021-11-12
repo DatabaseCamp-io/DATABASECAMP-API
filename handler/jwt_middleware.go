@@ -29,16 +29,6 @@ func NewJwtMiddleware(repo repository.IUserRepository) jwtMiddleware {
 	return jwtMiddleware{repo: repo}
 }
 
-func (j jwtMiddleware) updateToken(id int, token string) error {
-	tokenExpireHour := time.Hour * utils.NewType().ParseDuration(os.Getenv("TOKEN_EXPIRE_HOUR"))
-	expiredTokenTimestamp := time.Now().Local().Add(tokenExpireHour)
-	err := j.repo.UpdatesByID(id, map[string]interface{}{
-		"access_token":            token,
-		"expired_token_timestamp": expiredTokenTimestamp,
-	})
-	return err
-}
-
 func (j jwtMiddleware) JwtSign(id int) (string, error) {
 	atClaims := jwt.MapClaims{}
 	atClaims["id"] = id
@@ -58,45 +48,6 @@ func (j jwtMiddleware) JwtSign(id int) (string, error) {
 	}
 
 	return token, nil
-}
-
-func (j jwtMiddleware) getClaims(token *jwt.Token) (jwt.MapClaims, error) {
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return claims, errs.NewForbiddenError("โทเค็นไม่ถูกต้อง", "Token Invalid")
-	} else {
-		return claims, nil
-	}
-}
-
-func (j jwtMiddleware) setClaims(c *fiber.Ctx, claims jwt.MapClaims) {
-	for k, v := range claims {
-		if k != "secret" {
-			c.Locals(k, utils.NewType().ParseString(v))
-		}
-	}
-}
-
-func (j jwtMiddleware) validUser(token string, id int) bool {
-	user, err := j.repo.GetUserByID(id)
-	if err != nil || user == (models.UserDB{}) {
-		return false
-	}
-
-	if user.AccessToken != token || user.ExpiredTokenTimestamp.Before(time.Now().Local()) {
-		return false
-	}
-
-	return true
-}
-
-func (j jwtMiddleware) jwtFromHeader(c *fiber.Ctx) (string, error) {
-	auth := c.Get("Authorization")
-	l := len("Bearer")
-	if len(auth) > l+1 && strings.EqualFold(auth[:l], "Bearer") {
-		return auth[l+1:], nil
-	}
-	return "", errs.NewBadRequestError("ไม่พบ JWT Token ในส่วนหัวของคำร้องขอ", "JWT Token Not found")
 }
 
 func (j jwtMiddleware) JwtVerify(c *fiber.Ctx) error {
@@ -137,4 +88,53 @@ func (j jwtMiddleware) JwtVerify(c *fiber.Ctx) error {
 
 	j.setClaims(c, claims)
 	return c.Next()
+}
+
+func (j jwtMiddleware) updateToken(id int, token string) error {
+	tokenExpireHour := time.Hour * utils.NewType().ParseDuration(os.Getenv("TOKEN_EXPIRE_HOUR"))
+	expiredTokenTimestamp := time.Now().Local().Add(tokenExpireHour)
+	err := j.repo.UpdatesByID(id, map[string]interface{}{
+		"access_token":            token,
+		"expired_token_timestamp": expiredTokenTimestamp,
+	})
+	return err
+}
+
+func (j jwtMiddleware) getClaims(token *jwt.Token) (jwt.MapClaims, error) {
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return claims, errs.NewForbiddenError("โทเค็นไม่ถูกต้อง", "Token Invalid")
+	} else {
+		return claims, nil
+	}
+}
+
+func (j jwtMiddleware) setClaims(c *fiber.Ctx, claims jwt.MapClaims) {
+	for k, v := range claims {
+		if k != "secret" {
+			c.Locals(k, utils.NewType().ParseString(v))
+		}
+	}
+}
+
+func (j jwtMiddleware) validUser(token string, id int) bool {
+	userDB, err := j.repo.GetUserByID(id)
+	if err != nil || userDB == (models.UserDB{}) {
+		return false
+	}
+
+	if userDB.AccessToken != token || userDB.ExpiredTokenTimestamp.Before(time.Now().Local()) {
+		return false
+	}
+
+	return true
+}
+
+func (j jwtMiddleware) jwtFromHeader(c *fiber.Ctx) (string, error) {
+	auth := c.Get("Authorization")
+	l := len("Bearer")
+	if len(auth) > l+1 && strings.EqualFold(auth[:l], "Bearer") {
+		return auth[l+1:], nil
+	}
+	return "", errs.NewBadRequestError("ไม่พบ JWT Token ในส่วนหัวของคำร้องขอ", "JWT Token Not found")
 }
