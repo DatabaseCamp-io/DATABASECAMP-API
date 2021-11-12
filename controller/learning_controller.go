@@ -396,21 +396,23 @@ func (c learningController) loadActivityAsync(concurrent *models.Concurrent, act
 }
 
 func (c learningController) prepareActivityHint(info activityInfo) *models.ActivityHint {
-	var nextHintPoint *int
+	hintRoadMap := make([]models.HintRoadMap, 0)
 	usedHint := make([]models.HintDB, 0)
 
 	for _, v := range info.activityHints {
 		if c.isUsedHint(info.userHints, v.ID) {
 			usedHint = append(usedHint, v)
-		} else if nextHintPoint == nil {
-			nextHintPoint = &v.PointReduce
 		}
+		hintRoadMap = append(hintRoadMap, models.HintRoadMap{
+			Level:       v.Level,
+			ReducePoint: v.PointReduce,
+		})
 	}
 
 	return &models.ActivityHint{
-		TotalHint:     len(info.activityHints),
-		UsedHints:     usedHint,
-		NextHintPoint: nextHintPoint,
+		TotalHint:   len(info.activityHints),
+		UsedHints:   usedHint,
+		HintRoadMap: hintRoadMap,
 	}
 }
 

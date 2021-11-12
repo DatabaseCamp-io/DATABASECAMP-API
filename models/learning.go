@@ -84,10 +84,15 @@ type OverviewInfo struct {
 	ContentExam         []ContentExamDB
 }
 
+type HintRoadMap struct {
+	Level       int `json:"level"`
+	ReducePoint int `json:"reduce_point"`
+}
+
 type ActivityHint struct {
-	TotalHint     int      `json:"total_hint"`
-	UsedHints     []HintDB `json:"used_hints"`
-	NextHintPoint *int     `json:"next_hint_point"`
+	TotalHint   int           `json:"total_hint"`
+	UsedHints   []HintDB      `json:"used_hints"`
+	HintRoadMap []HintRoadMap `json:"hint_roadmap"`
 }
 
 type ActivityResponse struct {
