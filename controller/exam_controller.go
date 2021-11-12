@@ -203,7 +203,7 @@ func (c examController) initialActivityChoiceMap(activityID int, typeID int, act
 	}
 }
 
-func (c examController) appendActivityChoice(examActivity models.ExamActivity, activityChoiceMap map[int]interface{}) {
+func (c examController) appendActivityChoice(examActivity models.ExamActivityDB, activityChoiceMap map[int]interface{}) {
 	choices := activityChoiceMap[examActivity.ActivityID]
 	if examActivity.ActivityTypeID == 1 {
 		temp := choices.([]models.MatchingChoiceDB)
@@ -233,7 +233,7 @@ func (c examController) prepareChoices(activityID int, typeID int, activityChoic
 	return nil
 }
 
-func (c examController) getChoice(examActivity models.ExamActivity) interface{} {
+func (c examController) getChoice(examActivity models.ExamActivityDB) interface{} {
 	if examActivity.ActivityTypeID == 1 {
 		choice := models.MatchingChoiceDB{}
 		utils.NewType().StructToStruct(examActivity, &choice)
@@ -253,7 +253,7 @@ func (c examController) getChoice(examActivity models.ExamActivity) interface{} 
 	}
 }
 
-func (c examController) prepareExam(examActivity []models.ExamActivity) (models.ExamResponse, map[int]interface{}) {
+func (c examController) prepareExam(examActivity []models.ExamActivityDB) (models.ExamResponse, map[int]interface{}) {
 	exam := models.ExamDB{}
 	activityChoiceMap := map[int]interface{}{}
 	activityMap := map[int]models.ActivityDB{}

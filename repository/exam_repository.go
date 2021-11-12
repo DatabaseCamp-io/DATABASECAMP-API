@@ -11,7 +11,7 @@ type examRepository struct {
 }
 
 type IExamRepository interface {
-	GetExamActivity(examID int) ([]models.ExamActivity, error)
+	GetExamActivity(examID int) ([]models.ExamActivityDB, error)
 	GetExamOverview() ([]models.ExamDB, error)
 	InsertExamResultTransaction(tx database.ITransaction, examResult models.ExamResultDB) (models.ExamResultDB, error)
 	InsertExamResultActivityTransaction(tx database.ITransaction, examResultActivity []models.ExamResultActivityDB) ([]models.ExamResultActivityDB, error)
@@ -46,8 +46,8 @@ func (r examRepository) GetExamOverview() ([]models.ExamDB, error) {
 	return exam, err
 }
 
-func (r examRepository) GetExamActivity(examID int) ([]models.ExamActivity, error) {
-	examActivity := make([]models.ExamActivity, 0)
+func (r examRepository) GetExamActivity(examID int) ([]models.ExamActivityDB, error) {
+	examActivity := make([]models.ExamActivityDB, 0)
 	err := r.database.GetDB().
 		Table(models.TableName.Exam).
 		Select(

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	loader "DatabaseCamp/controller/loaders"
 	"DatabaseCamp/database"
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
@@ -81,59 +82,59 @@ func NewLearningController(
 }
 
 func (c learningController) GetVideoLecture(id int) (*models.VideoLectureResponse, error) {
-	content, err := c.learningRepo.GetContent(id)
+	contentDB, err := c.learningRepo.GetContent(id)
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่พบเนื้อหา", "Content Not Found")
 	}
 
-	videoLink, err := c.service.GetFileLink(content.VideoPath)
+	videoLink, err := c.service.GetFileLink(contentDB.VideoPath)
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.NewServiceUnavailableError("Service ไม่พร้อมใช้งาน", "Service Unavailable")
 	}
 
 	res := models.VideoLectureResponse{
-		ContentID:   content.ID,
-		ContentName: content.Name,
+		ContentID:   contentDB.ID,
+		ContentName: contentDB.Name,
 		VideoLink:   videoLink,
 	}
 
 	return &res, nil
 }
 
-func (c learningController) loadOverviewInfo(id int) (*models.OverviewInfo, error) {
-	var wg sync.WaitGroup
-	var err error
-	overview := make([]models.OverviewDB, 0)
-	learningProgression := make([]models.LearningProgressionDB, 0)
-	exam := make([]models.ExamResultDB, 0)
-	contentExam := make([]models.ContentExamDB, 0)
+// func (c learningController) loadOverviewInfo(id int) (*models.OverviewInfo, error) {
+// 	var wg sync.WaitGroup
+// 	var err error
+// 	overview := make([]models.OverviewDB, 0)
+// 	learningProgression := make([]models.LearningProgressionDB, 0)
+// 	exam := make([]models.ExamResultDB, 0)
+// 	contentExam := make([]models.ContentExamDB, 0)
 
-	concurrent := models.Concurrent{
-		Wg:  &wg,
-		Err: &err,
-	}
+// 	concurrent := models.Concurrent{
+// 		Wg:  &wg,
+// 		Err: &err,
+// 	}
 
-	wg.Add(3)
-	go c.loadOverviewAsync(&concurrent, &overview)
-	go c.loadLearningProgressionAsync(&concurrent, &learningProgression, id)
-	go c.loadContentExamPretestAsync(&concurrent, &contentExam)
-	wg.Wait()
+// 	wg.Add(3)
+// 	go c.loadOverviewAsync(&concurrent, &overview)
+// 	go c.loadLearningProgressionAsync(&concurrent, &learningProgression, id)
+// 	go c.loadContentExamPretestAsync(&concurrent, &contentExam)
+// 	wg.Wait()
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	info := models.OverviewInfo{
-		Overview:            overview,
-		LearningProgression: learningProgression,
-		ExamResult:          exam,
-		ContentExam:         contentExam,
-	}
+// 	info := models.OverviewInfo{
+// 		Overview:            overview,
+// 		LearningProgression: learningProgression,
+// 		ExamResult:          exam,
+// 		ContentExam:         contentExam,
+// 	}
 
-	return &info, err
-}
+// 	return &info, err
+// }
 
 func (c learningController) loadOverviewAsync(concurrent *models.Concurrent, overview *[]models.OverviewDB) {
 	defer concurrent.Wg.Done()
@@ -318,7 +319,8 @@ func (c learningController) prepareOverviewResponse(info *models.OverviewInfo, d
 }
 
 func (c learningController) GetOverview(id int) (*models.OverviewResponse, error) {
-	info, err := c.loadOverviewInfo(id)
+	loader := loader.NewLearningOverviewLoader(c.learningRepo, c.userRepo)
+	err := loader.Load(id)
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
@@ -494,7 +496,7 @@ func (c learningController) getChioceAsync(concurrent *models.Concurrent, activi
 
 func (c learningController) isMatchingCorrect(choice interface{}, answer interface{}) (bool, error) {
 	matchingChoices := choice.([]models.MatchingChoiceDB)
-	_answer := answer.([]models.PairItem)
+	_answer := answer.([]models.PairItemRequest)
 	if len(matchingChoices) != len(_answer) {
 		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
 	}
@@ -508,7 +510,7 @@ func (c learningController) isMultipleCorrect(choice interface{}, answer interfa
 
 func (c learningController) isCompletionCorrect(choice interface{}, answer interface{}) (bool, error) {
 	completionChoices := choice.([]models.CompletionChoiceDB)
-	_answer := answer.([]models.PairContent)
+	_answer := answer.([]models.PairContentRequest)
 	if len(completionChoices) != len(_answer) {
 		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
 	}

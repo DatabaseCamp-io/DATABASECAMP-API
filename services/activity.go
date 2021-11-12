@@ -13,8 +13,8 @@ type IActivityManager interface {
 	PrepareMultipleChoice(multipleChoice []models.MultipleChoiceDB) interface{}
 	PrepareMatchingChoice(matchingChoice []models.MatchingChoiceDB) interface{}
 	PrepareCompletionChoice(completionChoice []models.CompletionChoiceDB) interface{}
-	IsMatchingCorrect(choices []models.MatchingChoiceDB, answer []models.PairItem)
-	IsCompletionCorrect(choices []models.CompletionChoiceDB, answer []models.PairContent)
+	IsMatchingCorrect(choices []models.MatchingChoiceDB, answer []models.PairItemRequest)
+	IsCompletionCorrect(choices []models.CompletionChoiceDB, answer []models.PairContentRequest)
 	IsMultipleCorrect(choices []models.MultipleChoiceDB, answer int)
 	IsAnswerCorrect(typeID int, choice interface{}, answer interface{}) (bool, error)
 }
@@ -71,7 +71,7 @@ func (m activityManager) PrepareCompletionChoice(completionChoice []models.Compl
 	return prepared
 }
 
-func (m activityManager) IsMatchingCorrect(choices []models.MatchingChoiceDB, answer []models.PairItem) bool {
+func (m activityManager) IsMatchingCorrect(choices []models.MatchingChoiceDB, answer []models.PairItemRequest) bool {
 	for _, correct := range choices {
 		for _, answer := range answer {
 			if (correct.PairItem1 == *answer.Item1) && (correct.PairItem2 != *answer.Item2) {
@@ -82,7 +82,7 @@ func (m activityManager) IsMatchingCorrect(choices []models.MatchingChoiceDB, an
 	return true
 }
 
-func (m activityManager) IsCompletionCorrect(choices []models.CompletionChoiceDB, answer []models.PairContent) bool {
+func (m activityManager) IsCompletionCorrect(choices []models.CompletionChoiceDB, answer []models.PairContentRequest) bool {
 	for _, correct := range choices {
 		for _, answer := range answer {
 			if (correct.ID == *answer.ID) && (correct.Content != *answer.Content) {
@@ -102,14 +102,14 @@ func (m activityManager) IsMultipleCorrect(choices []models.MultipleChoiceDB, an
 	return false
 }
 
-func (m activityManager) convertToPairItem(raw interface{}) ([]models.PairItem, error) {
-	result := make([]models.PairItem, 0)
+func (m activityManager) convertToPairItem(raw interface{}) ([]models.PairItemRequest, error) {
+	result := make([]models.PairItemRequest, 0)
 	list, ok := raw.([]interface{})
 	if !ok {
 		return nil, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
 	}
 	for _, v := range list {
-		temp := models.PairItem{}
+		temp := models.PairItemRequest{}
 		utils.NewType().StructToStruct(v, &temp)
 		err := temp.Validate()
 		if err != nil {
@@ -122,7 +122,7 @@ func (m activityManager) convertToPairItem(raw interface{}) ([]models.PairItem, 
 
 func (m activityManager) checkMatchingCorrect(choice interface{}, answer interface{}) (bool, error) {
 	matchingChoices, choiceOK := choice.([]models.MatchingChoiceDB)
-	_answer, answerOK := answer.([]models.PairItem)
+	_answer, answerOK := answer.([]models.PairItemRequest)
 	if !answerOK {
 		var err error
 		_answer, err = m.convertToPairItem(answer)
@@ -144,14 +144,14 @@ func (m activityManager) checkMultipleCorrect(choice interface{}, answer interfa
 	return m.IsMultipleCorrect(multipleChoices, utils.NewType().ParseInt(answer)), nil
 }
 
-func (m activityManager) convertToPairContent(raw interface{}) ([]models.PairContent, error) {
-	result := make([]models.PairContent, 0)
+func (m activityManager) convertToPairContent(raw interface{}) ([]models.PairContentRequest, error) {
+	result := make([]models.PairContentRequest, 0)
 	list, ok := raw.([]interface{})
 	if !ok {
 		return nil, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
 	}
 	for _, v := range list {
-		temp := models.PairContent{}
+		temp := models.PairContentRequest{}
 		utils.NewType().StructToStruct(v, &temp)
 		err := temp.Validate()
 		if err != nil {
@@ -164,7 +164,7 @@ func (m activityManager) convertToPairContent(raw interface{}) ([]models.PairCon
 
 func (m activityManager) checkCompletionCorrect(choice interface{}, answer interface{}) (bool, error) {
 	completionChoices, choiceOK := choice.([]models.CompletionChoiceDB)
-	_answer, answerOK := answer.([]models.PairContent)
+	_answer, answerOK := answer.([]models.PairContentRequest)
 	if !answerOK || !choiceOK {
 		var err error
 		_answer, err = m.convertToPairContent(answer)
