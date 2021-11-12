@@ -20,6 +20,8 @@ var Exam = struct {
 type ExamResultOverview struct {
 	ExamID           int       `json:"exam_id"`
 	ExamResultID     int       `json:"exam_result_id"`
+	ExamType         string    `json:"exam_type"`
+	ContentGroupName string    `json:"content_group_name"`
 	CreatedTimestamp time.Time `json:"created_timestamp"`
 	Score            int       `json:"score"`
 	IsPassed         bool      `json:"is_passed"`
