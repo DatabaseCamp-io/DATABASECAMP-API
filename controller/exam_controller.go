@@ -96,7 +96,7 @@ func (c examController) countExamScore(examResults []models.ExamResultDB) map[in
 
 func (c examController) canDoFianlExam(info examOverviewInfo) bool {
 	for _, v := range info.correctedBadge {
-		if v.UserID == nil {
+		if v.UserID == nil && v.BadgeID != 3 {
 			return false
 		}
 	}
