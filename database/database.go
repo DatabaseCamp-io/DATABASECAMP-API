@@ -27,7 +27,7 @@ func New() *db {
 	return instantiated
 }
 
-func (database db) getDSN() string {
+func getDSN() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		os.Getenv("DB_USERNAME"),
 		os.Getenv("DB_PASSWORD"),
@@ -39,7 +39,7 @@ func (database db) getDSN() string {
 
 func (database *db) OpenConnection() error {
 	var err error
-	dsn := database.getDSN()
+	dsn := getDSN()
 	sql := mysql.Open(dsn)
 	database.db, err = gorm.Open(sql)
 	return err

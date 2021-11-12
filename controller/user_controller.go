@@ -17,6 +17,8 @@ type IUserController interface {
 	Register(request models.UserRequest) (*models.UserResponse, error)
 	Login(request models.UserRequest) (*models.UserResponse, error)
 	GetProfile(userID int) (*models.ProfileResponse, error)
+	GetRanking(id int) (interface{}, error)
+	EditProfile(userID int, request models.EditProfileRequest) (interface{}, error)
 }
 
 func NewUserController(repo repository.IUserRepository) userController {
@@ -93,7 +95,7 @@ func (c userController) GetProfile(id int) (*models.ProfileResponse, error) {
 	return &response, nil
 }
 
-func (c userController) calculateUserBadge(allBadge []models.Badge, userBadgeGain []models.UserBadgeIDPair) []models.Badge {
+func (c userController) calculateUserBadge(allBadge []models.BadgeDB, userBadgeGain []models.UserBadgeIDPair) []models.BadgeDB {
 	for i, v := range allBadge {
 		allBadge[i].IsCollect = c.isCollectBadge(v.ID, userBadgeGain)
 	}
@@ -109,22 +111,50 @@ func (c userController) isCollectBadge(badgeID int, userBadgeGain []models.UserB
 	return false
 }
 
-func (c userController) GetUserRanking(id int) (*models.PointRanking, error) {
-	response := models.PointRanking{}
+func (c userController) getUserRanking(id int) (*models.PointRanking, error) {
 	user, err := c.repo.UserPointranking(id)
 	if err != nil || user == nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่พบผู้ใช้", "Profile Not Found")
 	}
-	return &response, nil
+	return user, nil
 }
 
-func (c userController) GetLeaderBoard() ([]models.PointRanking, error) {
-	response := make([]models.PointRanking, 0)
+func (c userController) getLeaderBoard() ([]models.PointRanking, error) {
 	ranking, err := c.repo.GetAllPointranking()
 	if err != nil || ranking == nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่มีตารางคะแนน", "LeaderBoard Not Found")
 	}
-	return response, nil
+	return ranking, nil
+}
+
+func (c userController) GetRanking(id int) (interface{}, error) {
+	userRanking, err := c.getUserRanking(id)
+	if err != nil {
+		return nil, err
+	}
+
+	leaderBoard, err := c.getLeaderBoard()
+	if err != nil {
+		return nil, err
+	}
+
+	result := map[string]interface{}{
+		"user_ranking": userRanking,
+		"leader_board": leaderBoard,
+	}
+
+	return result, nil
+}
+
+func (c userController) EditProfile(userID int, request models.EditProfileRequest) (interface{}, error) {
+	err := c.repo.UpdatesByID(userID, map[string]interface{}{"name": *request.Name})
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+	}
+	return map[string]interface{}{
+		"updated_name": request.Name,
+	}, nil
 }

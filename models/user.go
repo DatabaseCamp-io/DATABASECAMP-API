@@ -6,6 +6,16 @@ import (
 	"time"
 )
 
+type ChangePointMode string
+
+var Mode = struct {
+	Add    ChangePointMode
+	Reduce ChangePointMode
+}{
+	"+",
+	"-",
+}
+
 type User struct {
 	ID                    int       `gorm:"primaryKey;column:user_id" json:"user_id"`
 	Name                  string    `gorm:"column:name" json:"name"`
@@ -63,11 +73,16 @@ type ProfileResponse struct {
 	Name             string    `json:"name"`
 	Point            int       `json:"point"`
 	ActivityCount    int       `json:"activity_count"`
-	Badges           []Badge   `json:"badges"`
+	Badges           []BadgeDB `json:"badges"`
 	CreatedTimestamp time.Time ` json:"created_timestamp"`
 }
 
-type Badge struct {
+type UserBadgeDB struct {
+	UserID  int `gorm:"primaryKey;column:user_id" json:"user_id"`
+	BadgeID int `gorm:"primaryKey;column:badge_id" json:"badge_id"`
+}
+
+type BadgeDB struct {
 	ID        int    `gorm:"primaryKey;column:badge_id" json:"badge_id"`
 	ImagePath string `gorm:"column:icon_path" json:"icon_path"`
 	Name      string `gorm:"column:name" json:"name"`
@@ -92,4 +107,21 @@ type PointRanking struct {
 	Name    string `gorm:"column:name" json:"name"`
 	Point   int    `gorm:"column:point" json:"point"`
 	Ranking int    `gorm:"column:ranking" json:"ranking"`
+}
+
+type CorrectedBadgeDB struct {
+	BadgeID int  `gorm:"column:badge_id" json:"badge_id"`
+	Name    int  `gorm:"column:name" json:"name"`
+	UserID  *int `gorm:"column:user_id" json:"user_id"`
+}
+
+type EditProfileRequest struct {
+	Name *string
+}
+
+func (r EditProfileRequest) Validate() error {
+	if r.Name == nil {
+		return errs.NewBadRequestError("ไม่พบชื่อในคำร้องขอ", "Name Not Found")
+	}
+	return nil
 }

@@ -30,6 +30,21 @@ func (r router) init() {
 	jwt := handler.NewJwtMiddleware(userRepo)
 	r.setupLearning(db, userRepo, jwt)
 	r.setupUser(db, userRepo, jwt)
+	r.setupExam(db, userRepo, jwt)
+}
+
+func (r router) setupExam(db database.IDatabase, userRepo repository.IUserRepository, jwt handler.IJwt) {
+	repo := repository.NewExamRepository(db)
+	controller := controller.NewExamController(repo, userRepo)
+	examHandler := handler.NewExamHandler(controller)
+	group := r.app.Group("exam")
+	group.Use(jwt.JwtVerify)
+	{
+		group.Get("/proposition/:id", examHandler.GetExam)
+		group.Get("/overview", examHandler.GetExamOverview)
+		group.Get("/result/:id", examHandler.GetExamResult)
+		group.Post("/check", examHandler.CheckExam)
+	}
 }
 
 func (r router) setupLearning(db database.IDatabase, userRepo repository.IUserRepository, jwt handler.IJwt) {
@@ -43,6 +58,12 @@ func (r router) setupLearning(db database.IDatabase, userRepo repository.IUserRe
 	{
 		group.Get("/video/:id", learningHandler.GetVideo)
 		group.Get("/overview", learningHandler.GetOverview)
+		group.Get("/content/roadmap/:id", learningHandler.GetContentRoadmap)
+		group.Get("/activity/:id", learningHandler.GetActivity)
+		group.Post("/activity/hint/:id", learningHandler.UseHint)
+		group.Post("/activity/matching/check-answer", learningHandler.CheckMatchingAnswer)
+		group.Post("/activity/multiple/check-answer", learningHandler.CheckMultipleAnswer)
+		group.Post("/activity/completion/check-answer", learningHandler.CheckCompletionAnswer)
 	}
 }
 
@@ -53,7 +74,9 @@ func (r router) setupUser(db database.IDatabase, repo repository.IUserRepository
 	{
 		group.Post("/register", userHandler.Register)
 		group.Post("/login", userHandler.Login)
+		group.Put("/profile", jwt.JwtVerify, userHandler.Edit)
 		group.Get("/info", jwt.JwtVerify, userHandler.GetInfo)
 		group.Get("/profile/:id", jwt.JwtVerify, userHandler.GetProfile)
+		group.Get("/ranking", jwt.JwtVerify, userHandler.GetUserRanking)
 	}
 }

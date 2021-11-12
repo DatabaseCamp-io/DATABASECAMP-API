@@ -13,6 +13,12 @@ type ILearningRepository interface {
 	GetContent(id int) (*models.ContentDB, error)
 	GetOverview() ([]models.OverviewDB, error)
 	GetContentExam(examType models.ExamType) ([]models.ContentExamDB, error)
+	GetActivity(id int) (*models.ActivityDB, error)
+	GetMatchingChoice(activityID int) ([]models.MatchingChoiceDB, error)
+	GetMultipleChoice(activityID int) ([]models.MultipleChoiceDB, error)
+	GetCompletionChoice(activityID int) ([]models.CompletionChoiceDB, error)
+	GetActivityHints(activityID int) ([]models.HintDB, error)
+	GetContentActivity(contentID int) ([]models.ActivityDB, error)
 }
 
 func NewLearningRepository(db database.IDatabase) learningRepository {
@@ -61,4 +67,77 @@ func (r learningRepository) GetContentExam(examType models.ExamType) ([]models.C
 		Find(&contentExam).
 		Error
 	return contentExam, err
+}
+
+func (r learningRepository) GetContentActivity(contentID int) ([]models.ActivityDB, error) {
+	activity := make([]models.ActivityDB, 0)
+
+	err := r.database.GetDB().
+		Table(models.TableName.Activity).
+		Where(models.IDName.Content+" = ?", contentID).
+		Find(&activity).
+		Error
+
+	return activity, err
+}
+
+func (r learningRepository) GetActivity(id int) (*models.ActivityDB, error) {
+	activity := models.ActivityDB{}
+
+	err := r.database.GetDB().
+		Table(models.TableName.Activity).
+		Where(models.IDName.Activity+" = ?", id).
+		Find(&activity).
+		Error
+
+	return &activity, err
+}
+
+func (r learningRepository) GetMatchingChoice(activityID int) ([]models.MatchingChoiceDB, error) {
+	matchingChoice := make([]models.MatchingChoiceDB, 0)
+
+	err := r.database.GetDB().
+		Table(models.TableName.MatchingChoice).
+		Where(models.IDName.Activity+" = ?", activityID).
+		Find(&matchingChoice).
+		Error
+
+	return matchingChoice, err
+}
+
+func (r learningRepository) GetMultipleChoice(activityID int) ([]models.MultipleChoiceDB, error) {
+	multipleChoice := make([]models.MultipleChoiceDB, 0)
+
+	err := r.database.GetDB().
+		Table(models.TableName.MultipleChoice).
+		Where(models.IDName.Activity+" = ?", activityID).
+		Find(&multipleChoice).
+		Error
+
+	return multipleChoice, err
+}
+
+func (r learningRepository) GetCompletionChoice(activityID int) ([]models.CompletionChoiceDB, error) {
+	completionChoice := make([]models.CompletionChoiceDB, 0)
+
+	err := r.database.GetDB().
+		Table(models.TableName.CompletionChoice).
+		Where(models.IDName.Activity+" = ?", activityID).
+		Find(&completionChoice).
+		Error
+
+	return completionChoice, err
+}
+
+func (r learningRepository) GetActivityHints(activityID int) ([]models.HintDB, error) {
+	hints := make([]models.HintDB, 0)
+
+	err := r.database.GetDB().
+		Table(models.TableName.Hint).
+		Where(models.IDName.Activity+" = ?", activityID).
+		Order("level ASC").
+		Find(&hints).
+		Error
+
+	return hints, err
 }
