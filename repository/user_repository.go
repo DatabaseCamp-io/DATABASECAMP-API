@@ -11,49 +11,42 @@ type userRepository struct {
 	database database.IDatabase
 }
 
-type IUserRepository interface {
-	Insert(user models.UserDB) (int, error)
+type IUserReader interface {
 	GetUserByEmail(email string) (models.UserDB, error)
 	GetUserByID(id int) (models.UserDB, error)
 	GetProfile(id int) (*models.ProfileDB, error)
 	GetLearningProgression(id int) ([]models.LearningProgressionDB, error)
-	GetFailedExam(id int) ([]models.ExamResultDB, error)
 	GetAllBadge() ([]models.BadgeDB, error)
-	UpdatesByID(id int, updateData map[string]interface{}) error
-	GetUserBadgeIDPair(id int) ([]models.UserBadgeDB, error)
-	GetAllPointranking() ([]models.RankingDB, error)
-	UserPointranking(id int) (*models.RankingDB, error)
-	GetUserHint(userID int, activityID int) ([]models.UserHintDB, error)
-	InsertUserHint(userHint models.UserHintDB) (*models.UserHintDB, error)
-	InsertUserHintTransaction(tx database.ITransaction, userHint models.UserHintDB) (*models.UserHintDB, error)
-	InsertLearningProgressionTransaction(tx database.ITransaction, progression models.LearningProgressionDB) (*models.LearningProgressionDB, error)
-	ChangePointTransaction(tx database.ITransaction, userID int, point int, mode models.ChangePointMode) error
+	GetUserBadge(id int) ([]models.UserBadgeDB, error)
 	GetCollectedBadge(userID int) ([]models.CorrectedBadgeDB, error)
+	GetPointRanking(id int) (*models.RankingDB, error)
+	GetRankingLeaderBoard() ([]models.RankingDB, error)
+	GetUserHint(userID int, activityID int) ([]models.UserHintDB, error)
 	GetExamResult(userID int) ([]models.ExamResultDB, error)
 	GetExamResultByID(userID int, examResultID int) ([]models.ExamResultDB, error)
-	InsertUserBadgeTransaction(tx database.ITransaction, userBadge models.UserBadgeDB) (models.UserBadgeDB, error)
+}
+
+type IUserWriter interface {
+	InsertUser(user models.UserDB) (*models.UserDB, error)
+	InsertUserHint(userHint models.UserHintDB) (*models.UserHintDB, error)
+	UpdatesByID(id int, updateData map[string]interface{}) error
+}
+
+type IUserTransaction interface {
+	InsertUserHintTransaction(tx database.ITransaction, userHint models.UserHintDB) (*models.UserHintDB, error)
+	InsertLearningProgressionTransaction(tx database.ITransaction, progression models.LearningProgressionDB) (*models.LearningProgressionDB, error)
+	InsertUserBadgeTransaction(tx database.ITransaction, userBadge models.UserBadgeDB) (*models.UserBadgeDB, error)
+	ChangePointTransaction(tx database.ITransaction, userID int, point int, mode models.ChangePointMode) error
+}
+
+type IUserRepository interface {
+	IUserReader
+	IUserWriter
+	IUserTransaction
 }
 
 func NewUserRepository(db database.IDatabase) userRepository {
 	return userRepository{database: db}
-}
-
-func (r userRepository) Insert(user models.UserDB) (int, error) {
-	err := r.database.GetDB().
-		Table(models.TableName.User).
-		Create(&user).
-		Error
-	return user.ID, err
-}
-
-func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) error {
-	err := r.database.GetDB().
-		Table(models.TableName.User).
-		Select("", utils.NewHelper().GetKeyList(updateData)).
-		Where(models.IDName.User+" = ?", id).
-		Updates(updateData).
-		Error
-	return err
 }
 
 func (r userRepository) GetUserByEmail(email string) (models.UserDB, error) {
@@ -100,17 +93,6 @@ func (r userRepository) GetLearningProgression(id int) ([]models.LearningProgres
 	return learningProgrogression, err
 }
 
-func (r userRepository) GetFailedExam(id int) ([]models.ExamResultDB, error) {
-	exam := make([]models.ExamResultDB, 0)
-	err := r.database.GetDB().
-		Table(models.TableName.ExamResult).
-		Where(models.IDName.User+" = ? AND is_passed = false", id).
-		Find(&exam).
-		Error
-
-	return exam, err
-}
-
 func (r userRepository) GetAllBadge() ([]models.BadgeDB, error) {
 	badge := make([]models.BadgeDB, 0)
 	err := r.database.GetDB().
@@ -120,7 +102,7 @@ func (r userRepository) GetAllBadge() ([]models.BadgeDB, error) {
 	return badge, err
 }
 
-func (r userRepository) GetUserBadgeIDPair(id int) ([]models.UserBadgeDB, error) {
+func (r userRepository) GetUserBadge(id int) ([]models.UserBadgeDB, error) {
 	badgePair := make([]models.UserBadgeDB, 0)
 	err := r.database.GetDB().
 		Table(models.TableName.UserBadge).
@@ -128,83 +110,6 @@ func (r userRepository) GetUserBadgeIDPair(id int) ([]models.UserBadgeDB, error)
 		Find(&badgePair).
 		Error
 	return badgePair, err
-}
-
-func (r userRepository) GetAllPointranking() ([]models.RankingDB, error) {
-	ranking := make([]models.RankingDB, 0)
-	err := r.database.GetDB().
-		Table(models.ViewName.Ranking).
-		Limit(20).
-		Order("ranking ASC").
-		Order("name ASC").
-		Find(&ranking).
-		Error
-	return ranking, err
-}
-
-func (r userRepository) UserPointranking(id int) (*models.RankingDB, error) {
-	ranking := models.RankingDB{}
-	err := r.database.GetDB().
-		Table(models.ViewName.Ranking).
-		Where(models.IDName.User+" = ?", id).
-		Find(&ranking).
-		Error
-	return &ranking, err
-}
-
-func (r userRepository) GetUserHint(userID int, activityID int) ([]models.UserHintDB, error) {
-	userhint := make([]models.UserHintDB, 0)
-
-	hintSubquery := r.database.GetDB().
-		Select("hint_id").
-		Table(models.TableName.Hint).
-		Where(models.IDName.Activity+" = ?", activityID)
-
-	err := r.database.GetDB().
-		Table(models.TableName.UserHint).
-		Where(models.IDName.Hint+" IN (?)", hintSubquery).
-		Where(models.IDName.User+" = ?", userID).
-		Find(&userhint).
-		Error
-
-	return userhint, err
-}
-
-func (r userRepository) InsertUserHint(userHint models.UserHintDB) (*models.UserHintDB, error) {
-	err := r.database.GetDB().
-		Table(models.TableName.UserHint).
-		Create(&userHint).
-		Error
-	return &userHint, err
-}
-
-func (r userRepository) InsertUserHintTransaction(tx database.ITransaction, userHint models.UserHintDB) (*models.UserHintDB, error) {
-	err := tx.GetDB().
-		Table(models.TableName.UserHint).
-		Create(&userHint).
-		Error
-	return &userHint, err
-}
-
-func (r userRepository) InsertLearningProgressionTransaction(tx database.ITransaction, progression models.LearningProgressionDB) (*models.LearningProgressionDB, error) {
-	err := tx.GetDB().
-		Table(models.TableName.LearningProgression).
-		Create(&progression).
-		Error
-	return &progression, err
-}
-
-func (r userRepository) ChangePointTransaction(tx database.ITransaction, userID int, point int, mode models.ChangePointMode) error {
-	statement := fmt.Sprintf("UPDATE %s SET point = point %s %d WHERE %s = %d",
-		models.TableName.User,
-		mode,
-		point,
-		models.IDName.User,
-		userID,
-	)
-	temp := map[string]interface{}{}
-	err := tx.GetDB().Raw(statement).Find(&temp).Error
-	return err
 }
 
 func (r userRepository) GetCollectedBadge(userID int) ([]models.CorrectedBadgeDB, error) {
@@ -229,6 +134,71 @@ func (r userRepository) GetCollectedBadge(userID int) ([]models.CorrectedBadgeDB
 		Find(&correctedBadge).
 		Error
 	return correctedBadge, err
+}
+
+func (r userRepository) GetPointRanking(id int) (*models.RankingDB, error) {
+	ranking := models.RankingDB{}
+	err := r.database.GetDB().
+		Table(models.ViewName.Ranking).
+		Where(models.IDName.User+" = ?", id).
+		Find(&ranking).
+		Error
+	return &ranking, err
+}
+
+func (r userRepository) GetRankingLeaderBoard() ([]models.RankingDB, error) {
+	ranking := make([]models.RankingDB, 0)
+	err := r.database.GetDB().
+		Table(models.ViewName.Ranking).
+		Limit(20).
+		Order("ranking ASC").
+		Order("name ASC").
+		Find(&ranking).
+		Error
+	return ranking, err
+}
+
+func (r userRepository) GetUserHint(userID int, activityID int) ([]models.UserHintDB, error) {
+	userhint := make([]models.UserHintDB, 0)
+
+	hintSubquery := r.database.GetDB().
+		Select("hint_id").
+		Table(models.TableName.Hint).
+		Where(models.IDName.Activity+" = ?", activityID)
+
+	err := r.database.GetDB().
+		Table(models.TableName.UserHint).
+		Where(models.IDName.Hint+" IN (?)", hintSubquery).
+		Where(models.IDName.User+" = ?", userID).
+		Find(&userhint).
+		Error
+
+	return userhint, err
+}
+
+func (r userRepository) GetExamResult(userID int) ([]models.ExamResultDB, error) {
+	examResults := make([]models.ExamResultDB, 0)
+	err := r.database.GetDB().
+		Table(models.TableName.ExamResult).
+		Select(
+			models.TableName.ExamResult+".exam_result_id AS exam_result_id",
+			models.TableName.ExamResult+".exam_id AS exam_id",
+			models.TableName.ExamResult+".user_id AS user_id",
+			models.TableName.ExamResult+".is_passed AS is_passed",
+			models.TableName.ExamResult+".created_timestamp AS created_timestamp",
+			models.TableName.ExamResultActivity+".score AS score",
+		).
+		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
+			models.TableName.ExamResultActivity,
+			models.TableName.ExamResultActivity,
+			models.IDName.ExamResult,
+			models.TableName.ExamResult,
+			models.IDName.ExamResult,
+		)).
+		Where(models.IDName.User+" = ?", userID).
+		Find(&examResults).
+		Error
+	return examResults, err
 }
 
 func (r userRepository) GetExamResultByID(userID int, examResultID int) ([]models.ExamResultDB, error) {
@@ -257,35 +227,65 @@ func (r userRepository) GetExamResultByID(userID int, examResultID int) ([]model
 	return examResults, err
 }
 
-func (r userRepository) GetExamResult(userID int) ([]models.ExamResultDB, error) {
-	examResults := make([]models.ExamResultDB, 0)
+func (r userRepository) InsertUser(user models.UserDB) (*models.UserDB, error) {
 	err := r.database.GetDB().
-		Table(models.TableName.ExamResult).
-		Select(
-			models.TableName.ExamResult+".exam_result_id AS exam_result_id",
-			models.TableName.ExamResult+".exam_id AS exam_id",
-			models.TableName.ExamResult+".user_id AS user_id",
-			models.TableName.ExamResult+".is_passed AS is_passed",
-			models.TableName.ExamResult+".created_timestamp AS created_timestamp",
-			models.TableName.ExamResultActivity+".score AS score",
-		).
-		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
-			models.TableName.ExamResultActivity,
-			models.TableName.ExamResultActivity,
-			models.IDName.ExamResult,
-			models.TableName.ExamResult,
-			models.IDName.ExamResult,
-		)).
-		Where(models.IDName.User+" = ?", userID).
-		Find(&examResults).
+		Table(models.TableName.User).
+		Create(&user).
 		Error
-	return examResults, err
+	return &user, err
 }
 
-func (r userRepository) InsertUserBadgeTransaction(tx database.ITransaction, userBadge models.UserBadgeDB) (models.UserBadgeDB, error) {
+func (r userRepository) InsertUserHint(userHint models.UserHintDB) (*models.UserHintDB, error) {
+	err := r.database.GetDB().
+		Table(models.TableName.UserHint).
+		Create(&userHint).
+		Error
+	return &userHint, err
+}
+
+func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) error {
+	err := r.database.GetDB().
+		Table(models.TableName.User).
+		Select("", utils.NewHelper().GetKeyList(updateData)).
+		Where(models.IDName.User+" = ?", id).
+		Updates(updateData).
+		Error
+	return err
+}
+
+func (r userRepository) InsertUserHintTransaction(tx database.ITransaction, userHint models.UserHintDB) (*models.UserHintDB, error) {
+	err := tx.GetDB().
+		Table(models.TableName.UserHint).
+		Create(&userHint).
+		Error
+	return &userHint, err
+}
+
+func (r userRepository) InsertLearningProgressionTransaction(tx database.ITransaction, progression models.LearningProgressionDB) (*models.LearningProgressionDB, error) {
+	err := tx.GetDB().
+		Table(models.TableName.LearningProgression).
+		Create(&progression).
+		Error
+	return &progression, err
+}
+
+func (r userRepository) InsertUserBadgeTransaction(tx database.ITransaction, userBadge models.UserBadgeDB) (*models.UserBadgeDB, error) {
 	err := tx.GetDB().
 		Table(models.TableName.UserBadge).
 		Create(&userBadge).
 		Error
-	return userBadge, err
+	return &userBadge, err
+}
+
+func (r userRepository) ChangePointTransaction(tx database.ITransaction, userID int, point int, mode models.ChangePointMode) error {
+	statement := fmt.Sprintf("UPDATE %s SET point = point %s %d WHERE %s = %d",
+		models.TableName.User,
+		mode,
+		point,
+		models.IDName.User,
+		userID,
+	)
+	temp := map[string]interface{}{}
+	err := tx.GetDB().Raw(statement).Find(&temp).Error
+	return err
 }

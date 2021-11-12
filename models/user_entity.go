@@ -17,8 +17,8 @@ var Mode = struct {
 	"-",
 }
 
-// CorrectedBadge data class
-type CorrectedBadge struct {
+// Badge data class
+type Badge struct {
 	ID        int    `json:"badge_id"`
 	ImagePath string `json:"icon_path"`
 	Name      string `json:"name"`
@@ -27,18 +27,18 @@ type CorrectedBadge struct {
 
 // User Class
 type User struct {
-	ID                    int              `json:"user_id"`
-	Name                  string           `json:"name"`
-	Email                 string           `json:"email"`
-	Password              string           `json:"password"`
-	AccessToken           string           `json:"access_token"`
-	Point                 int              `json:"point"`
-	ActivityCount         int              `json:"activity_count"`
-	Ranking               int              `json:"ranking"`
-	Badges                []CorrectedBadge `json:"badges"`
-	ExpiredTokenTimestamp time.Time        `json:"expired_token_timestamp"`
-	CreatedTimestamp      time.Time        `json:"created_timestamp"`
-	UpdatedTimestamp      time.Time        `json:"updated_timestamp"`
+	ID                    int       `json:"user_id"`
+	Name                  string    `json:"name"`
+	Email                 string    `json:"email"`
+	Password              string    `json:"password"`
+	AccessToken           string    `json:"access_token"`
+	Point                 int       `json:"point"`
+	ActivityCount         int       `json:"activity_count"`
+	Ranking               int       `json:"ranking"`
+	Badges                []Badge   `json:"badges"`
+	ExpiredTokenTimestamp time.Time `json:"expired_token_timestamp"`
+	CreatedTimestamp      time.Time `json:"created_timestamp"`
+	UpdatedTimestamp      time.Time `json:"updated_timestamp"`
 }
 
 // New user by any request type
@@ -60,7 +60,7 @@ func NewUserByRequest(request UserRequest) User {
 // Setter for set corrected badge
 func (u *User) SetCorrectedBadges(allBadgesDB []BadgeDB, correctedBadgesDB []UserBadgeDB) {
 	for _, badgeDB := range allBadgesDB {
-		u.Badges = append(u.Badges, CorrectedBadge{
+		u.Badges = append(u.Badges, Badge{
 			ID:        badgeDB.ID,
 			ImagePath: badgeDB.ImagePath,
 			Name:      badgeDB.Name,

@@ -25,9 +25,8 @@ func NewUserController(repo repository.IUserRepository) userController {
 }
 
 func (c userController) Register(request models.UserRequest) (*models.UserResponse, error) {
-	var err error
 	user := models.NewUserByRequest(request)
-	user.ID, err = c.repo.Insert(user.ToDB())
+	userDB, err := c.repo.InsertUser(user.ToDB())
 	if err != nil {
 		logs.New().Error(err)
 		if utils.NewHelper().IsSqlDuplicateError(err) {
@@ -36,6 +35,7 @@ func (c userController) Register(request models.UserRequest) (*models.UserRespon
 			return nil, errs.NewInternalServerError("ลงทะเบียนไม่สำเร็จ", "Register Failed")
 		}
 	}
+	user.ID = userDB.ID
 	response := user.ToUserResponse()
 	return &response, nil
 }
@@ -62,7 +62,7 @@ func (c userController) GetProfile(id int) (*models.GetProfileResponse, error) {
 		logs.New().Error(err)
 		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
 	}
-	userBadgeGain, err := c.repo.GetUserBadgeIDPair(id)
+	userBadgeGain, err := c.repo.GetUserBadge(id)
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
@@ -100,7 +100,7 @@ func (c userController) GetRanking(userID int) (*models.RankingResponse, error) 
 }
 
 func (c userController) getUserRanking(id int) (*models.RankingDB, error) {
-	user, err := c.repo.UserPointranking(id)
+	user, err := c.repo.GetPointRanking(id)
 	if err != nil || user == nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่พบผู้ใช้", "Profile Not Found")
@@ -109,7 +109,7 @@ func (c userController) getUserRanking(id int) (*models.RankingDB, error) {
 }
 
 func (c userController) getLeaderBoard() ([]models.RankingDB, error) {
-	ranking, err := c.repo.GetAllPointranking()
+	ranking, err := c.repo.GetRankingLeaderBoard()
 	if err != nil || ranking == nil {
 		logs.New().Error(err)
 		return nil, errs.NewNotFoundError("ไม่มีตารางคะแนน", "LeaderBoard Not Found")

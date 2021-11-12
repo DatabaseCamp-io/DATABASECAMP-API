@@ -115,10 +115,9 @@ func (c learningController) loadOverviewInfo(id int) (*models.OverviewInfo, erro
 		Err: &err,
 	}
 
-	wg.Add(4)
+	wg.Add(3)
 	go c.loadOverviewAsync(&concurrent, &overview)
 	go c.loadLearningProgressionAsync(&concurrent, &learningProgression, id)
-	go c.loadFailedExamAsync(&concurrent, &exam, id)
 	go c.loadContentExamPretestAsync(&concurrent, &contentExam)
 	wg.Wait()
 
@@ -161,15 +160,6 @@ func (c learningController) loadLearningProgressionAsync(concurrent *models.Conc
 		*concurrent.Err = err
 	}
 	*learningProgression = append(*learningProgression, result...)
-}
-
-func (c learningController) loadFailedExamAsync(concurrent *models.Concurrent, exam *[]models.ExamResultDB, id int) {
-	defer concurrent.Wg.Done()
-	result, err := c.userRepo.GetFailedExam(id)
-	if err != nil {
-		*concurrent.Err = err
-	}
-	*exam = append(*exam, result...)
 }
 
 func (c learningController) loadContentExamPretestAsync(concurrent *models.Concurrent, contentExamDB *[]models.ContentExamDB) {
