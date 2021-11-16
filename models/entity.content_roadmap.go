@@ -26,6 +26,8 @@ func (c *contentRoadmap) ToResponse() *ContentRoadmapResponse {
 }
 
 func (c *contentRoadmap) Prepare(contentDB ContentDB, contentActivitiesDB []ActivityDB, learningProgressionDB []LearningProgressionDB) {
+	c.ContentID = contentDB.ID
+	c.ContentName = contentDB.Name
 	for _, activity := range contentActivitiesDB {
 		isLearned := c.isLearnedActivity(learningProgressionDB, activity.ID)
 		c.Items = append(c.Items, contentRoadmapItem{

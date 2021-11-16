@@ -94,7 +94,7 @@ func (e *exam) ToResponse() *ExamResponse {
 	for _, activity := range e.Activities {
 		activitiesResponse = append(activitiesResponse, ActivityResponse{
 			Activity: activity.Info,
-			Choices:  activity.Choices,
+			Choices:  activity.PropositionChoices,
 		})
 	}
 	response := ExamResponse{

@@ -11,10 +11,9 @@ type hintRoadMap struct {
 }
 
 type activityHint struct {
-	TotalHint     int           `json:"total_hint"`
-	UsedHints     []HintDB      `json:"used_hints"`
-	NextHintPoint *int          `json:"next_hint_point"`
-	HintRoadMap   []hintRoadMap `json:"hint_roadmap"`
+	TotalHint   int           `json:"total_hint"`
+	UsedHints   []HintDB      `json:"used_hints"`
+	HintRoadMap []hintRoadMap `json:"hint_roadmap"`
 }
 
 type activityDetail struct {
@@ -28,9 +27,10 @@ type activityDetail struct {
 }
 
 type activity struct {
-	Info    activityDetail `json:"activity"`
-	Choices interface{}    `json:"choice"`
-	Hint    *activityHint  `json:"hint"`
+	Info               activityDetail `json:"activity"`
+	PropositionChoices interface{}    `json:"proposition_choices"`
+	Choices            interface{}    `json:"choices"`
+	Hint               *activityHint  `json:"hint"`
 }
 
 func NewActivity() *activity {
@@ -40,7 +40,7 @@ func NewActivity() *activity {
 func (a *activity) ToPropositionResponse() *ActivityResponse {
 	response := ActivityResponse{
 		Activity: a.Info,
-		Choices:  a.Choices,
+		Choices:  a.PropositionChoices,
 		Hint:     *a.Hint,
 	}
 	return &response
@@ -60,18 +60,22 @@ func (a *activity) PrepareActivity(activityDB ActivityDB) {
 }
 
 func (a *activity) PrepareChoicesByChoiceDB(choiceDB interface{}) {
+	a.Choices = choiceDB
 	if a.Info.TypeID == 1 {
-		a.Choices = a.PrepareMatchingChoice(choiceDB.([]MatchingChoiceDB))
+		a.PropositionChoices = a.PrepareMatchingChoice(choiceDB.([]MatchingChoiceDB))
 	} else if a.Info.TypeID == 2 {
-		a.Choices = a.PrepareMultipleChoice(choiceDB.([]MultipleChoiceDB))
+		a.PropositionChoices = a.PrepareMultipleChoice(choiceDB.([]MultipleChoiceDB))
 	} else if a.Info.TypeID == 3 {
-		a.Choices = a.PrepareCompletionChoice(choiceDB.([]CompletionChoiceDB))
+		a.PropositionChoices = a.PrepareCompletionChoice(choiceDB.([]CompletionChoiceDB))
 	} else {
-		a.Choices = nil
+		a.PropositionChoices = nil
 	}
 }
 
 func (a *activity) PrepareHint(activityHints []HintDB, userHintsDB []UserHintDB) {
+	a.Hint = &activityHint{
+		TotalHint: len(activityHints),
+	}
 	for _, hint := range activityHints {
 		if a.isUsedHint(userHintsDB, hint.ID) {
 			a.Hint.UsedHints = append(a.Hint.UsedHints, hint)
