@@ -9,6 +9,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
 )
 
@@ -35,7 +36,7 @@ func setupFiber() error {
 	app := fiber.New(getConfig())
 
 	app.Use(cors.New())
-	//app.Use(recover.New())
+	app.Use(recover.New())
 
 	router.New(app)
 	err := app.Listen(":" + os.Getenv("PORT"))
