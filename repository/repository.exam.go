@@ -10,11 +10,19 @@ type examRepository struct {
 	database database.IDatabase
 }
 
-type IExamRepository interface {
+type IExamReader interface {
 	GetExamActivity(examID int) ([]models.ExamActivityDB, error)
 	GetExamOverview() ([]models.ExamDB, error)
+}
+
+type IExamTransaction interface {
 	InsertExamResultTransaction(tx database.ITransaction, examResult models.ExamResultDB) (models.ExamResultDB, error)
 	InsertExamResultActivityTransaction(tx database.ITransaction, examResultActivity []models.ExamResultActivityDB) ([]models.ExamResultActivityDB, error)
+}
+
+type IExamRepository interface {
+	IExamReader
+	IExamTransaction
 }
 
 func NewExamRepository(db database.IDatabase) examRepository {

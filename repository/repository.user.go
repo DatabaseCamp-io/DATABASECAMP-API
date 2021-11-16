@@ -12,8 +12,8 @@ type userRepository struct {
 }
 
 type IUserReader interface {
-	GetUserByEmail(email string) (models.UserDB, error)
-	GetUserByID(id int) (models.UserDB, error)
+	GetUserByEmail(email string) (*models.UserDB, error)
+	GetUserByID(id int) (*models.UserDB, error)
 	GetProfile(id int) (*models.ProfileDB, error)
 	GetLearningProgression(id int) ([]models.LearningProgressionDB, error)
 	GetAllBadge() ([]models.BadgeDB, error)
@@ -49,24 +49,24 @@ func NewUserRepository(db database.IDatabase) userRepository {
 	return userRepository{database: db}
 }
 
-func (r userRepository) GetUserByEmail(email string) (models.UserDB, error) {
+func (r userRepository) GetUserByEmail(email string) (*models.UserDB, error) {
 	user := models.UserDB{}
 	err := r.database.GetDB().
 		Table(models.TableName.User).
 		Where("email = ?", email).
 		Find(&user).
 		Error
-	return user, err
+	return &user, err
 }
 
-func (r userRepository) GetUserByID(id int) (models.UserDB, error) {
+func (r userRepository) GetUserByID(id int) (*models.UserDB, error) {
 	user := models.UserDB{}
 	err := r.database.GetDB().
 		Table(models.TableName.User).
 		Where(models.IDName.User+" = ?", id).
 		Find(&user).
 		Error
-	return user, err
+	return &user, err
 }
 
 func (r userRepository) GetProfile(id int) (*models.ProfileDB, error) {

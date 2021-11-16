@@ -9,7 +9,7 @@ type learningRepository struct {
 	database database.IDatabase
 }
 
-type ILearningRepository interface {
+type ILearningReader interface {
 	GetContent(id int) (*models.ContentDB, error)
 	GetOverview() ([]models.OverviewDB, error)
 	GetContentExam(examType models.ExamType) ([]models.ContentExamDB, error)
@@ -19,6 +19,10 @@ type ILearningRepository interface {
 	GetCompletionChoice(activityID int) ([]models.CompletionChoiceDB, error)
 	GetActivityHints(activityID int) ([]models.HintDB, error)
 	GetContentActivity(contentID int) ([]models.ActivityDB, error)
+}
+
+type ILearningRepository interface {
+	ILearningReader
 }
 
 func NewLearningRepository(db database.IDatabase) learningRepository {

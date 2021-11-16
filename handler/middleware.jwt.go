@@ -3,7 +3,6 @@ package handler
 import (
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
-	"DatabaseCamp/models"
 	"DatabaseCamp/repository"
 	"DatabaseCamp/utils"
 	"fmt"
@@ -119,7 +118,7 @@ func (j jwtMiddleware) setClaims(c *fiber.Ctx, claims jwt.MapClaims) {
 
 func (j jwtMiddleware) validUser(token string, id int) bool {
 	userDB, err := j.repo.GetUserByID(id)
-	if err != nil || userDB == (models.UserDB{}) {
+	if err != nil || userDB == nil {
 		return false
 	}
 
