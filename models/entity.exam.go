@@ -27,7 +27,7 @@ type examResultOverview struct {
 	ExamResultID     int                  `json:"exam_result_id"`
 	TotalScore       int                  `json:"score"`
 	IsPassed         bool                 `json:"is_passed"`
-	ActivitiesResult []examActivityResult `json:"activities_result"`
+	ActivitiesResult []examActivityResult `json:"activities_result,omitempty"`
 	CreatedTimestamp time.Time            `json:"created_timestamp"`
 }
 
@@ -128,7 +128,7 @@ func (e *exam) Prepare(examActivitiesDB []ExamActivityDB) {
 		utils.NewType().StructToStruct(examActivityDB, &activityDB)
 		activity := NewActivity()
 		activity.PrepareActivity(activityDB)
-		activity.PrepareChoicesByChoiceDB(activityDB.ID)
+		activity.PrepareChoicesByChoiceDB(activityChoiceDBMap[activityDB.ID])
 		e.Activities = append(e.Activities, *activity)
 	}
 }

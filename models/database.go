@@ -123,9 +123,9 @@ type LearningProgressionDB struct {
 // 		Table - UserBadge
 // 		Table - Badge
 type CorrectedBadgeDB struct {
-	BadgeID int  `gorm:"column:badge_id" json:"badge_id"`
-	Name    int  `gorm:"column:badge_name" json:"badge_name"`
-	UserID  *int `gorm:"column:user_id" json:"user_id"`
+	BadgeID int    `gorm:"column:badge_id" json:"badge_id"`
+	Name    string `gorm:"column:badge_name" json:"badge_name"`
+	UserID  *int   `gorm:"column:user_id" json:"user_id"`
 }
 
 // Model mapped Hint table in the database

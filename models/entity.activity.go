@@ -59,17 +59,30 @@ func (a *activity) PrepareActivity(activityDB ActivityDB) {
 	utils.NewType().StructToStruct(activityDB, &a.Info)
 }
 
-func (a *activity) PrepareChoicesByChoiceDB(choiceDB interface{}) {
+func (a *activity) PrepareChoicesByChoiceDB(choiceDB interface{}) error {
 	a.Choices = choiceDB
 	if a.Info.TypeID == 1 {
-		a.PropositionChoices = a.PrepareMatchingChoice(choiceDB.([]MatchingChoiceDB))
+		propositionChoices, choiceOK := choiceDB.([]MatchingChoiceDB)
+		if !choiceOK {
+			return errs.NewInternalServerError("รูปแบบของตัวเลือกไม่ถูกต้อง", "Invalid Choice")
+		}
+		a.PropositionChoices = a.PrepareMatchingChoice(propositionChoices)
 	} else if a.Info.TypeID == 2 {
-		a.PropositionChoices = a.PrepareMultipleChoice(choiceDB.([]MultipleChoiceDB))
+		propositionChoices, choiceOK := choiceDB.([]MultipleChoiceDB)
+		if !choiceOK {
+			return errs.NewInternalServerError("รูปแบบของตัวเลือกไม่ถูกต้อง", "Invalid Choice")
+		}
+		a.PropositionChoices = a.PrepareMultipleChoice(propositionChoices)
 	} else if a.Info.TypeID == 3 {
-		a.PropositionChoices = a.PrepareCompletionChoice(choiceDB.([]CompletionChoiceDB))
+		propositionChoices, choiceOK := choiceDB.([]CompletionChoiceDB)
+		if !choiceOK {
+			return errs.NewInternalServerError("รูปแบบของตัวเลือกไม่ถูกต้อง", "Invalid Choice")
+		}
+		a.PropositionChoices = a.PrepareCompletionChoice(propositionChoices)
 	} else {
 		a.PropositionChoices = nil
 	}
+	return nil
 }
 
 func (a *activity) PrepareHint(activityHints []HintDB, userHintsDB []UserHintDB) {
@@ -245,7 +258,7 @@ func (a *activity) checkCompletionCorrect(answer interface{}) (bool, error) {
 			return false, err
 		}
 	}
-	if len(completionChoices) != len(_answer) {
+	if len(completionChoices) != len(_answer) || !choiceOK {
 		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
 	}
 	return a.IsCompletionCorrect(completionChoices, _answer), nil

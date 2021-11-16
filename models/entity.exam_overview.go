@@ -6,7 +6,7 @@ type examDetailOverview struct {
 	ContentGroupID   *int                  `json:"content_group_id,omitempty"`
 	ContentGroupName *string               `json:"content_group_name,omitempty"`
 	CanDo            *bool                 `json:"can_do,omitempty"`
-	Results          *[]examResultOverview `json:"results"`
+	Results          *[]examResultOverview `json:"results,omitempty"`
 }
 
 type examOverview struct {
@@ -37,11 +37,17 @@ func (o *examOverview) PrepareExamOverview(examResultsDB []ExamResultDB, correct
 				Results:  examResultMap[examDB.ID],
 			}
 		} else if examDB.Type == string(Exam.MiniExam) {
+			if o.MiniExam == nil {
+				temp := make([]examDetailOverview, 0)
+				o.MiniExam = &temp
+			}
+			contentGroupID := examDB.ContentGroupID
+			contentGroupName := examDB.ContentGroupName
 			*o.MiniExam = append(*o.MiniExam, examDetailOverview{
 				ExamID:           examDB.ID,
 				ExamType:         examDB.Type,
-				ContentGroupID:   &examDB.ContentGroupID,
-				ContentGroupName: &examDB.ContentGroupName,
+				ContentGroupID:   &contentGroupID,
+				ContentGroupName: &contentGroupName,
 				Results:          examResultMap[examDB.ID],
 			})
 		} else if examDB.Type == string(Exam.Posttest) {
@@ -60,11 +66,15 @@ func (o *examOverview) createExamResultMap(examResultsDB []ExamResultDB) map[int
 	examResultMap := map[int]*[]examResultOverview{}
 	examScoreCount := o.countExamScore(examResultsDB)
 	for _, examResult := range examResultsDB {
-
+		if examResultMap[examResult.ExamID] == nil {
+			temp := make([]examResultOverview, 0)
+			examResultMap[examResult.ExamID] = &temp
+		}
 		*examResultMap[examResult.ExamID] = append(*examResultMap[examResult.ExamID], examResultOverview{
-			CreatedTimestamp: examResult.CreatedTimestamp,
+			ExamResultID:     examResult.ID,
 			TotalScore:       examScoreCount[examResult.ID],
 			IsPassed:         examResult.IsPassed,
+			CreatedTimestamp: examResult.CreatedTimestamp,
 		})
 	}
 	return examResultMap
