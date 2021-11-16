@@ -14,16 +14,6 @@ type userHandler struct {
 	jwt        IJwt
 }
 
-type IUserHandler interface {
-	Register(c *fiber.Ctx) error
-	Login(c *fiber.Ctx) error
-	Edit(c *fiber.Ctx) error
-	GetProfile(c *fiber.Ctx) error
-	GetInfo(c *fiber.Ctx) error
-	GetBadge(c *fiber.Ctx) error
-	GetUserRanking(c *fiber.Ctx) error
-}
-
 func NewUserHandler(controller controller.IUserController, jwt IJwt) userHandler {
 	return userHandler{controller: controller, jwt: jwt}
 }
@@ -93,7 +83,7 @@ func (h userHandler) GetProfile(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
-func (h userHandler) GetInfo(c *fiber.Ctx) error {
+func (h userHandler) GetOwnProfile(c *fiber.Ctx) error {
 	id := c.Locals("id")
 	response, err := h.controller.GetProfile(utils.NewType().ParseInt(id))
 	if err != nil {
@@ -112,7 +102,7 @@ func (h userHandler) GetUserRanking(c *fiber.Ctx) error {
 }
 
 func (h userHandler) Edit(c *fiber.Ctx) error {
-	request := models.EditProfileRequest{}
+	request := models.UserRequest{}
 	userID := utils.NewType().ParseInt(c.Locals("id"))
 
 	err := bindRequest(c, &request)
@@ -120,7 +110,7 @@ func (h userHandler) Edit(c *fiber.Ctx) error {
 		return handleError(c, err)
 	}
 
-	err = request.Validate()
+	err = request.ValidateEdit()
 	if err != nil {
 		return handleError(c, err)
 	}

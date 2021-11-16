@@ -12,6 +12,7 @@ import (
 
 type router struct {
 	app *fiber.App
+	api fiber.Router
 }
 
 var instantiated *router = nil
@@ -24,20 +25,21 @@ func New(app *fiber.App) *router {
 	return instantiated
 }
 
-func (r router) init() {
+func (r *router) init() {
 	db := database.New()
 	userRepo := repository.NewUserRepository(db)
 	jwt := handler.NewJwtMiddleware(userRepo)
+	r.api = r.app.Group("api/v1")
 	r.setupLearning(db, userRepo, jwt)
 	r.setupUser(db, userRepo, jwt)
 	r.setupExam(db, userRepo, jwt)
 }
 
-func (r router) setupExam(db database.IDatabase, userRepo repository.IUserRepository, jwt handler.IJwt) {
+func (r *router) setupExam(db database.IDatabase, userRepo repository.IUserRepository, jwt handler.IJwt) {
 	repo := repository.NewExamRepository(db)
 	controller := controller.NewExamController(repo, userRepo)
 	examHandler := handler.NewExamHandler(controller)
-	group := r.app.Group("exam")
+	group := r.api.Group("exam")
 	group.Use(jwt.JwtVerify)
 	{
 		group.Get("/proposition/:id", examHandler.GetExam)
@@ -47,13 +49,13 @@ func (r router) setupExam(db database.IDatabase, userRepo repository.IUserReposi
 	}
 }
 
-func (r router) setupLearning(db database.IDatabase, userRepo repository.IUserRepository, jwt handler.IJwt) {
+func (r *router) setupLearning(db database.IDatabase, userRepo repository.IUserRepository, jwt handler.IJwt) {
 
 	repo := repository.NewLearningRepository(db)
 	service := services.GetAwsServiceInstance()
 	controller := controller.NewLearningController(repo, userRepo, service)
 	learningHandler := handler.NewLearningHandler(controller)
-	group := r.app.Group("learning")
+	group := r.api.Group("learning")
 	group.Use(jwt.JwtVerify)
 	{
 		group.Get("/video/:id", learningHandler.GetVideo)
@@ -67,16 +69,16 @@ func (r router) setupLearning(db database.IDatabase, userRepo repository.IUserRe
 	}
 }
 
-func (r router) setupUser(db database.IDatabase, repo repository.IUserRepository, jwt handler.IJwt) {
+func (r *router) setupUser(db database.IDatabase, repo repository.IUserRepository, jwt handler.IJwt) {
 	controller := controller.NewUserController(repo)
 	userHandler := handler.NewUserHandler(controller, jwt)
-	group := r.app.Group("user")
+	group := r.api.Group("user")
 	{
-		group.Post("/register", userHandler.Register)
-		group.Post("/login", userHandler.Login)
-		group.Put("/profile", jwt.JwtVerify, userHandler.Edit)
-		group.Get("/info", jwt.JwtVerify, userHandler.GetInfo)
+		group.Get("/info", jwt.JwtVerify, userHandler.GetOwnProfile)
 		group.Get("/profile/:id", jwt.JwtVerify, userHandler.GetProfile)
 		group.Get("/ranking", jwt.JwtVerify, userHandler.GetUserRanking)
+		group.Put("/profile", jwt.JwtVerify, userHandler.Edit)
+		group.Post("/register", userHandler.Register)
+		group.Post("/login", userHandler.Login)
 	}
 }
