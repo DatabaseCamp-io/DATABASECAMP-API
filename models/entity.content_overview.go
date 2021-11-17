@@ -55,7 +55,7 @@ func (o *overview) ToResponse() *OverviewResponse {
 
 func (o *overview) Prepare(overviewDB []OverviewDB, learningProgressionDB []LearningProgressionDB) {
 	groupMap := o.createGroupMap(overviewDB)
-	activityContentIDMap := o.createContentActivityCount(overviewDB)
+	activityContentIDMap := o.createActivityContentIDMap(overviewDB)
 	userActivityCountByContentID := o.createUserActivityCountByContentID(learningProgressionDB, activityContentIDMap)
 	lastedActivityID := o.getLastedActivityID(learningProgressionDB)
 	lastedContentID := o.getLastedContentID(activityContentIDMap, lastedActivityID)
@@ -128,12 +128,14 @@ func (o *overview) createGroupMap(overviewDB []OverviewDB) map[int]*group {
 	return groupMap
 }
 
-func (o *overview) createContentActivityCount(overviewDB []OverviewDB) map[int]int {
-	contentActivityCount := map[int]int{}
+func (o *overview) createActivityContentIDMap(overviewDB []OverviewDB) map[int]int {
+	activityContentIDMap := map[int]int{}
 	for _, overview := range overviewDB {
-		contentActivityCount[overview.ContentID] += 1
+		if overview.ActivityID != nil {
+			activityContentIDMap[*overview.ActivityID] = overview.ContentID
+		}
 	}
-	return contentActivityCount
+	return activityContentIDMap
 }
 
 func (o *overview) getLastedActivityID(learningProgressionDB []LearningProgressionDB) *int {
