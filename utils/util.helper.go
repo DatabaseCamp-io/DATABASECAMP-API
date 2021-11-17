@@ -2,8 +2,8 @@ package utils
 
 import (
 	"math/rand"
+	"net/mail"
 	"reflect"
-	"regexp"
 
 	m "github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
@@ -32,8 +32,8 @@ func (h helper) ComparePasswords(hashedPwd string, plainPwd string) bool {
 }
 
 func (h helper) IsEmailValid(email string) bool {
-	emailRegExp := regexp.MustCompile(`/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/`)
-	return emailRegExp.MatchString(email)
+	_, err := mail.ParseAddress(email)
+	return err == nil
 }
 
 func (h helper) IsSqlDuplicateError(err error) bool {

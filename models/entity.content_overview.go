@@ -1,5 +1,7 @@
 package models
 
+import "fmt"
+
 type content struct {
 	id         int
 	name       string
@@ -68,6 +70,7 @@ func (o *overview) Prepare(overviewDB []OverviewDB, learningProgressionDB []Lear
 			groupActivityCount += len(content.activities)
 			groupUserActivityCount += userActivityCountByContentID[content.id]
 			isContentLasted := lastedContentID != nil && *lastedContentID == content.id
+			fmt.Println(userActivityCountByContentID[content.id], len(content.activities))
 			contentProgress := o.calculateProgress(userActivityCountByContentID[content.id], len(content.activities))
 			contents = append(contents, contentOverview{
 				ContentID:   content.id,
