@@ -158,11 +158,13 @@ func (a *activity) PrepareCompletionChoice(completionChoice []CompletionChoiceDB
 }
 
 func (a *activity) IsMatchingCorrect(choices []MatchingChoiceDB, answer []PairItemRequest) bool {
+	Item1Item2Map := map[string]string{}
 	for _, correct := range choices {
-		for _, answer := range answer {
-			if (correct.PairItem1 == *answer.Item1) && (correct.PairItem2 != *answer.Item2) {
-				return false
-			}
+		Item1Item2Map[correct.PairItem1] = correct.PairItem2
+	}
+	for _, answer := range answer {
+		if Item1Item2Map[*answer.Item1] != *answer.Item2 && Item1Item2Map[*answer.Item2] != *answer.Item1 {
+			return false
 		}
 	}
 	return true
