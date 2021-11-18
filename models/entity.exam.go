@@ -205,7 +205,7 @@ func (e *exam) CheckAnswer(answers []ExamActivityAnswer) (*examResultOverview, e
 
 	wg.Add(len(answers))
 	for _, answer := range answers {
-		go e.checkActivityAsync(&concurrent, *activityMap[answer.ActivityID], answer)
+		go e.checkActivityAsync(&concurrent, *activityMap[answer.ActivityID], answer.Answer)
 	}
 	wg.Wait()
 
