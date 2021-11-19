@@ -119,6 +119,9 @@ func (e *exam) Prepare(examActivitiesDB []ExamActivityDB) {
 	for _, examActivityDB := range examActivitiesDB {
 		activity := ActivityDB{}
 		utils.NewType().StructToStruct(examActivityDB, &e.Info)
+		if examActivityDB.ExamType == string(Exam.Posttest) {
+			e.Info.BadgeID = 3
+		}
 		utils.NewType().StructToStruct(examActivityDB, &activity)
 		examActivityDBMap[examActivityDB.ActivityID] = activity
 		if activityChoiceDBMap[examActivityDB.ActivityID] == nil {
