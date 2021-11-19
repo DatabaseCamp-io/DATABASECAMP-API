@@ -12,7 +12,7 @@ const (
 )
 
 const (
-	INSERT_ERROR_TH = "เกิดช้อผิดพลาดในการบันทึกข้อมูล"
+	INSERT_ERROR_TH = "เกิดข้อผิดพลาดในการบันทึกข้อมูล"
 	INSERT_ERROR_EN = "Saving data error"
 
 	LOAD_ERROR_TH = "เกิดข้อผิดพลาดในการโหลดข้อมูล"

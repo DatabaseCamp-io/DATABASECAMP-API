@@ -79,6 +79,7 @@ func (c examController) CheckExam(userID int, request models.ExamAnswerRequest) 
 	}
 	examResultDB := exam.ToExamResultDB(userID)
 	examResultActivities := exam.ToExamResultActivitiesDB()
+
 	err = c.saveExamResult(exam.Info.Type, userBadgeDB, examResultDB, examResultActivities)
 	if err != nil {
 		logs.New().Error(err)
@@ -112,6 +113,7 @@ func (c examController) saveExamResult(examType string, userBadgeDB models.UserB
 		tx.Rollback()
 		return err
 	}
+
 	_, err = c.examRepo.InsertExamResultActivityTransaction(tx, c.addExamResultID(examResultDB.ID, resultActivitiesDB))
 	if err != nil {
 		tx.Rollback()
