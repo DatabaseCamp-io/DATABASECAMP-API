@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"DatabaseCamp/controllers/loaders"
-	loader "DatabaseCamp/controllers/loaders"
 	"DatabaseCamp/database"
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
@@ -47,7 +46,7 @@ func (c examController) GetExam(examID int, userID int) (*models.ExamResponse, e
 }
 
 func (c examController) GetOverview(userID int) (*models.ExamOverviewResponse, error) {
-	loader := loader.NewExamOverviewLoader(c.examRepo, c.userRepo)
+	loader := loaders.NewExamOverviewLoader(c.examRepo, c.userRepo)
 	err := loader.Load(userID)
 	if err != nil {
 		logs.New().Error(err)

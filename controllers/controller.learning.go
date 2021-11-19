@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	loader "DatabaseCamp/controllers/loaders"
+	"DatabaseCamp/controllers/loaders"
 	"DatabaseCamp/database"
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
@@ -63,7 +63,7 @@ func (c learningController) GetVideoLecture(id int) (*models.VideoLectureRespons
 }
 
 func (c learningController) GetOverview(userID int) (*models.OverviewResponse, error) {
-	loader := loader.NewLearningOverviewLoader(c.learningRepo, c.userRepo)
+	loader := loaders.NewLearningOverviewLoader(c.learningRepo, c.userRepo)
 	err := loader.Load(userID)
 	if err != nil {
 		logs.New().Error(err)
@@ -78,7 +78,7 @@ func (c learningController) GetOverview(userID int) (*models.OverviewResponse, e
 }
 
 func (c learningController) GetActivity(userID int, activityID int) (*models.ActivityResponse, error) {
-	loader := loader.NewActivityLoader(c.learningRepo, c.userRepo)
+	loader := loaders.NewActivityLoader(c.learningRepo, c.userRepo)
 	err := loader.Load(userID, activityID)
 	if err != nil {
 		logs.New().Error(err)
@@ -144,7 +144,7 @@ func (c learningController) finishActivityTrasaction(userID int, activityID int,
 }
 
 func (c learningController) UseHint(userID int, activityID int) (*models.HintDB, error) {
-	loader := loader.NewHintLoader(c.learningRepo, c.userRepo)
+	loader := loaders.NewHintLoader(c.learningRepo, c.userRepo)
 	err := loader.Load(userID, activityID)
 	if err != nil || len(loader.ActivityHintsDB) == 0 {
 		logs.New().Error(err)
@@ -238,7 +238,7 @@ func (c learningController) insertUserHintAsyncTransaction(ct *models.Concurrent
 }
 
 func (c learningController) GetContentRoadmap(userID int, contentID int) (*models.ContentRoadmapResponse, error) {
-	loader := loader.NewContentRoadmapLoader(c.learningRepo, c.userRepo)
+	loader := loaders.NewContentRoadmapLoader(c.learningRepo, c.userRepo)
 	err := loader.Load(userID, contentID)
 	if err != nil || loader.ContentDB == nil {
 		logs.New().Error(err)
@@ -253,7 +253,7 @@ func (c learningController) GetContentRoadmap(userID int, contentID int) (*model
 }
 
 func (c learningController) CheckAnswer(userID int, activityID int, typeID int, answer interface{}) (*models.AnswerResponse, error) {
-	loader := loader.NewCheckAnswerLoader(c.learningRepo)
+	loader := loaders.NewCheckAnswerLoader(c.learningRepo)
 	err := loader.Load(activityID, typeID, c.getChoices)
 	if err != nil || loader.ActivityDB == nil {
 		logs.New().Error(err)
