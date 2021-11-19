@@ -115,20 +115,22 @@ func (e *exam) PrepareResult(examResultDB ExamResultDB) {
 
 func (e *exam) Prepare(examActivitiesDB []ExamActivityDB) {
 	activityChoiceDBMap := map[int]interface{}{}
+	examActivityDBMap := map[int]ActivityDB{}
 	for _, examActivityDB := range examActivitiesDB {
+		activity := ActivityDB{}
 		utils.NewType().StructToStruct(examActivityDB, &e.Info)
+		utils.NewType().StructToStruct(examActivityDB, &activity)
+		examActivityDBMap[examActivityDB.ActivityID] = activity
 		if activityChoiceDBMap[examActivityDB.ActivityID] == nil {
 			e.initialActivityChoiceMap(examActivityDB.ActivityID, examActivityDB.ActivityTypeID, activityChoiceDBMap)
 		}
 		e.appendExamActivityChoice(examActivityDB, activityChoiceDBMap)
 	}
 
-	for _, examActivityDB := range examActivitiesDB {
-		activityDB := ActivityDB{}
-		utils.NewType().StructToStruct(examActivityDB, &activityDB)
+	for _, examActivityDB := range examActivityDBMap {
 		activity := NewActivity()
-		activity.PrepareActivity(activityDB)
-		activity.PrepareChoicesByChoiceDB(activityChoiceDBMap[activityDB.ID])
+		activity.PrepareActivity(examActivityDB)
+		activity.PrepareChoicesByChoiceDB(activityChoiceDBMap[examActivityDB.ID])
 		e.Activities = append(e.Activities, *activity)
 	}
 }

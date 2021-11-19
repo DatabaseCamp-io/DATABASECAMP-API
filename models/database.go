@@ -228,9 +228,8 @@ type ExamDB struct {
 
 // Model mapped ExamResultActivity table in the database
 type ExamResultActivityDB struct {
-	ID           int `gorm:"primaryKey;column:exam_result_activity_id" json:"exam_result_activity_id"`
-	ExamResultID int `gorm:"column:exam_result_id" json:"exam_result_id"`
-	ActivityID   int `gorm:"column:activity_id" json:"activity_id"`
+	ExamResultID int `gorm:"primaryKey;column:exam_result_id" json:"exam_result_id"`
+	ActivityID   int `gorm:"primaryKey;column:activity_id" json:"activity_id"`
 	Score        int `gorm:"column:score" json:"score"`
 }
 
