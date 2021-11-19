@@ -2,19 +2,19 @@ package loader
 
 import (
 	"DatabaseCamp/models"
-	"DatabaseCamp/repository"
+	"DatabaseCamp/repositories"
 	"sync"
 )
 
 type hintLoader struct {
-	learningRepo    repository.ILearningRepository
-	userRepo        repository.IUserRepository
+	learningRepo    repositories.ILearningRepository
+	userRepo        repositories.IUserRepository
 	ActivityHintsDB []models.HintDB
 	UserHintsDB     []models.UserHintDB
 	UserDB          *models.UserDB
 }
 
-func NewHintLoader(learningRepo repository.ILearningRepository, userRepo repository.IUserRepository) *hintLoader {
+func NewHintLoader(learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) *hintLoader {
 	return &hintLoader{learningRepo: learningRepo, userRepo: userRepo}
 }
 

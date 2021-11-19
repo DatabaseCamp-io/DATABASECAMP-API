@@ -1,18 +1,18 @@
-package controller
+package controllers
 
 import (
-	loader "DatabaseCamp/controller/loaders"
+	loader "DatabaseCamp/controllers/loaders"
 	"DatabaseCamp/database"
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
 	"DatabaseCamp/models"
-	"DatabaseCamp/repository"
+	"DatabaseCamp/repositories"
 	"DatabaseCamp/utils"
 )
 
 type examController struct {
-	examRepo repository.IExamRepository
-	userRepo repository.IUserRepository
+	examRepo repositories.IExamRepository
+	userRepo repositories.IUserRepository
 }
 
 type IExamController interface {
@@ -22,25 +22,21 @@ type IExamController interface {
 	GetExamResult(userID int, examResultID int) (*models.ExamResultOverviewResponse, error)
 }
 
-func NewExamController(examRepo repository.IExamRepository, userRepo repository.IUserRepository) examController {
+func NewExamController(examRepo repositories.IExamRepository, userRepo repositories.IUserRepository) examController {
 	return examController{examRepo: examRepo, userRepo: userRepo}
 }
 
 func (c examController) GetExam(examID int, userID int) (*models.ExamResponse, error) {
-	examActivity, err := c.examRepo.GetExamActivity(examID)
-	if err != nil {
+	examActivities, err := c.examRepo.GetExamActivity(examID)
+	if err != nil || len(examActivities) == 0 {
 		logs.New().Error(err)
-		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
-	}
-
-	if len(examActivity) == 0 {
-		return nil, errs.NewNotFoundError("ไม่พบข้อสอบ", "Exam Not Found")
+		return nil, errs.ErrExamNotFound
 	}
 
 	exam := models.NewExam()
-	exam.Prepare(examActivity)
-	response := exam.ToResponse()
+	exam.Prepare(examActivities)
 
+	response := exam.ToResponse()
 	return response, nil
 }
 
@@ -49,11 +45,48 @@ func (c examController) GetOverview(userID int) (*models.ExamOverviewResponse, e
 	err := loader.Load(userID)
 	if err != nil {
 		logs.New().Error(err)
-		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+		return nil, errs.ErrLoadError
 	}
+
 	examOverview := models.NewExamOverview()
 	examOverview.PrepareExamOverview(loader.ExamResultsDB, loader.CorrectedBadgeDB, loader.ExamDB)
+
 	response := examOverview.ToResponse()
+	return response, nil
+}
+
+func (c examController) CheckExam(userID int, request models.ExamAnswerRequest) (*models.ExamResultOverviewResponse, error) {
+	examActivities, err := c.examRepo.GetExamActivity(*request.ExamID)
+	if err != nil || len(examActivities) == 0 {
+		logs.New().Error(err)
+		return nil, errs.ErrExamNotFound
+	}
+
+	exam := models.NewExam()
+	exam.Prepare(examActivities)
+	if len(request.Activities) != len(exam.Activities) {
+		return nil, errs.ErrActivitiesNumberIncorrect
+	}
+
+	_, err = exam.CheckAnswer(request.Activities)
+	if err != nil {
+		return nil, err
+	}
+
+	userBadgeDB := models.UserBadgeDB{
+		UserID:  userID,
+		BadgeID: exam.Info.BadgeID,
+	}
+	examResultDB := exam.ToExamResultDB(userID)
+	examResultActivities := exam.ToExamResultActivitiesDB()
+	err = c.saveExamResult(exam.Info.Type, userBadgeDB, examResultDB, examResultActivities)
+	if err != nil {
+		logs.New().Error(err)
+		return nil, errs.ErrInsertError
+	}
+
+	exam.Result.ExamResultID = examResultDB.ID
+	response := exam.ToExamResultOverviewResponse()
 	return response, nil
 }
 
@@ -98,59 +131,22 @@ func (c examController) saveExamResult(examType string, userBadgeDB models.UserB
 	return nil
 }
 
-func (c examController) CheckExam(userID int, request models.ExamAnswerRequest) (*models.ExamResultOverviewResponse, error) {
-	examActivity, err := c.examRepo.GetExamActivity(*request.ExamID)
-	if err != nil {
-		logs.New().Error(err)
-		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
-	}
-
-	exam := models.NewExam()
-	exam.Prepare(examActivity)
-
-	if len(request.Activities) != len(exam.Activities) {
-		return nil, errs.NewBadRequestError("จำนวนของกิจกรรมไม่ถูกต้อง", "Number of Activity Incorrect")
-	}
-
-	_, err = exam.CheckAnswer(request.Activities)
-	if err != nil {
-		return nil, err
-	}
-
-	userBadgeDB := models.UserBadgeDB{
-		UserID:  userID,
-		BadgeID: exam.Info.BadgeID,
-	}
-	examResultDB := exam.ToExamResultDB(userID)
-	examResultActivities := exam.ToExamResultActivitiesDB()
-
-	err = c.saveExamResult(exam.Info.Type, userBadgeDB, examResultDB, examResultActivities)
-	if err != nil {
-		logs.New().Error(err)
-		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาดในการบันทึกข้อมูล", "Internal Server Error")
-	}
-	exam.Result.ExamResultID = examResultDB.ID
-	response := exam.ToExamResultOverviewResponse()
-
-	return response, nil
-}
-
 func (c examController) GetExamResult(userID int, examResultID int) (*models.ExamResultOverviewResponse, error) {
 
 	examResults, err := c.userRepo.GetExamResultByID(userID, examResultID)
 	if err != nil || len(examResults) == 0 {
 		logs.New().Error(err)
-		return nil, errs.NewNotFoundError("ไม่พบผลการสอบ", "Exam Result Not Found")
+		return nil, errs.ErrExamNotFound
 	}
 
-	examActivity, err := c.examRepo.GetExamActivity(examResults[0].ExamID)
-	if err != nil {
+	examActivities, err := c.examRepo.GetExamActivity(examResults[0].ExamID)
+	if err != nil || len(examActivities) == 0 {
 		logs.New().Error(err)
-		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+		return nil, errs.ErrExamNotFound
 	}
 
 	exam := models.NewExam()
-	exam.Prepare(examActivity)
+	exam.Prepare(examActivities)
 	exam.PrepareResult(examResults[0])
 	response := exam.ToExamResultOverviewResponse()
 

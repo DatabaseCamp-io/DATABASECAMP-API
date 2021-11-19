@@ -2,19 +2,19 @@ package loader
 
 import (
 	"DatabaseCamp/models"
-	"DatabaseCamp/repository"
+	"DatabaseCamp/repositories"
 	"sync"
 )
 
 type activityLoader struct {
-	learningRepo    repository.ILearningRepository
-	userRepo        repository.IUserRepository
+	learningRepo    repositories.ILearningRepository
+	userRepo        repositories.IUserRepository
 	ActivityDB      *models.ActivityDB
 	ActivityHintsDB []models.HintDB
 	UserHintsDB     []models.UserHintDB
 }
 
-func NewActivityLoader(learningRepo repository.ILearningRepository, userRepo repository.IUserRepository) *activityLoader {
+func NewActivityLoader(learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) *activityLoader {
 	return &activityLoader{learningRepo: learningRepo, userRepo: userRepo}
 }
 

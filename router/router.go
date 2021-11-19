@@ -1,10 +1,11 @@
 package router
 
 import (
-	"DatabaseCamp/controller"
+	"DatabaseCamp/controllers"
 	"DatabaseCamp/database"
-	"DatabaseCamp/handler"
-	"DatabaseCamp/repository"
+	"DatabaseCamp/handlers"
+	"DatabaseCamp/middleware"
+	"DatabaseCamp/repositories"
 	"DatabaseCamp/services"
 
 	"github.com/gofiber/fiber/v2"
@@ -27,18 +28,18 @@ func New(app *fiber.App) *router {
 
 func (r *router) init() {
 	db := database.New()
-	userRepo := repository.NewUserRepository(db)
-	jwt := handler.NewJwtMiddleware(userRepo)
+	userRepo := repositories.NewUserRepository(db)
+	jwt := middleware.NewJwtMiddleware(userRepo)
 	r.api = r.app.Group("api/v1")
 	r.setupLearning(db, userRepo, jwt)
 	r.setupUser(db, userRepo, jwt)
 	r.setupExam(db, userRepo, jwt)
 }
 
-func (r *router) setupExam(db database.IDatabase, userRepo repository.IUserRepository, jwt handler.IJwt) {
-	repo := repository.NewExamRepository(db)
-	controller := controller.NewExamController(repo, userRepo)
-	examHandler := handler.NewExamHandler(controller)
+func (r *router) setupExam(db database.IDatabase, userRepo repositories.IUserRepository, jwt middleware.IJwt) {
+	repo := repositories.NewExamRepository(db)
+	controller := controllers.NewExamController(repo, userRepo)
+	examHandler := handlers.NewExamHandler(controller)
 	group := r.api.Group("exam")
 	group.Use(jwt.JwtVerify)
 	{
@@ -49,12 +50,12 @@ func (r *router) setupExam(db database.IDatabase, userRepo repository.IUserRepos
 	}
 }
 
-func (r *router) setupLearning(db database.IDatabase, userRepo repository.IUserRepository, jwt handler.IJwt) {
+func (r *router) setupLearning(db database.IDatabase, userRepo repositories.IUserRepository, jwt middleware.IJwt) {
 
-	repo := repository.NewLearningRepository(db)
+	repo := repositories.NewLearningRepository(db)
 	service := services.GetAwsServiceInstance()
-	controller := controller.NewLearningController(repo, userRepo, service)
-	learningHandler := handler.NewLearningHandler(controller)
+	controller := controllers.NewLearningController(repo, userRepo, service)
+	learningHandler := handlers.NewLearningHandler(controller)
 	group := r.api.Group("learning")
 	group.Use(jwt.JwtVerify)
 	{
@@ -69,9 +70,9 @@ func (r *router) setupLearning(db database.IDatabase, userRepo repository.IUserR
 	}
 }
 
-func (r *router) setupUser(db database.IDatabase, repo repository.IUserRepository, jwt handler.IJwt) {
-	controller := controller.NewUserController(repo)
-	userHandler := handler.NewUserHandler(controller, jwt)
+func (r *router) setupUser(db database.IDatabase, repo repositories.IUserRepository, jwt middleware.IJwt) {
+	controller := controllers.NewUserController(repo)
+	userHandler := handlers.NewUserHandler(controller, jwt)
 	group := r.api.Group("user")
 	{
 		group.Get("/info", jwt.JwtVerify, userHandler.GetOwnProfile)

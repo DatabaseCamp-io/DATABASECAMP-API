@@ -1,12 +1,12 @@
-package controller
+package controllers
 
 import (
-	loader "DatabaseCamp/controller/loaders"
+	loader "DatabaseCamp/controllers/loaders"
 	"DatabaseCamp/database"
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
 	"DatabaseCamp/models"
-	"DatabaseCamp/repository"
+	"DatabaseCamp/repositories"
 	"DatabaseCamp/services"
 	"DatabaseCamp/utils"
 	"sync"
@@ -14,8 +14,8 @@ import (
 )
 
 type learningController struct {
-	learningRepo repository.ILearningRepository
-	userRepo     repository.IUserRepository
+	learningRepo repositories.ILearningRepository
+	userRepo     repositories.IUserRepository
 	service      services.IAwsService
 }
 
@@ -29,8 +29,8 @@ type ILearningController interface {
 }
 
 func NewLearningController(
-	learningRepo repository.ILearningRepository,
-	userRepo repository.IUserRepository,
+	learningRepo repositories.ILearningRepository,
+	userRepo repositories.IUserRepository,
 	service services.IAwsService,
 ) learningController {
 	return learningController{
@@ -42,15 +42,15 @@ func NewLearningController(
 
 func (c learningController) GetVideoLecture(id int) (*models.VideoLectureResponse, error) {
 	contentDB, err := c.learningRepo.GetContent(id)
-	if err != nil {
+	if err != nil || contentDB == nil {
 		logs.New().Error(err)
-		return nil, errs.NewNotFoundError("ไม่พบเนื้อหา", "Content Not Found")
+		return nil, errs.ErrContentNotFound
 	}
 
 	videoLink, err := c.service.GetFileLink(contentDB.VideoPath)
 	if err != nil {
 		logs.New().Error(err)
-		return nil, errs.NewServiceUnavailableError("Service ไม่พร้อมใช้งาน", "Service Unavailable")
+		return nil, errs.ErrServiceUnavailableError
 	}
 
 	res := models.VideoLectureResponse{
@@ -67,10 +67,12 @@ func (c learningController) GetOverview(userID int) (*models.OverviewResponse, e
 	err := loader.Load(userID)
 	if err != nil {
 		logs.New().Error(err)
-		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+		return nil, errs.ErrLoadError
 	}
+
 	overview := models.NewOverview()
 	overview.Prepare(loader.OverviewDB, loader.LearningProgressionDB)
+
 	response := overview.ToResponse()
 	return response, nil
 }
@@ -80,17 +82,20 @@ func (c learningController) GetActivity(userID int, activityID int) (*models.Act
 	err := loader.Load(userID, activityID)
 	if err != nil {
 		logs.New().Error(err)
-		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
+		return nil, errs.ErrLoadError
 	}
+
 	choiceDB, err := c.getChoices(loader.ActivityDB.ID, loader.ActivityDB.TypeID)
 	if err != nil {
 		logs.New().Error(err)
-		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
+		return nil, errs.ErrActivitiesNotFound
 	}
+
 	activity := models.NewActivity()
 	activity.PrepareActivity(*loader.ActivityDB)
 	activity.PrepareChoicesByChoiceDB(choiceDB)
 	activity.PrepareHint(loader.ActivityHintsDB, loader.UserHintsDB)
+
 	response := activity.ToPropositionResponse()
 	return response, nil
 }
@@ -103,7 +108,7 @@ func (c learningController) getChoices(activityID int, typeID int) (interface{},
 	} else if typeID == 3 {
 		return c.learningRepo.GetCompletionChoice(activityID)
 	} else {
-		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+		return nil, errs.ErrActivityTypeInvalid
 	}
 }
 
@@ -116,6 +121,7 @@ func (c learningController) finishActivityTrasaction(userID int, activityID int,
 		ActivityID:       activityID,
 		CreatedTimestamp: time.Now().Local(),
 	}
+
 	_, err := c.userRepo.InsertLearningProgressionTransaction(tx, progression)
 	if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
 		tx.Rollback()
@@ -130,49 +136,37 @@ func (c learningController) finishActivityTrasaction(userID int, activityID int,
 		tx.Rollback()
 		return err
 	}
+
 	tx.Commit()
 	tx.Close()
 
 	return nil
 }
 
-func (c learningController) CheckAnswer(userID int, activityID int, typeID int, answer interface{}) (*models.AnswerResponse, error) {
-	loader := loader.NewCheckAnswerLoader(c.learningRepo)
-	err := loader.Load(activityID, typeID, c.getChoices)
-	if err != nil || loader.ActivityDB == nil {
+func (c learningController) UseHint(userID int, activityID int) (*models.HintDB, error) {
+	loader := loader.NewHintLoader(c.learningRepo, c.userRepo)
+	err := loader.Load(userID, activityID)
+	if err != nil || len(loader.ActivityHintsDB) == 0 {
 		logs.New().Error(err)
-		return nil, errs.NewNotFoundError("ไม่พบกิจกรรม", "Activity Not Found")
+		return nil, errs.ErrLoadError
 	}
 
-	if loader.ActivityDB.TypeID != typeID {
-		return nil, errs.NewNotFoundError("ประเภทของกิจกรรมไม่ถูกต้อง", "Invalid Activity Type")
+	nextLevelHint := c.getNextLevelHint(loader.ActivityHintsDB, loader.UserHintsDB)
+	if nextLevelHint == nil {
+		return nil, errs.ErrHintAlreadyUsed
 	}
 
-	activity := models.NewActivity()
-	activity.PrepareActivity(*loader.ActivityDB)
-	activity.PrepareChoicesByChoiceDB(loader.ChoicesDB)
-	isCorrect, err := activity.IsAnswerCorrect(answer)
-	if err != nil {
-		return nil, err
+	if loader.UserDB.Point < nextLevelHint.PointReduce {
+		return nil, errs.ErrHintPointsNotEnough
 	}
 
-	if isCorrect {
-		err = c.finishActivityTrasaction(userID, activityID, activity.Info.Point)
-		if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
-			logs.New().Error(err)
-			return nil, errs.NewInternalServerError("เกิดข้อผิดพลาดในการบันทึกกิจกรรม", "Saved Activity Failed")
-		}
-	}
-
-	userDB, err := c.userRepo.GetUserByID(userID)
+	err = c.useHintTransaction(userID, nextLevelHint.PointReduce, nextLevelHint.ID)
 	if err != nil {
 		logs.New().Error(err)
-		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+		return nil, errs.ErrInsertError
 	}
 
-	response := activity.ToAnswerResponse(userDB.Point, isCorrect)
-
-	return response, nil
+	return nextLevelHint, nil
 }
 
 func (c learningController) isUsedHint(userHints []models.UserHintDB, hintID int) bool {
@@ -193,31 +187,6 @@ func (c learningController) getNextLevelHint(ActivityHintsDB []models.HintDB, us
 	return nil
 }
 
-func (c learningController) UseHint(userID int, activityID int) (*models.HintDB, error) {
-	loader := loader.NewHintLoader(c.learningRepo, c.userRepo)
-	err := loader.Load(userID, activityID)
-	if err != nil || len(loader.ActivityHintsDB) == 0 {
-		logs.New().Error(err)
-		return nil, errs.NewNotFoundError("ไม่พบคำใบ้ของกิจกรรม", "Activity Hints Not Found")
-	}
-	nextLevelHint := c.getNextLevelHint(loader.ActivityHintsDB, loader.UserHintsDB)
-
-	if nextLevelHint == nil {
-		return nil, errs.NewBadRequestError("ได้ใช้คำใบ้ทั้งหมดของกิจกรรมแล้ว", "Activity Hints Has Been Used")
-	}
-
-	if loader.UserDB.Point < nextLevelHint.PointReduce {
-		return nil, errs.NewBadRequestError("แต้มไม่เพียงพอในการขอคำใบ้", "Not Enough Points")
-	}
-
-	err = c.useHintTransaction(userID, nextLevelHint.PointReduce, nextLevelHint.ID)
-	if err != nil {
-		logs.New().Error(err)
-		return nil, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
-	}
-	return nextLevelHint, nil
-}
-
 func (c learningController) useHintTransaction(userID int, reducePoint int, hintID int) error {
 	var wg sync.WaitGroup
 	var err error
@@ -235,10 +204,12 @@ func (c learningController) useHintTransaction(userID int, reducePoint int, hint
 	go c.updateUserPointAsyncTrasaction(&ct, userID, reducePoint, models.Mode.Reduce)
 	go c.insertUserHintAsyncTransaction(&ct, userID, hintID)
 	wg.Wait()
+
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
+
 	tx.Commit()
 	tx.Close()
 
@@ -269,12 +240,53 @@ func (c learningController) insertUserHintAsyncTransaction(ct *models.Concurrent
 func (c learningController) GetContentRoadmap(userID int, contentID int) (*models.ContentRoadmapResponse, error) {
 	loader := loader.NewContentRoadmapLoader(c.learningRepo, c.userRepo)
 	err := loader.Load(userID, contentID)
-	if err != nil {
+	if err != nil || loader.ContentDB == nil {
 		logs.New().Error(err)
-		return nil, errs.NewNotFoundError("ไม่พบเนื้อหา", "Content Not Found")
+		return nil, errs.ErrContentNotFound
 	}
+
 	roadmap := models.NewContentRoadmap()
 	roadmap.Prepare(*loader.ContentDB, loader.ContentActivityDB, loader.LearningProgressionDB)
+
 	response := roadmap.ToResponse()
+	return response, nil
+}
+
+func (c learningController) CheckAnswer(userID int, activityID int, typeID int, answer interface{}) (*models.AnswerResponse, error) {
+	loader := loader.NewCheckAnswerLoader(c.learningRepo)
+	err := loader.Load(activityID, typeID, c.getChoices)
+	if err != nil || loader.ActivityDB == nil {
+		logs.New().Error(err)
+		return nil, errs.ErrLoadError
+	}
+
+	if loader.ActivityDB.TypeID != typeID {
+		return nil, errs.ErrActivityTypeInvalid
+	}
+
+	activity := models.NewActivity()
+	activity.PrepareActivity(*loader.ActivityDB)
+	activity.PrepareChoicesByChoiceDB(loader.ChoicesDB)
+
+	isCorrect, err := activity.IsAnswerCorrect(answer)
+	if err != nil {
+		return nil, err
+	}
+
+	if isCorrect {
+		err = c.finishActivityTrasaction(userID, activityID, activity.Info.Point)
+		if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
+			logs.New().Error(err)
+			return nil, errs.ErrInsertError
+		}
+	}
+
+	userDB, err := c.userRepo.GetUserByID(userID)
+	if err != nil || userDB == nil {
+		logs.New().Error(err)
+		return nil, errs.ErrUserNotFound
+	}
+
+	response := activity.ToAnswerResponse(userDB.Point, isCorrect)
 	return response, nil
 }

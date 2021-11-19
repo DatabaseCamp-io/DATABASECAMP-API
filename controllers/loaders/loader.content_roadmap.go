@@ -2,19 +2,19 @@ package loader
 
 import (
 	"DatabaseCamp/models"
-	"DatabaseCamp/repository"
+	"DatabaseCamp/repositories"
 	"sync"
 )
 
 type contentRoadmapLoader struct {
-	learningRepo          repository.ILearningRepository
-	userRepo              repository.IUserRepository
+	learningRepo          repositories.ILearningRepository
+	userRepo              repositories.IUserRepository
 	ContentDB             *models.ContentDB
 	ContentActivityDB     []models.ActivityDB
 	LearningProgressionDB []models.LearningProgressionDB
 }
 
-func NewContentRoadmapLoader(learningRepo repository.ILearningRepository, userRepo repository.IUserRepository) *contentRoadmapLoader {
+func NewContentRoadmapLoader(learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) *contentRoadmapLoader {
 	return &contentRoadmapLoader{learningRepo: learningRepo, userRepo: userRepo}
 }
 

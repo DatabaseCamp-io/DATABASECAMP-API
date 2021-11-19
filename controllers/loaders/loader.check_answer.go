@@ -2,17 +2,17 @@ package loader
 
 import (
 	"DatabaseCamp/models"
-	"DatabaseCamp/repository"
+	"DatabaseCamp/repositories"
 	"sync"
 )
 
 type checkAnswerLoader struct {
-	learningRepo repository.ILearningRepository
+	learningRepo repositories.ILearningRepository
 	ChoicesDB    interface{}
 	ActivityDB   *models.ActivityDB
 }
 
-func NewCheckAnswerLoader(learningRepo repository.ILearningRepository) *checkAnswerLoader {
+func NewCheckAnswerLoader(learningRepo repositories.ILearningRepository) *checkAnswerLoader {
 	return &checkAnswerLoader{learningRepo: learningRepo}
 }
 

@@ -1,9 +1,9 @@
-package handler
+package middleware
 
 import (
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
-	"DatabaseCamp/repository"
+	"DatabaseCamp/repositories"
 	"DatabaseCamp/utils"
 	"fmt"
 	"os"
@@ -16,7 +16,7 @@ import (
 )
 
 type jwtMiddleware struct {
-	repo repository.IUserRepository
+	repo repositories.IUserRepository
 }
 
 type IJwt interface {
@@ -24,7 +24,7 @@ type IJwt interface {
 	JwtVerify(c *fiber.Ctx) error
 }
 
-func NewJwtMiddleware(repo repository.IUserRepository) jwtMiddleware {
+func NewJwtMiddleware(repo repositories.IUserRepository) jwtMiddleware {
 	return jwtMiddleware{repo: repo}
 }
 
@@ -37,52 +37,53 @@ func (j jwtMiddleware) JwtSign(id int) (string, error) {
 	token, err := at.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
 		logs.New().Error(err)
-		return "", errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+		return "", errs.ErrInternalServerError
 	}
 
 	err = j.updateToken(id, token)
 	if err != nil {
 		logs.New().Error(err)
-		return "", errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error")
+		return "", errs.ErrInternalServerError
 	}
 
 	return token, nil
 }
 
 func (j jwtMiddleware) JwtVerify(c *fiber.Ctx) error {
+	handleUtil := utils.NewHandle()
 	bearer, err := j.jwtFromHeader(c)
 	if err != nil {
-		return handleError(c, err)
+		return handleUtil.HandleError(c, err)
 	}
 
 	token, err := jwt.Parse(bearer, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			EnMessage := fmt.Sprintf("unexpected signing method: %v", token.Header["alg"])
 			ThMessage := fmt.Sprintf("วิธีการลงนามที่ไม่คาดคิด: %v", token.Header["alg"])
-			return nil, handleError(c, errs.NewForbiddenError(ThMessage, EnMessage))
+			return nil, handleUtil.HandleError(c, errs.NewForbiddenError(ThMessage, EnMessage))
 		}
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 	if err != nil {
 		logs.New().Error(err)
-		return handleError(c, errs.NewForbiddenError("โทเค็นไม่ถูกต้อง", "Token Invalid"))
+		return handleUtil.HandleError(c, errs.NewForbiddenError("โทเค็นไม่ถูกต้อง", "Token Invalid"))
 	}
 
 	claims, err := j.getClaims(token)
 	if err != nil {
-		return handleError(c, err)
+		return handleUtil.HandleError(c, err)
 	}
 
 	id := utils.NewType().ParseInt(claims["id"])
 
 	if !j.validUser(bearer, id) {
-		return handleError(c, errs.NewForbiddenError("โทเค็นไม่ถูกต้อง", "Token Invalid"))
+		return handleUtil.HandleError(c, errs.NewForbiddenError("โทเค็นไม่ถูกต้อง", "Token Invalid"))
 	}
 
 	err = j.updateToken(id, bearer)
 	if err != nil {
 		logs.New().Error(err)
-		return handleError(c, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error"))
+		return handleUtil.HandleError(c, errs.NewInternalServerError("เกิดข้อผิดพลาด", "Internal Server Error"))
 	}
 
 	j.setClaims(c, claims)

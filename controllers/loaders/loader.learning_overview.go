@@ -2,18 +2,18 @@ package loader
 
 import (
 	"DatabaseCamp/models"
-	"DatabaseCamp/repository"
+	"DatabaseCamp/repositories"
 	"sync"
 )
 
 type learningOverviewLoader struct {
-	learningRepo          repository.ILearningRepository
-	userRepo              repository.IUserRepository
+	learningRepo          repositories.ILearningRepository
+	userRepo              repositories.IUserRepository
 	OverviewDB            []models.OverviewDB
 	LearningProgressionDB []models.LearningProgressionDB
 }
 
-func NewLearningOverviewLoader(learningRepo repository.ILearningRepository, userRepo repository.IUserRepository) *learningOverviewLoader {
+func NewLearningOverviewLoader(learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) *learningOverviewLoader {
 	return &learningOverviewLoader{learningRepo: learningRepo, userRepo: userRepo}
 }
 

@@ -2,19 +2,19 @@ package loader
 
 import (
 	"DatabaseCamp/models"
-	"DatabaseCamp/repository"
+	"DatabaseCamp/repositories"
 	"sync"
 )
 
 type examOverviewLoader struct {
-	examRepo         repository.IExamRepository
-	userRepo         repository.IUserRepository
+	examRepo         repositories.IExamRepository
+	userRepo         repositories.IUserRepository
 	CorrectedBadgeDB []models.CorrectedBadgeDB
 	ExamDB           []models.ExamDB
 	ExamResultsDB    []models.ExamResultDB
 }
 
-func NewExamOverviewLoader(examRepo repository.IExamRepository, userRepo repository.IUserRepository) *examOverviewLoader {
+func NewExamOverviewLoader(examRepo repositories.IExamRepository, userRepo repositories.IUserRepository) *examOverviewLoader {
 	return &examOverviewLoader{examRepo: examRepo, userRepo: userRepo}
 }
 
