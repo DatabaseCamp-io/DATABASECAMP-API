@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"DatabaseCamp/controllers/loaders"
 	loader "DatabaseCamp/controllers/loaders"
 	"DatabaseCamp/database"
 	"DatabaseCamp/errs"
@@ -27,14 +28,19 @@ func NewExamController(examRepo repositories.IExamRepository, userRepo repositor
 }
 
 func (c examController) GetExam(examID int, userID int) (*models.ExamResponse, error) {
-	examActivities, err := c.examRepo.GetExamActivity(examID)
-	if err != nil || len(examActivities) == 0 {
+	loader := loaders.NewExamLoader(c.examRepo, c.userRepo)
+	err := loader.Load(userID, examID)
+	if err != nil || len(loader.ExamActivitiesDB) == 0 {
 		logs.New().Error(err)
 		return nil, errs.ErrExamNotFound
 	}
 
 	exam := models.NewExam()
-	exam.Prepare(examActivities)
+	exam.Prepare(loader.ExamActivitiesDB)
+
+	if exam.Info.Type == string(models.Exam.Posttest) && !c.canDoFianlExam(loader.CorrectedBadgeDB) {
+		return nil, errs.ErrFinalExamBadgesNotEnough
+	}
 
 	response := exam.ToResponse()
 	return response, nil
@@ -49,10 +55,19 @@ func (c examController) GetOverview(userID int) (*models.ExamOverviewResponse, e
 	}
 
 	examOverview := models.NewExamOverview()
-	examOverview.PrepareExamOverview(loader.ExamResultsDB, loader.CorrectedBadgeDB, loader.ExamDB)
+	examOverview.PrepareExamOverview(loader.ExamResultsDB, loader.ExamDB, c.canDoFianlExam(loader.CorrectedBadgeDB))
 
 	response := examOverview.ToResponse()
 	return response, nil
+}
+
+func (c examController) canDoFianlExam(correctedBadgesDB []models.CorrectedBadgeDB) bool {
+	for _, correctedBadgeDB := range correctedBadgesDB {
+		if correctedBadgeDB.UserID == nil && correctedBadgeDB.BadgeID != 3 {
+			return false
+		}
+	}
+	return true
 }
 
 func (c examController) CheckExam(userID int, request models.ExamAnswerRequest) (*models.ExamResultOverviewResponse, error) {

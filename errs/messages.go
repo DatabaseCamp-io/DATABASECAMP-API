@@ -43,6 +43,9 @@ const (
 
 	ACTIVITY_TYPE_INVALID_TH = "ประเภทของกิจกรรมไม่ถูกต้อง"
 	ACTIVITY_TYPE_INVALID_EN = "Activity type invalid"
+
+	FINAL_EXAM_BAGES_NOT_ENOUGH_TH = "จำนวนเหรียญตราไม่เพียงพอในการทำข้อสอบ"
+	FINAL_EXAM_BAGES_NOT_ENOUGH_EN = "Not enough badges to do final exam"
 )
 
 const (
@@ -84,6 +87,7 @@ var (
 	ErrHintAlreadyUsed           = NewBadRequestError(HINTS_ALREADY_USED_TH, HINTS_ALREADY_USED_EN)
 	ErrHintPointsNotEnough       = NewBadRequestError(HINT_POINTS_NOT_ENOUGH_TH, HINT_POINTS_NOT_ENOUGH_EN)
 	ErrActivityTypeInvalid       = NewInternalServerError(ACTIVITY_TYPE_INVALID_TH, ACTIVITY_TYPE_INVALID_EN)
+	ErrFinalExamBadgesNotEnough  = NewBadRequestError(FINAL_EXAM_BAGES_NOT_ENOUGH_TH, FINAL_EXAM_BAGES_NOT_ENOUGH_EN)
 )
 
 var (

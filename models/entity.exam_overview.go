@@ -27,7 +27,7 @@ func (o *examOverview) ToResponse() *ExamOverviewResponse {
 	}
 }
 
-func (o *examOverview) PrepareExamOverview(examResultsDB []ExamResultDB, correctedBadgesDB []CorrectedBadgeDB, examsDB []ExamDB) {
+func (o *examOverview) PrepareExamOverview(examResultsDB []ExamResultDB, examsDB []ExamDB, canDoFinalExam bool) {
 	examResultMap := o.createExamResultMap(examResultsDB)
 	for _, examDB := range examsDB {
 		if examDB.Type == string(Exam.Pretest) {
@@ -51,11 +51,10 @@ func (o *examOverview) PrepareExamOverview(examResultsDB []ExamResultDB, correct
 				Results:          examResultMap[examDB.ID],
 			})
 		} else if examDB.Type == string(Exam.Posttest) {
-			cando := o.canDoFianlExam(correctedBadgesDB)
 			o.FinalExam = &examDetailOverview{
 				ExamID:   examDB.ID,
 				ExamType: examDB.Type,
-				CanDo:    &cando,
+				CanDo:    &canDoFinalExam,
 				Results:  examResultMap[examDB.ID],
 			}
 		}
@@ -86,13 +85,4 @@ func (o *examOverview) countExamScore(examResultsDB []ExamResultDB) map[int]int 
 		examCountScore[examResultDB.ID] += examResultDB.Score
 	}
 	return examCountScore
-}
-
-func (o *examOverview) canDoFianlExam(correctedBadgesDB []CorrectedBadgeDB) bool {
-	for _, correctedBadgeDB := range correctedBadgesDB {
-		if correctedBadgeDB.UserID == nil {
-			return false
-		}
-	}
-	return true
 }
