@@ -3,133 +3,123 @@ package repositories
 import (
 	"DatabaseCamp/database"
 	"DatabaseCamp/models/entities"
-	"DatabaseCamp/models/general"
+	"DatabaseCamp/models/storages"
 	"DatabaseCamp/utils"
 	"fmt"
 )
 
 type userRepository struct {
-	database database.IDatabase
-}
-
-type IUserReader interface {
-	GetUserByEmail(email string) (*general.UserDB, error)
-	GetUserByID(id int) (*general.UserDB, error)
-	GetProfile(id int) (*general.ProfileDB, error)
-	GetLearningProgression(id int) ([]general.LearningProgressionDB, error)
-	GetAllBadge() ([]general.BadgeDB, error)
-	GetUserBadge(id int) ([]general.UserBadgeDB, error)
-	GetCollectedBadge(userID int) ([]general.CorrectedBadgeDB, error)
-	GetPointRanking(id int) (*general.RankingDB, error)
-	GetRankingLeaderBoard() ([]general.RankingDB, error)
-	GetUserHint(userID int, activityID int) ([]general.UserHintDB, error)
-	GetExamResult(userID int) ([]general.ExamResultDB, error)
-	GetExamResultByID(userID int, examResultID int) ([]general.ExamResultDB, error)
-}
-
-type IUserWriter interface {
-	InsertUser(user general.UserDB) (*general.UserDB, error)
-	InsertUserHint(userHint general.UserHintDB) (*general.UserHintDB, error)
-	UpdatesByID(id int, updateData map[string]interface{}) error
-}
-
-type IUserTransaction interface {
-	InsertUserHintTransaction(tx database.ITransaction, userHint general.UserHintDB) (*general.UserHintDB, error)
-	InsertLearningProgressionTransaction(tx database.ITransaction, progression general.LearningProgressionDB) (*general.LearningProgressionDB, error)
-	InsertUserBadgeTransaction(tx database.ITransaction, userBadge general.UserBadgeDB) (*general.UserBadgeDB, error)
-	ChangePointTransaction(tx database.ITransaction, userID int, point int, mode entities.ChangePointMode) error
+	Database database.IDatabase
 }
 
 type IUserRepository interface {
-	IUserReader
-	IUserWriter
-	IUserTransaction
+	GetUserByEmail(email string) (*storages.UserDB, error)
+	GetUserByID(id int) (*storages.UserDB, error)
+	GetProfile(id int) (*storages.ProfileDB, error)
+	GetLearningProgression(id int) ([]storages.LearningProgressionDB, error)
+	GetAllBadge() ([]storages.BadgeDB, error)
+	GetUserBadge(id int) ([]storages.UserBadgeDB, error)
+	GetCollectedBadge(userID int) ([]storages.CorrectedBadgeDB, error)
+	GetPointRanking(id int) (*storages.RankingDB, error)
+	GetRankingLeaderBoard() ([]storages.RankingDB, error)
+	GetUserHint(userID int, activityID int) ([]storages.UserHintDB, error)
+	GetExamResult(userID int) ([]storages.ExamResultDB, error)
+	GetExamResultByID(userID int, examResultID int) ([]storages.ExamResultDB, error)
+
+	InsertUser(user storages.UserDB) (*storages.UserDB, error)
+	InsertUserHint(userHint storages.UserHintDB) (*storages.UserHintDB, error)
+	UpdatesByID(id int, updateData map[string]interface{}) error
+
+	InsertUserHintTransaction(tx database.ITransaction, userHint storages.UserHintDB) (*storages.UserHintDB, error)
+	InsertLearningProgressionTransaction(tx database.ITransaction, progression storages.LearningProgressionDB) (*storages.LearningProgressionDB, error)
+	InsertUserBadgeTransaction(tx database.ITransaction, userBadge storages.UserBadgeDB) (*storages.UserBadgeDB, error)
+	ChangePointTransaction(tx database.ITransaction, userID int, point int, mode entities.ChangePointMode) error
 }
 
 func NewUserRepository(db database.IDatabase) userRepository {
-	return userRepository{database: db}
+	return userRepository{Database: db}
 }
 
-func (r userRepository) GetUserByEmail(email string) (*general.UserDB, error) {
-	user := general.UserDB{}
-	err := r.database.GetDB().
-		Table(general.TableName.User).
+func (r userRepository) GetUserByEmail(email string) (*storages.UserDB, error) {
+	user := storages.UserDB{}
+	err := r.Database.GetDB().
+		Table(storages.TableName.User).
 		Where("email = ?", email).
 		Find(&user).
 		Error
 	return &user, err
 }
 
-func (r userRepository) GetUserByID(id int) (*general.UserDB, error) {
-	user := general.UserDB{}
-	err := r.database.GetDB().
-		Table(general.TableName.User).
-		Where(general.IDName.User+" = ?", id).
+func (r userRepository) GetUserByID(id int) (*storages.UserDB, error) {
+	user := storages.UserDB{}
+	err := r.Database.GetDB().
+		Table(storages.TableName.User).
+		Where(storages.IDName.User+" = ?", id).
 		Find(&user).
 		Error
 	return &user, err
 }
 
-func (r userRepository) GetProfile(id int) (*general.ProfileDB, error) {
-	profile := general.ProfileDB{}
-	err := r.database.GetDB().
-		Table(general.ViewName.Profile).
-		Where(general.IDName.User+" = ?", id).
+func (r userRepository) GetProfile(id int) (*storages.ProfileDB, error) {
+	profile := storages.ProfileDB{}
+	err := r.Database.GetDB().
+		Table(storages.ViewName.Profile).
+		Where(storages.IDName.User+" = ?", id).
 		Find(&profile).
 		Error
-	if profile == (general.ProfileDB{}) {
+	if profile == (storages.ProfileDB{}) {
 		return nil, nil
 	}
 	return &profile, err
 }
 
-func (r userRepository) GetLearningProgression(id int) ([]general.LearningProgressionDB, error) {
-	learningProgrogression := make([]general.LearningProgressionDB, 0)
-	err := r.database.GetDB().
-		Table(general.TableName.LearningProgression).
-		Where(general.IDName.User+" = ?", id).
+func (r userRepository) GetLearningProgression(id int) ([]storages.LearningProgressionDB, error) {
+	learningProgrogression := make([]storages.LearningProgressionDB, 0)
+	err := r.Database.GetDB().
+		Table(storages.TableName.LearningProgression).
+		Where(storages.IDName.User+" = ?", id).
 		Order("created_timestamp desc").
 		Find(&learningProgrogression).
 		Error
 	return learningProgrogression, err
 }
 
-func (r userRepository) GetAllBadge() ([]general.BadgeDB, error) {
-	badge := make([]general.BadgeDB, 0)
-	err := r.database.GetDB().
-		Table(general.TableName.Badge).
+func (r userRepository) GetAllBadge() ([]storages.BadgeDB, error) {
+	badge := make([]storages.BadgeDB, 0)
+	err := r.Database.GetDB().
+		Table(storages.TableName.Badge).
 		Find(&badge).
 		Error
 	return badge, err
 }
 
-func (r userRepository) GetUserBadge(id int) ([]general.UserBadgeDB, error) {
-	badgePair := make([]general.UserBadgeDB, 0)
-	err := r.database.GetDB().
-		Table(general.TableName.UserBadge).
-		Where(general.IDName.User+" = ?", id).
+func (r userRepository) GetUserBadge(id int) ([]storages.UserBadgeDB, error) {
+	badgePair := make([]storages.UserBadgeDB, 0)
+	err := r.Database.GetDB().
+		Table(storages.TableName.UserBadge).
+		Where(storages.IDName.User+" = ?", id).
 		Find(&badgePair).
 		Error
 	return badgePair, err
 }
 
-func (r userRepository) GetCollectedBadge(userID int) ([]general.CorrectedBadgeDB, error) {
-	correctedBadge := make([]general.CorrectedBadgeDB, 0)
-	err := r.database.GetDB().
-		Table(general.TableName.Badge).
+func (r userRepository) GetCollectedBadge(userID int) ([]storages.CorrectedBadgeDB, error) {
+	correctedBadge := make([]storages.CorrectedBadgeDB, 0)
+	err := r.Database.GetDB().
+		Table(storages.TableName.Badge).
 		Select(
-			general.TableName.Badge+".badge_id AS badge_id",
-			general.TableName.Badge+".name AS badge_name",
-			general.TableName.UserBadge+".user_id AS user_id",
+			storages.TableName.Badge+".badge_id AS badge_id",
+			storages.TableName.Badge+".name AS badge_name",
+			storages.TableName.UserBadge+".user_id AS user_id",
 		).
 		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s AND %s.%s = %d",
-			general.TableName.UserBadge,
-			general.TableName.UserBadge,
-			general.IDName.Badge,
-			general.TableName.Badge,
-			general.IDName.Badge,
-			general.TableName.UserBadge,
-			general.IDName.User,
+			storages.TableName.UserBadge,
+			storages.TableName.UserBadge,
+			storages.IDName.Badge,
+			storages.TableName.Badge,
+			storages.IDName.Badge,
+			storages.TableName.UserBadge,
+			storages.IDName.User,
 			userID,
 		)).
 		Find(&correctedBadge).
@@ -137,144 +127,144 @@ func (r userRepository) GetCollectedBadge(userID int) ([]general.CorrectedBadgeD
 	return correctedBadge, err
 }
 
-func (r userRepository) GetPointRanking(id int) (*general.RankingDB, error) {
-	ranking := general.RankingDB{}
-	err := r.database.GetDB().
-		Table(general.ViewName.Ranking).
-		Where(general.IDName.User+" = ?", id).
+func (r userRepository) GetPointRanking(id int) (*storages.RankingDB, error) {
+	ranking := storages.RankingDB{}
+	err := r.Database.GetDB().
+		Table(storages.ViewName.Ranking).
+		Where(storages.IDName.User+" = ?", id).
 		Find(&ranking).
 		Error
 	return &ranking, err
 }
 
-func (r userRepository) GetRankingLeaderBoard() ([]general.RankingDB, error) {
-	ranking := make([]general.RankingDB, 0)
-	err := r.database.GetDB().
-		Table(general.ViewName.Ranking).
+func (r userRepository) GetRankingLeaderBoard() ([]storages.RankingDB, error) {
+	ranking := make([]storages.RankingDB, 0)
+	err := r.Database.GetDB().
+		Table(storages.ViewName.Ranking).
 		Limit(20).
 		Order("ranking ASC").
 		Order("name ASC").
-		Order(general.IDName.User + " ASC").
+		Order(storages.IDName.User + " ASC").
 		Find(&ranking).
 		Error
 	return ranking, err
 }
 
-func (r userRepository) GetUserHint(userID int, activityID int) ([]general.UserHintDB, error) {
-	userhint := make([]general.UserHintDB, 0)
+func (r userRepository) GetUserHint(userID int, activityID int) ([]storages.UserHintDB, error) {
+	userhint := make([]storages.UserHintDB, 0)
 
-	hintSubquery := r.database.GetDB().
+	hintSubquery := r.Database.GetDB().
 		Select("hint_id").
-		Table(general.TableName.Hint).
-		Where(general.IDName.Activity+" = ?", activityID)
+		Table(storages.TableName.Hint).
+		Where(storages.IDName.Activity+" = ?", activityID)
 
-	err := r.database.GetDB().
-		Table(general.TableName.UserHint).
-		Where(general.IDName.Hint+" IN (?)", hintSubquery).
-		Where(general.IDName.User+" = ?", userID).
+	err := r.Database.GetDB().
+		Table(storages.TableName.UserHint).
+		Where(storages.IDName.Hint+" IN (?)", hintSubquery).
+		Where(storages.IDName.User+" = ?", userID).
 		Find(&userhint).
 		Error
 
 	return userhint, err
 }
 
-func (r userRepository) GetExamResult(userID int) ([]general.ExamResultDB, error) {
-	examResults := make([]general.ExamResultDB, 0)
-	err := r.database.GetDB().
-		Table(general.TableName.ExamResult).
+func (r userRepository) GetExamResult(userID int) ([]storages.ExamResultDB, error) {
+	examResults := make([]storages.ExamResultDB, 0)
+	err := r.Database.GetDB().
+		Table(storages.TableName.ExamResult).
 		Select(
-			general.TableName.ExamResult+".exam_result_id AS exam_result_id",
-			general.TableName.ExamResult+".exam_id AS exam_id",
-			general.TableName.ExamResult+".user_id AS user_id",
-			general.TableName.ExamResult+".is_passed AS is_passed",
-			general.TableName.ExamResult+".created_timestamp AS created_timestamp",
+			storages.TableName.ExamResult+".exam_result_id AS exam_result_id",
+			storages.TableName.ExamResult+".exam_id AS exam_id",
+			storages.TableName.ExamResult+".user_id AS user_id",
+			storages.TableName.ExamResult+".is_passed AS is_passed",
+			storages.TableName.ExamResult+".created_timestamp AS created_timestamp",
 
-			general.TableName.ExamResultActivity+".score AS score",
+			storages.TableName.ExamResultActivity+".score AS score",
 		).
 		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
-			general.TableName.ExamResultActivity,
-			general.TableName.ExamResultActivity,
-			general.IDName.ExamResult,
-			general.TableName.ExamResult,
-			general.IDName.ExamResult,
+			storages.TableName.ExamResultActivity,
+			storages.TableName.ExamResultActivity,
+			storages.IDName.ExamResult,
+			storages.TableName.ExamResult,
+			storages.IDName.ExamResult,
 		)).
-		Where(general.IDName.User+" = ?", userID).
+		Where(storages.IDName.User+" = ?", userID).
 		Find(&examResults).
 		Error
 	return examResults, err
 }
 
-func (r userRepository) GetExamResultByID(userID int, examResultID int) ([]general.ExamResultDB, error) {
-	examResults := make([]general.ExamResultDB, 0)
-	err := r.database.GetDB().
-		Table(general.TableName.ExamResult).
+func (r userRepository) GetExamResultByID(userID int, examResultID int) ([]storages.ExamResultDB, error) {
+	examResults := make([]storages.ExamResultDB, 0)
+	err := r.Database.GetDB().
+		Table(storages.TableName.ExamResult).
 		Select(
-			general.TableName.ExamResult+".exam_result_id AS exam_result_id",
-			general.TableName.ExamResult+".exam_id AS exam_id",
-			general.TableName.ExamResult+".user_id AS user_id",
-			general.TableName.ExamResult+".is_passed AS is_passed",
-			general.TableName.ExamResult+".created_timestamp AS created_timestamp",
-			general.TableName.ExamResultActivity+".score AS score",
+			storages.TableName.ExamResult+".exam_result_id AS exam_result_id",
+			storages.TableName.ExamResult+".exam_id AS exam_id",
+			storages.TableName.ExamResult+".user_id AS user_id",
+			storages.TableName.ExamResult+".is_passed AS is_passed",
+			storages.TableName.ExamResult+".created_timestamp AS created_timestamp",
+			storages.TableName.ExamResultActivity+".score AS score",
 		).
 		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
-			general.TableName.ExamResultActivity,
-			general.TableName.ExamResultActivity,
-			general.IDName.ExamResult,
-			general.TableName.ExamResult,
-			general.IDName.ExamResult,
+			storages.TableName.ExamResultActivity,
+			storages.TableName.ExamResultActivity,
+			storages.IDName.ExamResult,
+			storages.TableName.ExamResult,
+			storages.IDName.ExamResult,
 		)).
-		Where(general.IDName.User+" = ?", userID).
-		Where(general.TableName.ExamResult+"."+general.IDName.ExamResult+" = ?", examResultID).
+		Where(storages.IDName.User+" = ?", userID).
+		Where(storages.TableName.ExamResult+"."+storages.IDName.ExamResult+" = ?", examResultID).
 		Find(&examResults).
 		Error
 	return examResults, err
 }
 
-func (r userRepository) InsertUser(user general.UserDB) (*general.UserDB, error) {
-	err := r.database.GetDB().
-		Table(general.TableName.User).
+func (r userRepository) InsertUser(user storages.UserDB) (*storages.UserDB, error) {
+	err := r.Database.GetDB().
+		Table(storages.TableName.User).
 		Create(&user).
 		Error
 	return &user, err
 }
 
-func (r userRepository) InsertUserHint(userHint general.UserHintDB) (*general.UserHintDB, error) {
-	err := r.database.GetDB().
-		Table(general.TableName.UserHint).
+func (r userRepository) InsertUserHint(userHint storages.UserHintDB) (*storages.UserHintDB, error) {
+	err := r.Database.GetDB().
+		Table(storages.TableName.UserHint).
 		Create(&userHint).
 		Error
 	return &userHint, err
 }
 
 func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) error {
-	err := r.database.GetDB().
-		Table(general.TableName.User).
+	err := r.Database.GetDB().
+		Table(storages.TableName.User).
 		Select("", utils.NewHelper().GetKeyList(updateData)).
-		Where(general.IDName.User+" = ?", id).
+		Where(storages.IDName.User+" = ?", id).
 		Updates(updateData).
 		Error
 	return err
 }
 
-func (r userRepository) InsertUserHintTransaction(tx database.ITransaction, userHint general.UserHintDB) (*general.UserHintDB, error) {
+func (r userRepository) InsertUserHintTransaction(tx database.ITransaction, userHint storages.UserHintDB) (*storages.UserHintDB, error) {
 	err := tx.GetDB().
-		Table(general.TableName.UserHint).
+		Table(storages.TableName.UserHint).
 		Create(&userHint).
 		Error
 	return &userHint, err
 }
 
-func (r userRepository) InsertLearningProgressionTransaction(tx database.ITransaction, progression general.LearningProgressionDB) (*general.LearningProgressionDB, error) {
+func (r userRepository) InsertLearningProgressionTransaction(tx database.ITransaction, progression storages.LearningProgressionDB) (*storages.LearningProgressionDB, error) {
 	err := tx.GetDB().
-		Table(general.TableName.LearningProgression).
+		Table(storages.TableName.LearningProgression).
 		Create(&progression).
 		Error
 	return &progression, err
 }
 
-func (r userRepository) InsertUserBadgeTransaction(tx database.ITransaction, userBadge general.UserBadgeDB) (*general.UserBadgeDB, error) {
+func (r userRepository) InsertUserBadgeTransaction(tx database.ITransaction, userBadge storages.UserBadgeDB) (*storages.UserBadgeDB, error) {
 	err := tx.GetDB().
-		Table(general.TableName.UserBadge).
+		Table(storages.TableName.UserBadge).
 		Create(&userBadge).
 		Error
 	return &userBadge, err
@@ -282,10 +272,10 @@ func (r userRepository) InsertUserBadgeTransaction(tx database.ITransaction, use
 
 func (r userRepository) ChangePointTransaction(tx database.ITransaction, userID int, point int, mode entities.ChangePointMode) error {
 	statement := fmt.Sprintf("UPDATE %s SET point = point %s %d WHERE %s = %d",
-		general.TableName.User,
+		storages.TableName.User,
 		mode,
 		point,
-		general.IDName.User,
+		storages.IDName.User,
 		userID,
 	)
 	temp := map[string]interface{}{}

@@ -2,6 +2,7 @@ package loaders
 
 import (
 	"DatabaseCamp/models/general"
+	"DatabaseCamp/models/storages"
 	"DatabaseCamp/repositories"
 	"sync"
 )
@@ -9,13 +10,25 @@ import (
 type hintLoader struct {
 	learningRepo    repositories.ILearningRepository
 	userRepo        repositories.IUserRepository
-	ActivityHintsDB []general.HintDB
-	UserHintsDB     []general.UserHintDB
-	UserDB          *general.UserDB
+	activityHintsDB []storages.HintDB
+	userHintsDB     []storages.UserHintDB
+	userDB          *storages.UserDB
 }
 
 func NewHintLoader(learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) *hintLoader {
 	return &hintLoader{learningRepo: learningRepo, userRepo: userRepo}
+}
+
+func (l *hintLoader) GetActivityHintsDB() []storages.HintDB {
+	return l.activityHintsDB
+}
+
+func (l *hintLoader) GetUserHintsDB() []storages.UserHintDB {
+	return l.userHintsDB
+}
+
+func (l *hintLoader) GetUserDB() *storages.UserDB {
+	return l.userDB
 }
 
 func (l *hintLoader) Load(userID int, activityID int) error {
@@ -33,7 +46,7 @@ func (l *hintLoader) Load(userID int, activityID int) error {
 func (l *hintLoader) loadUser(concurrent *general.Concurrent, userID int) {
 	defer concurrent.Wg.Done()
 	var err error
-	l.UserDB, err = l.userRepo.GetUserByID(userID)
+	l.userDB, err = l.userRepo.GetUserByID(userID)
 	if err != nil {
 		*concurrent.Err = err
 	}
@@ -45,7 +58,7 @@ func (l *hintLoader) loadUserHintsAsync(concurrent *general.Concurrent, userID i
 	if e != nil {
 		*concurrent.Err = e
 	}
-	l.UserHintsDB = append(l.UserHintsDB, result...)
+	l.userHintsDB = append(l.userHintsDB, result...)
 }
 
 func (l *hintLoader) loadActivityHints(concurrent *general.Concurrent, activityID int) {
@@ -54,5 +67,5 @@ func (l *hintLoader) loadActivityHints(concurrent *general.Concurrent, activityI
 	if e != nil {
 		*concurrent.Err = e
 	}
-	l.ActivityHintsDB = append(l.ActivityHintsDB, result...)
+	l.activityHintsDB = append(l.activityHintsDB, result...)
 }

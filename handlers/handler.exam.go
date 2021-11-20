@@ -10,18 +10,25 @@ import (
 )
 
 type examHandler struct {
-	controller controllers.IExamController
+	Controller controllers.IExamController
+}
+
+type IExamHandler interface {
+	GetExam(c *fiber.Ctx) error
+	CheckExam(c *fiber.Ctx) error
+	GetExamOverview(c *fiber.Ctx) error
+	GetExamResult(c *fiber.Ctx) error
 }
 
 func NewExamHandler(controller controllers.IExamController) examHandler {
-	return examHandler{controller: controller}
+	return examHandler{Controller: controller}
 }
 
 func (h examHandler) GetExam(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	examID := utils.NewType().ParseInt(c.Params("id"))
 	userID := utils.NewType().ParseInt(c.Locals("id"))
-	response, err := h.controller.GetExam(examID, userID)
+	response, err := h.Controller.GetExam(examID, userID)
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
@@ -43,7 +50,7 @@ func (h examHandler) CheckExam(c *fiber.Ctx) error {
 		return handleUtil.HandleError(c, err)
 	}
 
-	response, err := h.controller.CheckExam(userID, request)
+	response, err := h.Controller.CheckExam(userID, request)
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
@@ -54,7 +61,7 @@ func (h examHandler) CheckExam(c *fiber.Ctx) error {
 func (h examHandler) GetExamOverview(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))
-	response, err := h.controller.GetOverview(userID)
+	response, err := h.Controller.GetOverview(userID)
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
@@ -65,7 +72,7 @@ func (h examHandler) GetExamResult(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))
 	examResultID := utils.NewType().ParseInt(c.Params("id"))
-	response, err := h.controller.GetExamResult(userID, examResultID)
+	response, err := h.Controller.GetExamResult(userID, examResultID)
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}

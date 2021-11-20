@@ -2,6 +2,7 @@ package loaders
 
 import (
 	"DatabaseCamp/models/general"
+	"DatabaseCamp/models/storages"
 	"DatabaseCamp/repositories"
 	"sync"
 )
@@ -9,13 +10,25 @@ import (
 type contentRoadmapLoader struct {
 	learningRepo          repositories.ILearningRepository
 	userRepo              repositories.IUserRepository
-	ContentDB             *general.ContentDB
-	ContentActivityDB     []general.ActivityDB
-	LearningProgressionDB []general.LearningProgressionDB
+	contentDB             *storages.ContentDB
+	contentActivityDB     []storages.ActivityDB
+	learningProgressionDB []storages.LearningProgressionDB
 }
 
 func NewContentRoadmapLoader(learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) *contentRoadmapLoader {
 	return &contentRoadmapLoader{learningRepo: learningRepo, userRepo: userRepo}
+}
+
+func (l *contentRoadmapLoader) GetContentDB() *storages.ContentDB {
+	return l.contentDB
+}
+
+func (l *contentRoadmapLoader) GetContentActivityDB() []storages.ActivityDB {
+	return l.contentActivityDB
+}
+
+func (l *contentRoadmapLoader) GetLearningProgressionDB() []storages.LearningProgressionDB {
+	return l.learningProgressionDB
 }
 
 func (l *contentRoadmapLoader) Load(userID int, contentID int) error {
@@ -36,7 +49,7 @@ func (l *contentRoadmapLoader) loadContentAsync(concurrent *general.Concurrent, 
 	if err != nil {
 		*concurrent.Err = err
 	}
-	l.ContentDB = result
+	l.contentDB = result
 }
 
 func (l *contentRoadmapLoader) loadLearningProgressionAsync(concurrent *general.Concurrent, userID int) {
@@ -45,7 +58,7 @@ func (l *contentRoadmapLoader) loadLearningProgressionAsync(concurrent *general.
 	if err != nil {
 		*concurrent.Err = err
 	}
-	l.LearningProgressionDB = append(l.LearningProgressionDB, result...)
+	l.learningProgressionDB = append(l.learningProgressionDB, result...)
 }
 
 func (l *contentRoadmapLoader) loadContentActivityAsync(concurrent *general.Concurrent, contentID int) {
@@ -54,5 +67,5 @@ func (l *contentRoadmapLoader) loadContentActivityAsync(concurrent *general.Conc
 	if err != nil {
 		*concurrent.Err = err
 	}
-	l.ContentActivityDB = append(l.ContentActivityDB, result...)
+	l.contentActivityDB = append(l.contentActivityDB, result...)
 }

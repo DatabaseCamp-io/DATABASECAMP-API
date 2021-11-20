@@ -16,7 +16,7 @@ import (
 )
 
 type jwtMiddleware struct {
-	repo repositories.IUserRepository
+	Repo repositories.IUserRepository
 }
 
 type IJwt interface {
@@ -25,7 +25,7 @@ type IJwt interface {
 }
 
 func NewJwtMiddleware(repo repositories.IUserRepository) jwtMiddleware {
-	return jwtMiddleware{repo: repo}
+	return jwtMiddleware{Repo: repo}
 }
 
 func (j jwtMiddleware) JwtSign(id int) (string, error) {
@@ -93,7 +93,7 @@ func (j jwtMiddleware) JwtVerify(c *fiber.Ctx) error {
 func (j jwtMiddleware) updateToken(id int, token string) error {
 	tokenExpireHour := time.Hour * utils.NewType().ParseDuration(os.Getenv("TOKEN_EXPIRE_HOUR"))
 	expiredTokenTimestamp := time.Now().Local().Add(tokenExpireHour)
-	err := j.repo.UpdatesByID(id, map[string]interface{}{
+	err := j.Repo.UpdatesByID(id, map[string]interface{}{
 		"access_token":            token,
 		"expired_token_timestamp": expiredTokenTimestamp,
 	})
@@ -118,7 +118,7 @@ func (j jwtMiddleware) setClaims(c *fiber.Ctx, claims jwt.MapClaims) {
 }
 
 func (j jwtMiddleware) validUser(token string, id int) bool {
-	userDB, err := j.repo.GetUserByID(id)
+	userDB, err := j.Repo.GetUserByID(id)
 	if err != nil || userDB == nil {
 		return false
 	}

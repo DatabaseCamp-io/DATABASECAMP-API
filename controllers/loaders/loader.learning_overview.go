@@ -2,6 +2,7 @@ package loaders
 
 import (
 	"DatabaseCamp/models/general"
+	"DatabaseCamp/models/storages"
 	"DatabaseCamp/repositories"
 	"sync"
 )
@@ -9,12 +10,20 @@ import (
 type learningOverviewLoader struct {
 	learningRepo          repositories.ILearningRepository
 	userRepo              repositories.IUserRepository
-	OverviewDB            []general.OverviewDB
-	LearningProgressionDB []general.LearningProgressionDB
+	overviewDB            []storages.OverviewDB
+	learningProgressionDB []storages.LearningProgressionDB
 }
 
 func NewLearningOverviewLoader(learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) *learningOverviewLoader {
 	return &learningOverviewLoader{learningRepo: learningRepo, userRepo: userRepo}
+}
+
+func (l *learningOverviewLoader) GetOverviewDB() []storages.OverviewDB {
+	return l.overviewDB
+}
+
+func (l *learningOverviewLoader) GetLearningProgressionDB() []storages.LearningProgressionDB {
+	return l.learningProgressionDB
 }
 
 func (l *learningOverviewLoader) Load(userID int) error {
@@ -34,7 +43,7 @@ func (l *learningOverviewLoader) loadOverviewAsync(concurrent *general.Concurren
 	if err != nil {
 		*concurrent.Err = err
 	}
-	l.OverviewDB = append(l.OverviewDB, result...)
+	l.overviewDB = append(l.overviewDB, result...)
 }
 
 func (l *learningOverviewLoader) loadLearningProgressionAsync(concurrent *general.Concurrent, id int) {
@@ -43,5 +52,5 @@ func (l *learningOverviewLoader) loadLearningProgressionAsync(concurrent *genera
 	if err != nil {
 		*concurrent.Err = err
 	}
-	l.LearningProgressionDB = append(l.LearningProgressionDB, result...)
+	l.learningProgressionDB = append(l.learningProgressionDB, result...)
 }

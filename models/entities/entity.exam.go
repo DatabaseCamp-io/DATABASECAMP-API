@@ -3,6 +3,7 @@ package entities
 import (
 	"DatabaseCamp/models/general"
 	"DatabaseCamp/models/request"
+	"DatabaseCamp/models/storages"
 	"DatabaseCamp/utils"
 	"sync"
 	"time"
@@ -59,10 +60,10 @@ func (e *Exam) GetInfo() ExamInfo {
 	return e.info
 }
 
-func (e *Exam) ToExamResultActivitiesDB() []general.ExamResultActivityDB {
-	resultActivities := make([]general.ExamResultActivityDB, 0)
+func (e *Exam) ToExamResultActivitiesDB() []storages.ExamResultActivityDB {
+	resultActivities := make([]storages.ExamResultActivityDB, 0)
 	for _, resultActivity := range e.result.ActivitiesResult {
-		resultActivities = append(resultActivities, general.ExamResultActivityDB{
+		resultActivities = append(resultActivities, storages.ExamResultActivityDB{
 			ActivityID: resultActivity.ActivityID,
 			Score:      resultActivity.Score,
 		})
@@ -70,8 +71,8 @@ func (e *Exam) ToExamResultActivitiesDB() []general.ExamResultActivityDB {
 	return resultActivities
 }
 
-func (e *Exam) ToExamResultDB(userID int) *general.ExamResultDB {
-	return &general.ExamResultDB{
+func (e *Exam) ToExamResultDB(userID int) *storages.ExamResultDB {
+	return &storages.ExamResultDB{
 		ExamID:           e.info.ID,
 		UserID:           userID,
 		Score:            e.result.TotalScore,
@@ -80,7 +81,7 @@ func (e *Exam) ToExamResultDB(userID int) *general.ExamResultDB {
 	}
 }
 
-func (e *Exam) PrepareResult(examResultDB general.ExamResultDB) {
+func (e *Exam) PrepareResult(examResultDB storages.ExamResultDB) {
 	e.result = &ExamResultOverview{
 		ExamResultID:     examResultDB.ID,
 		TotalScore:       examResultDB.Score,
@@ -89,11 +90,11 @@ func (e *Exam) PrepareResult(examResultDB general.ExamResultDB) {
 	}
 }
 
-func (e *Exam) Prepare(examActivitiesDB []general.ExamActivityDB) {
+func (e *Exam) Prepare(examActivitiesDB []storages.ExamActivityDB) {
 	activityChoiceDBMap := map[int]interface{}{}
-	examActivityDBMap := map[int]general.ActivityDB{}
+	examActivityDBMap := map[int]storages.ActivityDB{}
 	for _, examActivityDB := range examActivitiesDB {
-		activity := general.ActivityDB{}
+		activity := storages.ActivityDB{}
 		utils.NewType().StructToStruct(examActivityDB, &e.info)
 		if examActivityDB.ExamType == string(ExamType.Posttest) {
 			e.info.BadgeID = 3
@@ -116,13 +117,13 @@ func (e *Exam) Prepare(examActivitiesDB []general.ExamActivityDB) {
 
 func (e *Exam) initialActivityChoiceMap(activityID int, typeID int, activityChoiceMap map[int]interface{}) {
 	if typeID == 1 {
-		temp := make([]general.MatchingChoiceDB, 0)
+		temp := make([]storages.MatchingChoiceDB, 0)
 		activityChoiceMap[activityID] = temp
 	} else if typeID == 2 {
-		temp := make([]general.MultipleChoiceDB, 0)
+		temp := make([]storages.MultipleChoiceDB, 0)
 		activityChoiceMap[activityID] = temp
 	} else if typeID == 3 {
-		temp := make([]general.CompletionChoiceDB, 0)
+		temp := make([]storages.CompletionChoiceDB, 0)
 		activityChoiceMap[activityID] = temp
 	} else {
 		temp := make([]interface{}, 0)
@@ -130,35 +131,35 @@ func (e *Exam) initialActivityChoiceMap(activityID int, typeID int, activityChoi
 	}
 }
 
-func (e *Exam) appendExamActivityChoice(examActivity general.ExamActivityDB, activityChoiceMap map[int]interface{}) {
+func (e *Exam) appendExamActivityChoice(examActivity storages.ExamActivityDB, activityChoiceMap map[int]interface{}) {
 	choices := activityChoiceMap[examActivity.ActivityID]
 	if examActivity.ActivityTypeID == 1 {
-		temp := choices.([]general.MatchingChoiceDB)
-		temp = append(temp, e.examActivityToChoice(examActivity).(general.MatchingChoiceDB))
+		temp := choices.([]storages.MatchingChoiceDB)
+		temp = append(temp, e.examActivityToChoice(examActivity).(storages.MatchingChoiceDB))
 		activityChoiceMap[examActivity.ActivityID] = temp
 	} else if examActivity.ActivityTypeID == 2 {
-		temp := choices.([]general.MultipleChoiceDB)
-		temp = append(temp, e.examActivityToChoice(examActivity).(general.MultipleChoiceDB))
+		temp := choices.([]storages.MultipleChoiceDB)
+		temp = append(temp, e.examActivityToChoice(examActivity).(storages.MultipleChoiceDB))
 		activityChoiceMap[examActivity.ActivityID] = temp
 	} else if examActivity.ActivityTypeID == 3 {
-		temp := choices.([]general.CompletionChoiceDB)
-		temp = append(temp, e.examActivityToChoice(examActivity).(general.CompletionChoiceDB))
+		temp := choices.([]storages.CompletionChoiceDB)
+		temp = append(temp, e.examActivityToChoice(examActivity).(storages.CompletionChoiceDB))
 		activityChoiceMap[examActivity.ActivityID] = temp
 	}
 }
 
-func (e *Exam) examActivityToChoice(examActivity general.ExamActivityDB) interface{} {
+func (e *Exam) examActivityToChoice(examActivity storages.ExamActivityDB) interface{} {
 	if examActivity.ActivityTypeID == 1 {
-		choice := general.MatchingChoiceDB{}
+		choice := storages.MatchingChoiceDB{}
 		utils.NewType().StructToStruct(examActivity, &choice)
 		return choice
 	} else if examActivity.ActivityTypeID == 2 {
-		choice := general.MultipleChoiceDB{}
+		choice := storages.MultipleChoiceDB{}
 		examActivity.Content = examActivity.MultipleChoiceContent
 		utils.NewType().StructToStruct(examActivity, &choice)
 		return choice
 	} else if examActivity.ActivityTypeID == 3 {
-		choice := general.CompletionChoiceDB{}
+		choice := storages.CompletionChoiceDB{}
 		examActivity.Content = examActivity.CompletionChoiceContent
 		utils.NewType().StructToStruct(examActivity, &choice)
 		return choice

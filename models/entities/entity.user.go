@@ -1,7 +1,8 @@
 package entities
 
 import (
-	"DatabaseCamp/models/general"
+	"DatabaseCamp/models/request"
+	"DatabaseCamp/models/storages"
 	"DatabaseCamp/utils"
 	"os"
 	"time"
@@ -38,6 +39,52 @@ type User struct {
 	updatedTimestamp time.Time
 }
 
+func NewUserByRequest(request request.UserRequest) User {
+	user := User{
+		name:     request.Name,
+		email:    request.Email,
+		password: request.Password,
+	}
+	user.SetTimestamp()
+	user.HashPassword()
+	return user
+}
+
+func NewUserByUserDB(userDB storages.UserDB) User {
+	return User{
+		id:               userDB.ID,
+		name:             userDB.Name,
+		email:            userDB.Email,
+		password:         userDB.Password,
+		createdTimestamp: userDB.CreatedTimestamp,
+		updatedTimestamp: userDB.UpdatedTimestamp,
+	}
+}
+
+func (u *User) GetID() int {
+	return u.id
+}
+
+func (u *User) GetName() string {
+	return u.name
+}
+
+func (u *User) GetEmail() string {
+	return u.email
+}
+
+func (u *User) GetBadges() []Badge {
+	return u.badges
+}
+
+func (u *User) GetCreatedTimestamp() time.Time {
+	return u.createdTimestamp
+}
+
+func (u *User) GetUpdatedTimstamp() time.Time {
+	return u.updatedTimestamp
+}
+
 func (u *User) SetID(id int) {
 	u.id = id
 }
@@ -52,7 +99,7 @@ func (u *User) SetTimestamp() {
 }
 
 // Setter for set corrected badge
-func (u *User) SetCorrectedBadges(allBadgesDB []general.BadgeDB, correctedBadgesDB []general.UserBadgeDB) {
+func (u *User) SetCorrectedBadges(allBadgesDB []storages.BadgeDB, correctedBadgesDB []storages.UserBadgeDB) {
 	for _, badgeDB := range allBadgesDB {
 		u.badges = append(u.badges, Badge{
 			ID:          badgeDB.ID,
@@ -64,7 +111,7 @@ func (u *User) SetCorrectedBadges(allBadgesDB []general.BadgeDB, correctedBadges
 }
 
 // Private method for checking which badge is corrected
-func (u *User) isCorrectedBadge(allBadgesDB []general.UserBadgeDB, badgeID int) bool {
+func (u *User) isCorrectedBadge(allBadgesDB []storages.UserBadgeDB, badgeID int) bool {
 	for _, correctedBadgeDB := range allBadgesDB {
 		if badgeID == correctedBadgeDB.BadgeID {
 			return true
@@ -74,10 +121,10 @@ func (u *User) isCorrectedBadge(allBadgesDB []general.UserBadgeDB, badgeID int) 
 }
 
 // To UserDB model
-func (u *User) ToDB() general.UserDB {
+func (u *User) ToDB() storages.UserDB {
 	tokenExpireHour := time.Hour * utils.NewType().ParseDuration(os.Getenv("TOKEN_EXPIRE_HOUR"))
 	expiredTokenTimestamp := time.Now().Local().Add(tokenExpireHour)
-	return general.UserDB{
+	return storages.UserDB{
 		Name:                  u.name,
 		Email:                 u.email,
 		Password:              u.password,

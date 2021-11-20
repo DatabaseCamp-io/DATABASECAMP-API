@@ -2,7 +2,7 @@ package response
 
 import (
 	"DatabaseCamp/models/entities"
-	"DatabaseCamp/models/general"
+	"DatabaseCamp/models/storages"
 )
 
 type examDetailOverview struct {
@@ -20,13 +20,13 @@ type ExamOverviewResponse struct {
 	FinalExam *examDetailOverview   `json:"final_exam"`
 }
 
-func NewExamOverviewResponse(examResultsDB []general.ExamResultDB, examsDB []general.ExamDB, canDoFinalExam bool) *ExamOverviewResponse {
+func NewExamOverviewResponse(examResultsDB []storages.ExamResultDB, examsDB []storages.ExamDB, canDoFinalExam bool) *ExamOverviewResponse {
 	response := ExamOverviewResponse{}
 	response.prepare(examResultsDB, examsDB, canDoFinalExam)
 	return &ExamOverviewResponse{}
 }
 
-func (o *ExamOverviewResponse) prepare(examResultsDB []general.ExamResultDB, examsDB []general.ExamDB, canDoFinalExam bool) {
+func (o *ExamOverviewResponse) prepare(examResultsDB []storages.ExamResultDB, examsDB []storages.ExamDB, canDoFinalExam bool) {
 	examResultMap := o.createExamResultMap(examResultsDB)
 	for _, examDB := range examsDB {
 		if examDB.Type == entities.ExamType.Pretest {
@@ -60,7 +60,7 @@ func (o *ExamOverviewResponse) prepare(examResultsDB []general.ExamResultDB, exa
 	}
 }
 
-func (o *ExamOverviewResponse) createExamResultMap(examResultsDB []general.ExamResultDB) map[int]*[]entities.ExamResultOverview {
+func (o *ExamOverviewResponse) createExamResultMap(examResultsDB []storages.ExamResultDB) map[int]*[]entities.ExamResultOverview {
 	examResultMap := map[int]*[]entities.ExamResultOverview{}
 	examScoreCount := o.countExamScore(examResultsDB)
 	for _, examResult := range examResultsDB {
@@ -78,7 +78,7 @@ func (o *ExamOverviewResponse) createExamResultMap(examResultsDB []general.ExamR
 	return examResultMap
 }
 
-func (o *ExamOverviewResponse) countExamScore(examResultsDB []general.ExamResultDB) map[int]int {
+func (o *ExamOverviewResponse) countExamScore(examResultsDB []storages.ExamResultDB) map[int]int {
 	examCountScore := map[int]int{}
 	for _, examResultDB := range examResultsDB {
 		examCountScore[examResultDB.ID] += examResultDB.Score

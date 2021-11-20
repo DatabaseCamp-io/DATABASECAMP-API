@@ -2,18 +2,27 @@ package loaders
 
 import (
 	"DatabaseCamp/models/general"
+	"DatabaseCamp/models/storages"
 	"DatabaseCamp/repositories"
 	"sync"
 )
 
 type checkAnswerLoader struct {
 	learningRepo repositories.ILearningRepository
-	ChoicesDB    interface{}
-	ActivityDB   *general.ActivityDB
+	choicesDB    interface{}
+	activityDB   *storages.ActivityDB
 }
 
 func NewCheckAnswerLoader(learningRepo repositories.ILearningRepository) *checkAnswerLoader {
 	return &checkAnswerLoader{learningRepo: learningRepo}
+}
+
+func (c *checkAnswerLoader) GetChoicesDB() interface{} {
+	return c.choicesDB
+}
+
+func (c *checkAnswerLoader) GetActivityDB() *storages.ActivityDB {
+	return c.activityDB
 }
 
 func (c *checkAnswerLoader) Load(activityID int, activityTypeID int, getChoicesFunc func(activityID int, activityTypeID int) (interface{}, error)) error {
@@ -30,7 +39,7 @@ func (c *checkAnswerLoader) Load(activityID int, activityTypeID int, getChoicesF
 func (c *checkAnswerLoader) loadActivityAsync(concurrent *general.Concurrent, activityID int) {
 	defer concurrent.Wg.Done()
 	var err error
-	c.ActivityDB, err = c.learningRepo.GetActivity(activityID)
+	c.activityDB, err = c.learningRepo.GetActivity(activityID)
 	if err != nil {
 		*concurrent.Err = err
 	}
@@ -44,7 +53,7 @@ func (c *checkAnswerLoader) getChioceAsync(
 ) {
 	defer concurrent.Wg.Done()
 	var err error
-	c.ChoicesDB, err = getChoicesFunc(activityID, activityTypeID)
+	c.choicesDB, err = getChoicesFunc(activityID, activityTypeID)
 	if err != nil {
 		*concurrent.Err = err
 	}

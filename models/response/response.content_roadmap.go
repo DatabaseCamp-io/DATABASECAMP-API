@@ -1,6 +1,6 @@
 package response
 
-import "DatabaseCamp/models/general"
+import "DatabaseCamp/models/storages"
 
 type contentRoadmapItem struct {
 	ActivityID int  `json:"activity_id"`
@@ -14,13 +14,13 @@ type ContentRoadmapResponse struct {
 	Items       []contentRoadmapItem `json:"items"`
 }
 
-func NewContentRoadmapResponse(contentDB general.ContentDB, contentActivitiesDB []general.ActivityDB, learningProgressionDB []general.LearningProgressionDB) *ContentRoadmapResponse {
+func NewContentRoadmapResponse(contentDB storages.ContentDB, contentActivitiesDB []storages.ActivityDB, learningProgressionDB []storages.LearningProgressionDB) *ContentRoadmapResponse {
 	response := ContentRoadmapResponse{}
 	response.prepare(contentDB, contentActivitiesDB, learningProgressionDB)
 	return &response
 }
 
-func (c *ContentRoadmapResponse) prepare(contentDB general.ContentDB, contentActivitiesDB []general.ActivityDB, learningProgressionDB []general.LearningProgressionDB) {
+func (c *ContentRoadmapResponse) prepare(contentDB storages.ContentDB, contentActivitiesDB []storages.ActivityDB, learningProgressionDB []storages.LearningProgressionDB) {
 	c.ContentID = contentDB.ID
 	c.ContentName = contentDB.Name
 	for _, activity := range contentActivitiesDB {
@@ -33,7 +33,7 @@ func (c *ContentRoadmapResponse) prepare(contentDB general.ContentDB, contentAct
 	}
 }
 
-func (c *ContentRoadmapResponse) isLearnedActivity(progression []general.LearningProgressionDB, activityID int) bool {
+func (c *ContentRoadmapResponse) isLearnedActivity(progression []storages.LearningProgressionDB, activityID int) bool {
 	for _, v := range progression {
 		if v.ActivityID == activityID {
 			return true

@@ -1,4 +1,4 @@
-package general
+package storages
 
 import "time"
 

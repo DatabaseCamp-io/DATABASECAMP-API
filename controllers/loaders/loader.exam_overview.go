@@ -2,6 +2,7 @@ package loaders
 
 import (
 	"DatabaseCamp/models/general"
+	"DatabaseCamp/models/storages"
 	"DatabaseCamp/repositories"
 	"sync"
 )
@@ -9,13 +10,25 @@ import (
 type examOverviewLoader struct {
 	examRepo         repositories.IExamRepository
 	userRepo         repositories.IUserRepository
-	CorrectedBadgeDB []general.CorrectedBadgeDB
-	ExamDB           []general.ExamDB
-	ExamResultsDB    []general.ExamResultDB
+	correctedBadgeDB []storages.CorrectedBadgeDB
+	examDB           []storages.ExamDB
+	examResultsDB    []storages.ExamResultDB
 }
 
 func NewExamOverviewLoader(examRepo repositories.IExamRepository, userRepo repositories.IUserRepository) *examOverviewLoader {
 	return &examOverviewLoader{examRepo: examRepo, userRepo: userRepo}
+}
+
+func (l *examOverviewLoader) GetCorrectedBadgeDB() []storages.CorrectedBadgeDB {
+	return l.correctedBadgeDB
+}
+
+func (l *examOverviewLoader) GetExamDB() []storages.ExamDB {
+	return l.examDB
+}
+
+func (l *examOverviewLoader) GetExamResultsDB() []storages.ExamResultDB {
+	return l.examResultsDB
 }
 
 func (l *examOverviewLoader) Load(userID int) error {
@@ -36,7 +49,7 @@ func (l *examOverviewLoader) loadExamResultAsync(concurrent *general.Concurrent,
 	if err != nil {
 		*concurrent.Err = err
 	}
-	l.ExamResultsDB = append(l.ExamResultsDB, result...)
+	l.examResultsDB = append(l.examResultsDB, result...)
 }
 
 func (l *examOverviewLoader) loadExamAsync(concurrent *general.Concurrent) {
@@ -45,7 +58,7 @@ func (l *examOverviewLoader) loadExamAsync(concurrent *general.Concurrent) {
 	if err != nil {
 		*concurrent.Err = err
 	}
-	l.ExamDB = append(l.ExamDB, result...)
+	l.examDB = append(l.examDB, result...)
 }
 
 func (l *examOverviewLoader) loadCorrectedBadgeAsync(concurrent *general.Concurrent, userID int) {
@@ -54,5 +67,5 @@ func (l *examOverviewLoader) loadCorrectedBadgeAsync(concurrent *general.Concurr
 	if err != nil {
 		*concurrent.Err = err
 	}
-	l.CorrectedBadgeDB = append(l.CorrectedBadgeDB, result...)
+	l.correctedBadgeDB = append(l.correctedBadgeDB, result...)
 }

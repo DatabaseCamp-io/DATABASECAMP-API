@@ -2,6 +2,7 @@ package loaders
 
 import (
 	"DatabaseCamp/models/general"
+	"DatabaseCamp/models/storages"
 	"DatabaseCamp/repositories"
 	"sync"
 )
@@ -9,12 +10,20 @@ import (
 type examLoader struct {
 	examRepo         repositories.IExamRepository
 	userRepo         repositories.IUserRepository
-	CorrectedBadgeDB []general.CorrectedBadgeDB
-	ExamActivitiesDB []general.ExamActivityDB
+	correctedBadgeDB []storages.CorrectedBadgeDB
+	examActivitiesDB []storages.ExamActivityDB
 }
 
 func NewExamLoader(examRepo repositories.IExamRepository, userRepo repositories.IUserRepository) *examLoader {
 	return &examLoader{examRepo: examRepo, userRepo: userRepo}
+}
+
+func (l *examLoader) GetCorrectedBadgeDB() []storages.CorrectedBadgeDB {
+	return l.correctedBadgeDB
+}
+
+func (l *examLoader) GetExamActivitiesDB() []storages.ExamActivityDB {
+	return l.examActivitiesDB
 }
 
 func (l *examLoader) Load(userID int, examID int) error {
@@ -34,7 +43,7 @@ func (l *examLoader) loadCorrectedBadgeAsync(concurrent *general.Concurrent, use
 	if err != nil {
 		*concurrent.Err = err
 	}
-	l.CorrectedBadgeDB = append(l.CorrectedBadgeDB, result...)
+	l.correctedBadgeDB = append(l.correctedBadgeDB, result...)
 }
 
 func (l *examLoader) loadExamActivityAsync(concurrent *general.Concurrent, examID int) {
@@ -43,5 +52,5 @@ func (l *examLoader) loadExamActivityAsync(concurrent *general.Concurrent, examI
 	if err != nil {
 		*concurrent.Err = err
 	}
-	l.ExamActivitiesDB = append(l.ExamActivitiesDB, result...)
+	l.examActivitiesDB = append(l.examActivitiesDB, result...)
 }

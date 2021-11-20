@@ -2,8 +2,7 @@ package response
 
 import (
 	"DatabaseCamp/models/entities"
-	"DatabaseCamp/models/general"
-	"DatabaseCamp/utils"
+	"DatabaseCamp/models/storages"
 	"time"
 )
 
@@ -19,8 +18,15 @@ type UserResponse struct {
 }
 
 func NewUserReponse(user entities.User) UserResponse {
-	response := UserResponse{}
-	utils.NewType().StructToStruct(user, &response)
+	response := UserResponse{
+		ID:               user.GetID(),
+		Name:             user.GetName(),
+		Email:            user.GetEmail(),
+		Point:            0,
+		AccessToken:      "",
+		CreatedTimestamp: user.GetCreatedTimestamp(),
+		UpdatedTimestamp: user.GetUpdatedTimstamp(),
+	}
 	return response
 }
 
@@ -34,9 +40,15 @@ type GetProfileResponse struct {
 	CreatedTimestamp time.Time        ` json:"created_timestamp"`
 }
 
-func NewGetProfileResponse(user entities.User) GetProfileResponse {
-	response := GetProfileResponse{}
-	utils.NewType().StructToStruct(user, &response)
+func NewGetProfileResponse(profileDB storages.ProfileDB, badges []entities.Badge) GetProfileResponse {
+	response := GetProfileResponse{
+		ID:               profileDB.ID,
+		Name:             profileDB.Name,
+		Point:            profileDB.Point,
+		ActivityCount:    profileDB.ActivityCount,
+		Badges:           badges,
+		CreatedTimestamp: profileDB.CreatedTimestamp,
+	}
 	return response
 }
 
@@ -47,6 +59,6 @@ type EditProfileResponse struct {
 
 // Model for response ranking
 type RankingResponse struct {
-	UserRanking general.RankingDB   `json:"user_ranking"`
-	LeaderBoard []general.RankingDB `json:"leader_board"`
+	UserRanking storages.RankingDB   `json:"user_ranking"`
+	LeaderBoard []storages.RankingDB `json:"leader_board"`
 }

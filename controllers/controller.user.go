@@ -11,7 +11,7 @@ import (
 )
 
 type userController struct {
-	repo repositories.IUserRepository
+	Repo repositories.IUserRepository
 }
 
 type IUserController interface {
@@ -23,15 +23,12 @@ type IUserController interface {
 }
 
 func NewUserController(repo repositories.IUserRepository) userController {
-	return userController{repo: repo}
+	return userController{Repo: repo}
 }
 
 func (c userController) Register(request request.UserRequest) (*response.UserResponse, error) {
-	user := entities.User{}
-	utils.NewType().StructToStruct(request, &user)
-	user.SetTimestamp()
-	user.HashPassword()
-	userDB, err := c.repo.InsertUser(user.ToDB())
+	user := entities.NewUserByRequest(request)
+	userDB, err := c.Repo.InsertUser(user.ToDB())
 	if err != nil {
 		logs.New().Error(err)
 		if utils.NewHelper().IsSqlDuplicateError(err) {
@@ -40,16 +37,14 @@ func (c userController) Register(request request.UserRequest) (*response.UserRes
 			return nil, errs.ErrInsertError
 		}
 	}
-
 	user.SetID(userDB.ID)
 	response := response.NewUserReponse(user)
 	return &response, nil
 }
 
 func (c userController) Login(request request.UserRequest) (*response.UserResponse, error) {
-	userDB, err := c.repo.GetUserByEmail(request.Email)
-	user := entities.User{}
-	utils.NewType().StructToStruct(userDB, &user)
+	userDB, err := c.Repo.GetUserByEmail(request.Email)
+	user := entities.NewUserByUserDB(*userDB)
 	if err != nil || !user.IsPasswordCorrect(request.Password) {
 		logs.New().Error(err)
 		return nil, errs.ErrEmailOrPasswordNotCorrect
@@ -59,34 +54,32 @@ func (c userController) Login(request request.UserRequest) (*response.UserRespon
 }
 
 func (c userController) GetProfile(id int) (*response.GetProfileResponse, error) {
-	profileDB, err := c.repo.GetProfile(id)
+	profileDB, err := c.Repo.GetProfile(id)
 	if err != nil || profileDB == nil {
 		logs.New().Error(err)
 		return nil, errs.ErrUserNotFound
 	}
 
-	allBadge, err := c.repo.GetAllBadge()
+	allBadge, err := c.Repo.GetAllBadge()
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.ErrLoadError
 	}
 
-	userBadgeGain, err := c.repo.GetUserBadge(id)
+	userBadgeGain, err := c.Repo.GetUserBadge(id)
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.ErrLoadError
 	}
 
 	user := entities.User{}
-	utils.NewType().StructToStruct(profileDB, &user)
 	user.SetCorrectedBadges(allBadge, userBadgeGain)
-
-	response := response.NewGetProfileResponse(user)
+	response := response.NewGetProfileResponse(*profileDB, user.GetBadges())
 	return &response, nil
 }
 
 func (c userController) EditProfile(userID int, request request.UserRequest) (*response.EditProfileResponse, error) {
-	err := c.repo.UpdatesByID(userID, map[string]interface{}{"name": request.Name})
+	err := c.Repo.UpdatesByID(userID, map[string]interface{}{"name": request.Name})
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.ErrUpdateError
@@ -96,13 +89,13 @@ func (c userController) EditProfile(userID int, request request.UserRequest) (*r
 }
 
 func (c userController) GetRanking(userID int) (*response.RankingResponse, error) {
-	userRanking, err := c.repo.GetPointRanking(userID)
+	userRanking, err := c.Repo.GetPointRanking(userID)
 	if err != nil || userRanking == nil {
 		logs.New().Error(err)
 		return nil, errs.ErrUserNotFound
 	}
 
-	leaderBoard, err := c.repo.GetRankingLeaderBoard()
+	leaderBoard, err := c.Repo.GetRankingLeaderBoard()
 	if err != nil || leaderBoard == nil {
 		logs.New().Error(err)
 		return nil, errs.ErrLeaderBoardNotFound

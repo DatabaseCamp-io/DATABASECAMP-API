@@ -1,6 +1,6 @@
 package response
 
-import "DatabaseCamp/models/general"
+import "DatabaseCamp/models/storages"
 
 type content struct {
 	id         int
@@ -44,13 +44,13 @@ type ContentOverviewResponse struct {
 	ContentGroupOverview []contentGroupOverview `json:"content_group_overview"`
 }
 
-func NewContentOverviewResponse(overviewDB []general.OverviewDB, learningProgressionDB []general.LearningProgressionDB) *ContentOverviewResponse {
+func NewContentOverviewResponse(overviewDB []storages.OverviewDB, learningProgressionDB []storages.LearningProgressionDB) *ContentOverviewResponse {
 	response := ContentOverviewResponse{}
 	response.prepare(overviewDB, learningProgressionDB)
 	return &response
 }
 
-func (o *ContentOverviewResponse) prepare(overviewDB []general.OverviewDB, learningProgressionDB []general.LearningProgressionDB) {
+func (o *ContentOverviewResponse) prepare(overviewDB []storages.OverviewDB, learningProgressionDB []storages.LearningProgressionDB) {
 	groupMap := o.createGroupMap(overviewDB)
 	activityContentIDMap := o.createActivityContentIDMap(overviewDB)
 	userActivityCountByContentID := o.createUserActivityCountByContentID(learningProgressionDB, activityContentIDMap)
@@ -95,7 +95,7 @@ func (o *ContentOverviewResponse) prepare(overviewDB []general.OverviewDB, learn
 	}
 }
 
-func (o *ContentOverviewResponse) createGroupMap(overviewDB []general.OverviewDB) map[int]*group {
+func (o *ContentOverviewResponse) createGroupMap(overviewDB []storages.OverviewDB) map[int]*group {
 	groupMap := map[int]*group{}
 	for _, overview := range overviewDB {
 		_group := groupMap[overview.GroupID]
@@ -126,7 +126,7 @@ func (o *ContentOverviewResponse) createGroupMap(overviewDB []general.OverviewDB
 	return groupMap
 }
 
-func (o *ContentOverviewResponse) createActivityContentIDMap(overviewDB []general.OverviewDB) map[int]int {
+func (o *ContentOverviewResponse) createActivityContentIDMap(overviewDB []storages.OverviewDB) map[int]int {
 	activityContentIDMap := map[int]int{}
 	for _, overview := range overviewDB {
 		if overview.ActivityID != nil {
@@ -136,7 +136,7 @@ func (o *ContentOverviewResponse) createActivityContentIDMap(overviewDB []genera
 	return activityContentIDMap
 }
 
-func (o *ContentOverviewResponse) getLastedActivityID(learningProgressionDB []general.LearningProgressionDB) *int {
+func (o *ContentOverviewResponse) getLastedActivityID(learningProgressionDB []storages.LearningProgressionDB) *int {
 	if len(learningProgressionDB) == 0 {
 		return nil
 	} else {
@@ -144,7 +144,7 @@ func (o *ContentOverviewResponse) getLastedActivityID(learningProgressionDB []ge
 	}
 }
 
-func (o *ContentOverviewResponse) createUserActivityCountByContentID(learningProgressionDB []general.LearningProgressionDB, activityContentIDMap map[int]int) map[int]int {
+func (o *ContentOverviewResponse) createUserActivityCountByContentID(learningProgressionDB []storages.LearningProgressionDB, activityContentIDMap map[int]int) map[int]int {
 	userActivityCount := map[int]int{}
 	for _, learningProgression := range learningProgressionDB {
 		userActivityCount[activityContentIDMap[learningProgression.ActivityID]]++

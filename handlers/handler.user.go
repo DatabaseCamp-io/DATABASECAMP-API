@@ -11,12 +11,21 @@ import (
 )
 
 type userHandler struct {
-	controller controllers.IUserController
-	jwt        middleware.IJwt
+	Controller controllers.IUserController
+	Jwt        middleware.IJwt
+}
+
+type IUserHandler interface {
+	Register(c *fiber.Ctx) error
+	Login(c *fiber.Ctx) error
+	GetProfile(c *fiber.Ctx) error
+	GetOwnProfile(c *fiber.Ctx) error
+	GetUserRanking(c *fiber.Ctx) error
+	Edit(c *fiber.Ctx) error
 }
 
 func NewUserHandler(controller controllers.IUserController, jwt middleware.IJwt) userHandler {
-	return userHandler{controller: controller, jwt: jwt}
+	return userHandler{Controller: controller, Jwt: jwt}
 }
 
 func (h userHandler) Register(c *fiber.Ctx) error {
@@ -33,12 +42,12 @@ func (h userHandler) Register(c *fiber.Ctx) error {
 		return handleUtil.HandleError(c, err)
 	}
 
-	response, err := h.controller.Register(request)
+	response, err := h.Controller.Register(request)
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
 
-	token, err := h.jwt.JwtSign(response.ID)
+	token, err := h.Jwt.JwtSign(response.ID)
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
@@ -62,12 +71,12 @@ func (h userHandler) Login(c *fiber.Ctx) error {
 		return handleUtil.HandleError(c, err)
 	}
 
-	response, err := h.controller.Login(request)
+	response, err := h.Controller.Login(request)
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
 
-	token, err := h.jwt.JwtSign(response.ID)
+	token, err := h.Jwt.JwtSign(response.ID)
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
@@ -80,7 +89,7 @@ func (h userHandler) Login(c *fiber.Ctx) error {
 func (h userHandler) GetProfile(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	id := c.Params("id")
-	response, err := h.controller.GetProfile(utils.NewType().ParseInt(id))
+	response, err := h.Controller.GetProfile(utils.NewType().ParseInt(id))
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
@@ -90,7 +99,7 @@ func (h userHandler) GetProfile(c *fiber.Ctx) error {
 func (h userHandler) GetOwnProfile(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	id := c.Locals("id")
-	response, err := h.controller.GetProfile(utils.NewType().ParseInt(id))
+	response, err := h.Controller.GetProfile(utils.NewType().ParseInt(id))
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
@@ -100,7 +109,7 @@ func (h userHandler) GetOwnProfile(c *fiber.Ctx) error {
 func (h userHandler) GetUserRanking(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	id := c.Locals("id")
-	response, err := h.controller.GetRanking(utils.NewType().ParseInt(id))
+	response, err := h.Controller.GetRanking(utils.NewType().ParseInt(id))
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
@@ -122,7 +131,7 @@ func (h userHandler) Edit(c *fiber.Ctx) error {
 		return handleUtil.HandleError(c, err)
 	}
 
-	response, err := h.controller.EditProfile(userID, request)
+	response, err := h.Controller.EditProfile(userID, request)
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}

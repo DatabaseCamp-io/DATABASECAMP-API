@@ -1,85 +1,86 @@
 package router
 
 import (
-	"DatabaseCamp/controllers"
-	"DatabaseCamp/database"
 	"DatabaseCamp/handlers"
 	"DatabaseCamp/middleware"
-	"DatabaseCamp/repositories"
-	"DatabaseCamp/services"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type router struct {
-	app *fiber.App
-	api fiber.Router
+	App    *fiber.App
+	Router fiber.Router
+
+	ExamHandler     handlers.IExamHandler
+	LearningHandler handlers.ILearningHandler
+	UserHandler     handlers.IUserHandler
+
+	Jwt middleware.IJwt
 }
 
 var instantiated *router = nil
 
-func New(app *fiber.App) *router {
+func New(
+	app *fiber.App,
+	examHandler handlers.IExamHandler,
+	learningHandler handlers.ILearningHandler,
+	userHandler handlers.IUserHandler,
+	jwt middleware.IJwt,
+) *router {
 	if instantiated == nil {
-		instantiated = &router{app: app}
+		instantiated = &router{
+			App:             app,
+			Router:          app.Group("api/v1"),
+			ExamHandler:     examHandler,
+			LearningHandler: learningHandler,
+			UserHandler:     userHandler,
+			Jwt:             jwt,
+		}
 		instantiated.init()
 	}
 	return instantiated
 }
 
 func (r *router) init() {
-	db := database.New()
-	userRepo := repositories.NewUserRepository(db)
-	jwt := middleware.NewJwtMiddleware(userRepo)
-	r.api = r.app.Group("api/v1")
-	r.setupLearning(db, userRepo, jwt)
-	r.setupUser(db, userRepo, jwt)
-	r.setupExam(db, userRepo, jwt)
+	r.setupLearning()
+	r.setupUser()
+	r.setupExam()
 }
 
-func (r *router) setupExam(db database.IDatabase, userRepo repositories.IUserRepository, jwt middleware.IJwt) {
-	repo := repositories.NewExamRepository(db)
-	controller := controllers.NewExamController(repo, userRepo)
-	examHandler := handlers.NewExamHandler(controller)
-	group := r.api.Group("exam")
-	group.Use(jwt.JwtVerify)
+func (r *router) setupExam() {
+	group := r.Router.Group("exam")
+	group.Use(r.Jwt.JwtVerify)
 	{
-		group.Get("/proposition/:id", examHandler.GetExam)
-		group.Get("/overview", examHandler.GetExamOverview)
-		group.Get("/result/:id", examHandler.GetExamResult)
-		group.Post("/check", examHandler.CheckExam)
+		group.Get("/proposition/:id", r.ExamHandler.GetExam)
+		group.Get("/overview", r.ExamHandler.GetExamOverview)
+		group.Get("/result/:id", r.ExamHandler.GetExamResult)
+		group.Post("/check", r.ExamHandler.CheckExam)
 	}
 }
 
-func (r *router) setupLearning(db database.IDatabase, userRepo repositories.IUserRepository, jwt middleware.IJwt) {
-
-	repo := repositories.NewLearningRepository(db)
-	service := services.GetAwsServiceInstance()
-	controller := controllers.NewLearningController(repo, userRepo, service)
-	learningHandler := handlers.NewLearningHandler(controller)
-	group := r.api.Group("learning")
-	group.Use(jwt.JwtVerify)
+func (r *router) setupLearning() {
+	group := r.Router.Group("learning")
+	group.Use(r.Jwt.JwtVerify)
 	{
-		group.Get("/video/:id", learningHandler.GetVideo)
-		group.Get("/overview", learningHandler.GetOverview)
-		group.Get("/content/roadmap/:id", learningHandler.GetContentRoadmap)
-		group.Get("/activity/:id", learningHandler.GetActivity)
-		group.Post("/activity/hint/:id", learningHandler.UseHint)
-		group.Post("/activity/matching/check-answer", learningHandler.CheckMatchingAnswer)
-		group.Post("/activity/multiple/check-answer", learningHandler.CheckMultipleAnswer)
-		group.Post("/activity/completion/check-answer", learningHandler.CheckCompletionAnswer)
+		group.Get("/video/:id", r.LearningHandler.GetVideo)
+		group.Get("/overview", r.LearningHandler.GetOverview)
+		group.Get("/content/roadmap/:id", r.LearningHandler.GetContentRoadmap)
+		group.Get("/activity/:id", r.LearningHandler.GetActivity)
+		group.Post("/activity/hint/:id", r.LearningHandler.UseHint)
+		group.Post("/activity/matching/check-answer", r.LearningHandler.CheckMatchingAnswer)
+		group.Post("/activity/multiple/check-answer", r.LearningHandler.CheckMultipleAnswer)
+		group.Post("/activity/completion/check-answer", r.LearningHandler.CheckCompletionAnswer)
 	}
 }
 
-func (r *router) setupUser(db database.IDatabase, repo repositories.IUserRepository, jwt middleware.IJwt) {
-	controller := controllers.NewUserController(repo)
-	userHandler := handlers.NewUserHandler(controller, jwt)
-	group := r.api.Group("user")
+func (r *router) setupUser() {
+	group := r.Router.Group("user")
 	{
-		group.Get("/info", jwt.JwtVerify, userHandler.GetOwnProfile)
-		group.Get("/profile/:id", jwt.JwtVerify, userHandler.GetProfile)
-		group.Get("/ranking", jwt.JwtVerify, userHandler.GetUserRanking)
-		group.Put("/profile", jwt.JwtVerify, userHandler.Edit)
-		group.Post("/register", userHandler.Register)
-		group.Post("/login", userHandler.Login)
+		group.Get("/info", r.Jwt.JwtVerify, r.UserHandler.GetOwnProfile)
+		group.Get("/profile/:id", r.Jwt.JwtVerify, r.UserHandler.GetProfile)
+		group.Get("/ranking", r.Jwt.JwtVerify, r.UserHandler.GetUserRanking)
+		group.Put("/profile", r.Jwt.JwtVerify, r.UserHandler.Edit)
+		group.Post("/register", r.UserHandler.Register)
+		group.Post("/login", r.UserHandler.Login)
 	}
 }
