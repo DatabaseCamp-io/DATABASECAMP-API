@@ -1,7 +1,7 @@
 package loaders
 
 import (
-	"DatabaseCamp/models"
+	"DatabaseCamp/models/general"
 	"DatabaseCamp/repositories"
 	"sync"
 )
@@ -9,8 +9,8 @@ import (
 type learningOverviewLoader struct {
 	learningRepo          repositories.ILearningRepository
 	userRepo              repositories.IUserRepository
-	OverviewDB            []models.OverviewDB
-	LearningProgressionDB []models.LearningProgressionDB
+	OverviewDB            []general.OverviewDB
+	LearningProgressionDB []general.LearningProgressionDB
 }
 
 func NewLearningOverviewLoader(learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) *learningOverviewLoader {
@@ -20,7 +20,7 @@ func NewLearningOverviewLoader(learningRepo repositories.ILearningRepository, us
 func (l *learningOverviewLoader) Load(userID int) error {
 	var wg sync.WaitGroup
 	var err error
-	concurrent := models.Concurrent{Wg: &wg, Err: &err}
+	concurrent := general.Concurrent{Wg: &wg, Err: &err}
 	wg.Add(2)
 	go l.loadOverviewAsync(&concurrent)
 	go l.loadLearningProgressionAsync(&concurrent, userID)
@@ -28,7 +28,7 @@ func (l *learningOverviewLoader) Load(userID int) error {
 	return err
 }
 
-func (l *learningOverviewLoader) loadOverviewAsync(concurrent *models.Concurrent) {
+func (l *learningOverviewLoader) loadOverviewAsync(concurrent *general.Concurrent) {
 	defer concurrent.Wg.Done()
 	result, err := l.learningRepo.GetOverview()
 	if err != nil {
@@ -37,7 +37,7 @@ func (l *learningOverviewLoader) loadOverviewAsync(concurrent *models.Concurrent
 	l.OverviewDB = append(l.OverviewDB, result...)
 }
 
-func (l *learningOverviewLoader) loadLearningProgressionAsync(concurrent *models.Concurrent, id int) {
+func (l *learningOverviewLoader) loadLearningProgressionAsync(concurrent *general.Concurrent, id int) {
 	defer concurrent.Wg.Done()
 	result, err := l.userRepo.GetLearningProgression(id)
 	if err != nil {

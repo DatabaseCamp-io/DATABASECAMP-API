@@ -1,7 +1,7 @@
 package loaders
 
 import (
-	"DatabaseCamp/models"
+	"DatabaseCamp/models/general"
 	"DatabaseCamp/repositories"
 	"sync"
 )
@@ -9,9 +9,9 @@ import (
 type hintLoader struct {
 	learningRepo    repositories.ILearningRepository
 	userRepo        repositories.IUserRepository
-	ActivityHintsDB []models.HintDB
-	UserHintsDB     []models.UserHintDB
-	UserDB          *models.UserDB
+	ActivityHintsDB []general.HintDB
+	UserHintsDB     []general.UserHintDB
+	UserDB          *general.UserDB
 }
 
 func NewHintLoader(learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) *hintLoader {
@@ -21,7 +21,7 @@ func NewHintLoader(learningRepo repositories.ILearningRepository, userRepo repos
 func (l *hintLoader) Load(userID int, activityID int) error {
 	var wg sync.WaitGroup
 	var err error
-	concurrent := models.Concurrent{Wg: &wg, Err: &err}
+	concurrent := general.Concurrent{Wg: &wg, Err: &err}
 	wg.Add(3)
 	go l.loadActivityHints(&concurrent, activityID)
 	go l.loadUserHintsAsync(&concurrent, userID, activityID)
@@ -30,7 +30,7 @@ func (l *hintLoader) Load(userID int, activityID int) error {
 	return err
 }
 
-func (l *hintLoader) loadUser(concurrent *models.Concurrent, userID int) {
+func (l *hintLoader) loadUser(concurrent *general.Concurrent, userID int) {
 	defer concurrent.Wg.Done()
 	var err error
 	l.UserDB, err = l.userRepo.GetUserByID(userID)
@@ -39,7 +39,7 @@ func (l *hintLoader) loadUser(concurrent *models.Concurrent, userID int) {
 	}
 }
 
-func (l *hintLoader) loadUserHintsAsync(concurrent *models.Concurrent, userID int, activityID int) {
+func (l *hintLoader) loadUserHintsAsync(concurrent *general.Concurrent, userID int, activityID int) {
 	defer concurrent.Wg.Done()
 	result, e := l.userRepo.GetUserHint(userID, activityID)
 	if e != nil {
@@ -48,7 +48,7 @@ func (l *hintLoader) loadUserHintsAsync(concurrent *models.Concurrent, userID in
 	l.UserHintsDB = append(l.UserHintsDB, result...)
 }
 
-func (l *hintLoader) loadActivityHints(concurrent *models.Concurrent, activityID int) {
+func (l *hintLoader) loadActivityHints(concurrent *general.Concurrent, activityID int) {
 	defer concurrent.Wg.Done()
 	result, e := l.learningRepo.GetActivityHints(activityID)
 	if e != nil {

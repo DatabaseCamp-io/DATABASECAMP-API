@@ -1,7 +1,7 @@
 package loaders
 
 import (
-	"DatabaseCamp/models"
+	"DatabaseCamp/models/general"
 	"DatabaseCamp/repositories"
 	"sync"
 )
@@ -9,9 +9,9 @@ import (
 type contentRoadmapLoader struct {
 	learningRepo          repositories.ILearningRepository
 	userRepo              repositories.IUserRepository
-	ContentDB             *models.ContentDB
-	ContentActivityDB     []models.ActivityDB
-	LearningProgressionDB []models.LearningProgressionDB
+	ContentDB             *general.ContentDB
+	ContentActivityDB     []general.ActivityDB
+	LearningProgressionDB []general.LearningProgressionDB
 }
 
 func NewContentRoadmapLoader(learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) *contentRoadmapLoader {
@@ -21,7 +21,7 @@ func NewContentRoadmapLoader(learningRepo repositories.ILearningRepository, user
 func (l *contentRoadmapLoader) Load(userID int, contentID int) error {
 	var wg sync.WaitGroup
 	var err error
-	concurrent := models.Concurrent{Wg: &wg, Err: &err}
+	concurrent := general.Concurrent{Wg: &wg, Err: &err}
 	wg.Add(3)
 	go l.loadLearningProgressionAsync(&concurrent, userID)
 	go l.loadContentActivityAsync(&concurrent, contentID)
@@ -30,7 +30,7 @@ func (l *contentRoadmapLoader) Load(userID int, contentID int) error {
 	return err
 }
 
-func (l *contentRoadmapLoader) loadContentAsync(concurrent *models.Concurrent, contentID int) {
+func (l *contentRoadmapLoader) loadContentAsync(concurrent *general.Concurrent, contentID int) {
 	defer concurrent.Wg.Done()
 	result, err := l.learningRepo.GetContent(contentID)
 	if err != nil {
@@ -39,7 +39,7 @@ func (l *contentRoadmapLoader) loadContentAsync(concurrent *models.Concurrent, c
 	l.ContentDB = result
 }
 
-func (l *contentRoadmapLoader) loadLearningProgressionAsync(concurrent *models.Concurrent, userID int) {
+func (l *contentRoadmapLoader) loadLearningProgressionAsync(concurrent *general.Concurrent, userID int) {
 	defer concurrent.Wg.Done()
 	result, err := l.userRepo.GetLearningProgression(userID)
 	if err != nil {
@@ -48,7 +48,7 @@ func (l *contentRoadmapLoader) loadLearningProgressionAsync(concurrent *models.C
 	l.LearningProgressionDB = append(l.LearningProgressionDB, result...)
 }
 
-func (l *contentRoadmapLoader) loadContentActivityAsync(concurrent *models.Concurrent, contentID int) {
+func (l *contentRoadmapLoader) loadContentActivityAsync(concurrent *general.Concurrent, contentID int) {
 	defer concurrent.Wg.Done()
 	result, err := l.learningRepo.GetContentActivity(contentID)
 	if err != nil {

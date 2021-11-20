@@ -1,7 +1,7 @@
 package loaders
 
 import (
-	"DatabaseCamp/models"
+	"DatabaseCamp/models/general"
 	"DatabaseCamp/repositories"
 	"sync"
 )
@@ -9,8 +9,8 @@ import (
 type examLoader struct {
 	examRepo         repositories.IExamRepository
 	userRepo         repositories.IUserRepository
-	CorrectedBadgeDB []models.CorrectedBadgeDB
-	ExamActivitiesDB []models.ExamActivityDB
+	CorrectedBadgeDB []general.CorrectedBadgeDB
+	ExamActivitiesDB []general.ExamActivityDB
 }
 
 func NewExamLoader(examRepo repositories.IExamRepository, userRepo repositories.IUserRepository) *examLoader {
@@ -20,7 +20,7 @@ func NewExamLoader(examRepo repositories.IExamRepository, userRepo repositories.
 func (l *examLoader) Load(userID int, examID int) error {
 	var wg sync.WaitGroup
 	var err error
-	concurrent := models.Concurrent{Wg: &wg, Err: &err}
+	concurrent := general.Concurrent{Wg: &wg, Err: &err}
 	wg.Add(3)
 	go l.loadCorrectedBadgeAsync(&concurrent, userID)
 	go l.loadExamActivityAsync(&concurrent, examID)
@@ -28,7 +28,7 @@ func (l *examLoader) Load(userID int, examID int) error {
 	return err
 }
 
-func (l *examLoader) loadCorrectedBadgeAsync(concurrent *models.Concurrent, userID int) {
+func (l *examLoader) loadCorrectedBadgeAsync(concurrent *general.Concurrent, userID int) {
 	defer concurrent.Wg.Done()
 	result, err := l.userRepo.GetCollectedBadge(userID)
 	if err != nil {
@@ -37,7 +37,7 @@ func (l *examLoader) loadCorrectedBadgeAsync(concurrent *models.Concurrent, user
 	l.CorrectedBadgeDB = append(l.CorrectedBadgeDB, result...)
 }
 
-func (l *examLoader) loadExamActivityAsync(concurrent *models.Concurrent, examID int) {
+func (l *examLoader) loadExamActivityAsync(concurrent *general.Concurrent, examID int) {
 	defer concurrent.Wg.Done()
 	result, err := l.examRepo.GetExamActivity(examID)
 	if err != nil {

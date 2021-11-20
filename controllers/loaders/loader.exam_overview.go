@@ -1,7 +1,7 @@
 package loaders
 
 import (
-	"DatabaseCamp/models"
+	"DatabaseCamp/models/general"
 	"DatabaseCamp/repositories"
 	"sync"
 )
@@ -9,9 +9,9 @@ import (
 type examOverviewLoader struct {
 	examRepo         repositories.IExamRepository
 	userRepo         repositories.IUserRepository
-	CorrectedBadgeDB []models.CorrectedBadgeDB
-	ExamDB           []models.ExamDB
-	ExamResultsDB    []models.ExamResultDB
+	CorrectedBadgeDB []general.CorrectedBadgeDB
+	ExamDB           []general.ExamDB
+	ExamResultsDB    []general.ExamResultDB
 }
 
 func NewExamOverviewLoader(examRepo repositories.IExamRepository, userRepo repositories.IUserRepository) *examOverviewLoader {
@@ -21,7 +21,7 @@ func NewExamOverviewLoader(examRepo repositories.IExamRepository, userRepo repos
 func (l *examOverviewLoader) Load(userID int) error {
 	var wg sync.WaitGroup
 	var err error
-	concurrent := models.Concurrent{Wg: &wg, Err: &err}
+	concurrent := general.Concurrent{Wg: &wg, Err: &err}
 	wg.Add(3)
 	go l.loadCorrectedBadgeAsync(&concurrent, userID)
 	go l.loadExamAsync(&concurrent)
@@ -30,7 +30,7 @@ func (l *examOverviewLoader) Load(userID int) error {
 	return err
 }
 
-func (l *examOverviewLoader) loadExamResultAsync(concurrent *models.Concurrent, userID int) {
+func (l *examOverviewLoader) loadExamResultAsync(concurrent *general.Concurrent, userID int) {
 	defer concurrent.Wg.Done()
 	result, err := l.userRepo.GetExamResult(userID)
 	if err != nil {
@@ -39,7 +39,7 @@ func (l *examOverviewLoader) loadExamResultAsync(concurrent *models.Concurrent, 
 	l.ExamResultsDB = append(l.ExamResultsDB, result...)
 }
 
-func (l *examOverviewLoader) loadExamAsync(concurrent *models.Concurrent) {
+func (l *examOverviewLoader) loadExamAsync(concurrent *general.Concurrent) {
 	defer concurrent.Wg.Done()
 	result, err := l.examRepo.GetExamOverview()
 	if err != nil {
@@ -48,7 +48,7 @@ func (l *examOverviewLoader) loadExamAsync(concurrent *models.Concurrent) {
 	l.ExamDB = append(l.ExamDB, result...)
 }
 
-func (l *examOverviewLoader) loadCorrectedBadgeAsync(concurrent *models.Concurrent, userID int) {
+func (l *examOverviewLoader) loadCorrectedBadgeAsync(concurrent *general.Concurrent, userID int) {
 	defer concurrent.Wg.Done()
 	result, err := l.userRepo.GetCollectedBadge(userID)
 	if err != nil {

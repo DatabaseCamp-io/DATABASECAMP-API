@@ -1,4 +1,6 @@
-package models
+package response
+
+import "DatabaseCamp/models/general"
 
 type contentRoadmapItem struct {
 	ActivityID int  `json:"activity_id"`
@@ -6,26 +8,19 @@ type contentRoadmapItem struct {
 	Order      int  `json:"order"`
 }
 
-type contentRoadmap struct {
+type ContentRoadmapResponse struct {
 	ContentID   int                  `json:"content_id"`
 	ContentName string               `json:"content_name"`
 	Items       []contentRoadmapItem `json:"items"`
 }
 
-func NewContentRoadmap() *contentRoadmap {
-	return &contentRoadmap{}
-}
-
-func (c *contentRoadmap) ToResponse() *ContentRoadmapResponse {
-	response := ContentRoadmapResponse{
-		ContentID:   c.ContentID,
-		ContentName: c.ContentName,
-		Items:       c.Items,
-	}
+func NewContentRoadmapResponse(contentDB general.ContentDB, contentActivitiesDB []general.ActivityDB, learningProgressionDB []general.LearningProgressionDB) *ContentRoadmapResponse {
+	response := ContentRoadmapResponse{}
+	response.prepare(contentDB, contentActivitiesDB, learningProgressionDB)
 	return &response
 }
 
-func (c *contentRoadmap) Prepare(contentDB ContentDB, contentActivitiesDB []ActivityDB, learningProgressionDB []LearningProgressionDB) {
+func (c *ContentRoadmapResponse) prepare(contentDB general.ContentDB, contentActivitiesDB []general.ActivityDB, learningProgressionDB []general.LearningProgressionDB) {
 	c.ContentID = contentDB.ID
 	c.ContentName = contentDB.Name
 	for _, activity := range contentActivitiesDB {
@@ -38,7 +33,7 @@ func (c *contentRoadmap) Prepare(contentDB ContentDB, contentActivitiesDB []Acti
 	}
 }
 
-func (c *contentRoadmap) isLearnedActivity(progression []LearningProgressionDB, activityID int) bool {
+func (c *ContentRoadmapResponse) isLearnedActivity(progression []general.LearningProgressionDB, activityID int) bool {
 	for _, v := range progression {
 		if v.ActivityID == activityID {
 			return true

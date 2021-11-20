@@ -1,7 +1,7 @@
 package loaders
 
 import (
-	"DatabaseCamp/models"
+	"DatabaseCamp/models/general"
 	"DatabaseCamp/repositories"
 	"sync"
 )
@@ -9,7 +9,7 @@ import (
 type checkAnswerLoader struct {
 	learningRepo repositories.ILearningRepository
 	ChoicesDB    interface{}
-	ActivityDB   *models.ActivityDB
+	ActivityDB   *general.ActivityDB
 }
 
 func NewCheckAnswerLoader(learningRepo repositories.ILearningRepository) *checkAnswerLoader {
@@ -19,7 +19,7 @@ func NewCheckAnswerLoader(learningRepo repositories.ILearningRepository) *checkA
 func (c *checkAnswerLoader) Load(activityID int, activityTypeID int, getChoicesFunc func(activityID int, activityTypeID int) (interface{}, error)) error {
 	var wg sync.WaitGroup
 	var err error
-	concurrent := models.Concurrent{Wg: &wg, Err: &err}
+	concurrent := general.Concurrent{Wg: &wg, Err: &err}
 	wg.Add(2)
 	go c.loadActivityAsync(&concurrent, activityID)
 	go c.getChioceAsync(&concurrent, activityID, activityTypeID, getChoicesFunc)
@@ -27,7 +27,7 @@ func (c *checkAnswerLoader) Load(activityID int, activityTypeID int, getChoicesF
 	return err
 }
 
-func (c *checkAnswerLoader) loadActivityAsync(concurrent *models.Concurrent, activityID int) {
+func (c *checkAnswerLoader) loadActivityAsync(concurrent *general.Concurrent, activityID int) {
 	defer concurrent.Wg.Done()
 	var err error
 	c.ActivityDB, err = c.learningRepo.GetActivity(activityID)
@@ -37,7 +37,7 @@ func (c *checkAnswerLoader) loadActivityAsync(concurrent *models.Concurrent, act
 }
 
 func (c *checkAnswerLoader) getChioceAsync(
-	concurrent *models.Concurrent,
+	concurrent *general.Concurrent,
 	activityID int,
 	activityTypeID int,
 	getChoicesFunc func(activityID int, activityTypeID int) (interface{}, error),

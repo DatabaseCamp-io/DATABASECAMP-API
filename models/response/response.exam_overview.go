@@ -1,42 +1,41 @@
-package models
+package response
+
+import (
+	"DatabaseCamp/models/entities"
+	"DatabaseCamp/models/general"
+)
 
 type examDetailOverview struct {
-	ExamID           int                   `json:"exam_id"`
-	ExamType         string                `json:"exam_type"`
-	ContentGroupID   *int                  `json:"content_group_id,omitempty"`
-	ContentGroupName *string               `json:"content_group_name,omitempty"`
-	CanDo            *bool                 `json:"can_do,omitempty"`
-	Results          *[]examResultOverview `json:"results,omitempty"`
+	ExamID           int                            `json:"exam_id"`
+	ExamType         string                         `json:"exam_type"`
+	ContentGroupID   *int                           `json:"content_group_id,omitempty"`
+	ContentGroupName *string                        `json:"content_group_name,omitempty"`
+	CanDo            *bool                          `json:"can_do,omitempty"`
+	Results          *[]entities.ExamResultOverview `json:"results,omitempty"`
 }
 
-type examOverview struct {
+type ExamOverviewResponse struct {
 	PreExam   *examDetailOverview   `json:"pre_exam"`
 	MiniExam  *[]examDetailOverview `json:"mini_exam"`
 	FinalExam *examDetailOverview   `json:"final_exam"`
 }
 
-func NewExamOverview() *examOverview {
-	return &examOverview{}
+func NewExamOverviewResponse(examResultsDB []general.ExamResultDB, examsDB []general.ExamDB, canDoFinalExam bool) *ExamOverviewResponse {
+	response := ExamOverviewResponse{}
+	response.prepare(examResultsDB, examsDB, canDoFinalExam)
+	return &ExamOverviewResponse{}
 }
 
-func (o *examOverview) ToResponse() *ExamOverviewResponse {
-	return &ExamOverviewResponse{
-		PreExam:   o.PreExam,
-		MiniExam:  o.MiniExam,
-		FinalExam: o.FinalExam,
-	}
-}
-
-func (o *examOverview) PrepareExamOverview(examResultsDB []ExamResultDB, examsDB []ExamDB, canDoFinalExam bool) {
+func (o *ExamOverviewResponse) prepare(examResultsDB []general.ExamResultDB, examsDB []general.ExamDB, canDoFinalExam bool) {
 	examResultMap := o.createExamResultMap(examResultsDB)
 	for _, examDB := range examsDB {
-		if examDB.Type == string(Exam.Pretest) {
+		if examDB.Type == entities.ExamType.Pretest {
 			o.PreExam = &examDetailOverview{
 				ExamID:   examDB.ID,
 				ExamType: examDB.Type,
 				Results:  examResultMap[examDB.ID],
 			}
-		} else if examDB.Type == string(Exam.MiniExam) {
+		} else if examDB.Type == entities.ExamType.MiniExam {
 			if o.MiniExam == nil {
 				temp := make([]examDetailOverview, 0)
 				o.MiniExam = &temp
@@ -50,7 +49,7 @@ func (o *examOverview) PrepareExamOverview(examResultsDB []ExamResultDB, examsDB
 				ContentGroupName: &contentGroupName,
 				Results:          examResultMap[examDB.ID],
 			})
-		} else if examDB.Type == string(Exam.Posttest) {
+		} else if examDB.Type == entities.ExamType.Posttest {
 			o.FinalExam = &examDetailOverview{
 				ExamID:   examDB.ID,
 				ExamType: examDB.Type,
@@ -61,15 +60,15 @@ func (o *examOverview) PrepareExamOverview(examResultsDB []ExamResultDB, examsDB
 	}
 }
 
-func (o *examOverview) createExamResultMap(examResultsDB []ExamResultDB) map[int]*[]examResultOverview {
-	examResultMap := map[int]*[]examResultOverview{}
+func (o *ExamOverviewResponse) createExamResultMap(examResultsDB []general.ExamResultDB) map[int]*[]entities.ExamResultOverview {
+	examResultMap := map[int]*[]entities.ExamResultOverview{}
 	examScoreCount := o.countExamScore(examResultsDB)
 	for _, examResult := range examResultsDB {
 		if examResultMap[examResult.ExamID] == nil {
-			temp := make([]examResultOverview, 0)
+			temp := make([]entities.ExamResultOverview, 0)
 			examResultMap[examResult.ExamID] = &temp
 		}
-		*examResultMap[examResult.ExamID] = append(*examResultMap[examResult.ExamID], examResultOverview{
+		*examResultMap[examResult.ExamID] = append(*examResultMap[examResult.ExamID], entities.ExamResultOverview{
 			ExamResultID:     examResult.ID,
 			TotalScore:       examScoreCount[examResult.ID],
 			IsPassed:         examResult.IsPassed,
@@ -79,7 +78,7 @@ func (o *examOverview) createExamResultMap(examResultsDB []ExamResultDB) map[int
 	return examResultMap
 }
 
-func (o *examOverview) countExamScore(examResultsDB []ExamResultDB) map[int]int {
+func (o *ExamOverviewResponse) countExamScore(examResultsDB []general.ExamResultDB) map[int]int {
 	examCountScore := map[int]int{}
 	for _, examResultDB := range examResultsDB {
 		examCountScore[examResultDB.ID] += examResultDB.Score

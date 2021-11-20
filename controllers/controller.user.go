@@ -25,8 +25,10 @@ func NewUserController(repo repositories.IUserRepository) userController {
 }
 
 func (c userController) Register(request models.UserRequest) (*models.UserResponse, error) {
-	user := models.NewUserByRequest(request)
-
+	user := models.User{}
+	utils.NewType().StructToStruct(request, &user)
+	user.SetTimestamp()
+	user.HashPassword()
 	userDB, err := c.repo.InsertUser(user.ToDB())
 	if err != nil {
 		logs.New().Error(err)
@@ -38,18 +40,19 @@ func (c userController) Register(request models.UserRequest) (*models.UserRespon
 	}
 
 	user.ID = userDB.ID
-	response := user.ToUserResponse()
+	response := models.NewUserReponse(user)
 	return &response, nil
 }
 
 func (c userController) Login(request models.UserRequest) (*models.UserResponse, error) {
 	userDB, err := c.repo.GetUserByEmail(request.Email)
-	user := models.NewUser(userDB)
+	user := models.User{}
+	utils.NewType().StructToStruct(userDB, &user)
 	if err != nil || !user.IsPasswordCorrect(request.Password) {
 		logs.New().Error(err)
 		return nil, errs.ErrEmailOrPasswordNotCorrect
 	}
-	response := user.ToUserResponse()
+	response := models.NewUserReponse(user)
 	return &response, nil
 }
 
@@ -72,10 +75,11 @@ func (c userController) GetProfile(id int) (*models.GetProfileResponse, error) {
 		return nil, errs.ErrLoadError
 	}
 
-	user := models.NewUser(profileDB)
+	user := models.User{}
+	utils.NewType().StructToStruct(profileDB, &user)
 	user.SetCorrectedBadges(allBadge, userBadgeGain)
 
-	response := user.ToProfileResponse()
+	response := models.NewGetProfileResponse(user)
 	return &response, nil
 }
 

@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"DatabaseCamp/controllers"
-	"DatabaseCamp/models"
+	"DatabaseCamp/models/request"
 	"DatabaseCamp/utils"
 	"net/http"
 
@@ -75,7 +75,7 @@ func (h learningHandler) UseHint(c *fiber.Ctx) error {
 func (h learningHandler) CheckMatchingAnswer(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))
-	request := models.MatchingChoiceAnswerRequest{}
+	request := request.MatchingChoiceAnswerRequest{}
 
 	err := handleUtil.BindRequest(c, &request)
 	if err != nil {
@@ -98,7 +98,7 @@ func (h learningHandler) CheckMatchingAnswer(c *fiber.Ctx) error {
 func (h learningHandler) CheckMultipleAnswer(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))
-	request := models.MultipleChoiceAnswerRequest{}
+	request := request.MultipleChoiceAnswerRequest{}
 
 	err := handleUtil.BindRequest(c, &request)
 	if err != nil {
@@ -121,7 +121,7 @@ func (h learningHandler) CheckMultipleAnswer(c *fiber.Ctx) error {
 func (h learningHandler) CheckCompletionAnswer(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))
-	request := models.CompletionAnswerRequest{}
+	request := request.CompletionAnswerRequest{}
 
 	err := handleUtil.BindRequest(c, &request)
 	if err != nil {

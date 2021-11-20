@@ -3,7 +3,7 @@ package handlers
 import (
 	"DatabaseCamp/controllers"
 	"DatabaseCamp/middleware"
-	"DatabaseCamp/models"
+	"DatabaseCamp/models/request"
 	"DatabaseCamp/utils"
 	"net/http"
 
@@ -21,7 +21,7 @@ func NewUserHandler(controller controllers.IUserController, jwt middleware.IJwt)
 
 func (h userHandler) Register(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
-	request := models.UserRequest{}
+	request := request.UserRequest{}
 
 	err := handleUtil.BindRequest(c, &request)
 	if err != nil {
@@ -50,7 +50,7 @@ func (h userHandler) Register(c *fiber.Ctx) error {
 
 func (h userHandler) Login(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
-	request := models.UserRequest{}
+	request := request.UserRequest{}
 
 	err := handleUtil.BindRequest(c, &request)
 	if err != nil {
@@ -109,7 +109,7 @@ func (h userHandler) GetUserRanking(c *fiber.Ctx) error {
 
 func (h userHandler) Edit(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
-	request := models.UserRequest{}
+	request := request.UserRequest{}
 	userID := utils.NewType().ParseInt(c.Locals("id"))
 
 	err := handleUtil.BindRequest(c, &request)

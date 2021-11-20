@@ -1,22 +1,24 @@
-package models
+package entities
 
 import (
 	"DatabaseCamp/errs"
+	"DatabaseCamp/models/general"
+	"DatabaseCamp/models/request"
 	"DatabaseCamp/utils"
 )
 
-type hintRoadMap struct {
+type HintRoadMap struct {
 	Level       int `json:"level"`
 	ReducePoint int `json:"reduce_point"`
 }
 
-type activityHint struct {
-	TotalHint   int           `json:"total_hint"`
-	UsedHints   []HintDB      `json:"used_hints"`
-	HintRoadMap []hintRoadMap `json:"hint_roadmap"`
+type ActivityHint struct {
+	TotalHint   int              `json:"total_hint"`
+	UsedHints   []general.HintDB `json:"used_hints"`
+	HintRoadMap []HintRoadMap    `json:"hint_roadmap"`
 }
 
-type activityDetail struct {
+type ActivityDetail struct {
 	ID        int    `json:"activity_id"`
 	TypeID    int    `json:"activity_type_id"`
 	ContentID *int   `json:"content_id"`
@@ -26,55 +28,33 @@ type activityDetail struct {
 	Question  string `json:"question"`
 }
 
-type activity struct {
-	Info               activityDetail `json:"activity"`
+type Activity struct {
+	Info               ActivityDetail `json:"activity"`
 	PropositionChoices interface{}    `json:"proposition_choices"`
 	Choices            interface{}    `json:"choices"`
-	Hint               *activityHint  `json:"hint"`
+	Hint               *ActivityHint  `json:"hint"`
 }
 
-func NewActivity() *activity {
-	return &activity{}
-}
-
-func (a *activity) ToPropositionResponse() *ActivityResponse {
-	response := ActivityResponse{
-		Activity: a.Info,
-		Choices:  a.PropositionChoices,
-		Hint:     *a.Hint,
-	}
-	return &response
-}
-
-func (a *activity) ToAnswerResponse(updatedPoint int, isCorrect bool) *AnswerResponse {
-	response := AnswerResponse{
-		ActivityID:   a.Info.ID,
-		IsCorrect:    isCorrect,
-		UpdatedPoint: updatedPoint,
-	}
-	return &response
-}
-
-func (a *activity) PrepareActivity(activityDB ActivityDB) {
+func (a *Activity) PrepareActivity(activityDB general.ActivityDB) {
 	utils.NewType().StructToStruct(activityDB, &a.Info)
 }
 
-func (a *activity) PrepareChoicesByChoiceDB(choiceDB interface{}) error {
+func (a *Activity) PrepareChoicesByChoiceDB(choiceDB interface{}) error {
 	a.Choices = choiceDB
 	if a.Info.TypeID == 1 {
-		propositionChoices, choiceOK := choiceDB.([]MatchingChoiceDB)
+		propositionChoices, choiceOK := choiceDB.([]general.MatchingChoiceDB)
 		if !choiceOK {
 			return errs.NewInternalServerError("รูปแบบของตัวเลือกไม่ถูกต้อง", "Invalid Choice")
 		}
 		a.PropositionChoices = a.PrepareMatchingChoice(propositionChoices)
 	} else if a.Info.TypeID == 2 {
-		propositionChoices, choiceOK := choiceDB.([]MultipleChoiceDB)
+		propositionChoices, choiceOK := choiceDB.([]general.MultipleChoiceDB)
 		if !choiceOK {
 			return errs.NewInternalServerError("รูปแบบของตัวเลือกไม่ถูกต้อง", "Invalid Choice")
 		}
 		a.PropositionChoices = a.PrepareMultipleChoice(propositionChoices)
 	} else if a.Info.TypeID == 3 {
-		propositionChoices, choiceOK := choiceDB.([]CompletionChoiceDB)
+		propositionChoices, choiceOK := choiceDB.([]general.CompletionChoiceDB)
 		if !choiceOK {
 			return errs.NewInternalServerError("รูปแบบของตัวเลือกไม่ถูกต้อง", "Invalid Choice")
 		}
@@ -85,22 +65,22 @@ func (a *activity) PrepareChoicesByChoiceDB(choiceDB interface{}) error {
 	return nil
 }
 
-func (a *activity) PrepareHint(activityHints []HintDB, userHintsDB []UserHintDB) {
-	a.Hint = &activityHint{
+func (a *Activity) PrepareHint(activityHints []general.HintDB, userHintsDB []general.UserHintDB) {
+	a.Hint = &ActivityHint{
 		TotalHint: len(activityHints),
 	}
 	for _, hint := range activityHints {
 		if a.isUsedHint(userHintsDB, hint.ID) {
 			a.Hint.UsedHints = append(a.Hint.UsedHints, hint)
 		}
-		a.Hint.HintRoadMap = append(a.Hint.HintRoadMap, hintRoadMap{
+		a.Hint.HintRoadMap = append(a.Hint.HintRoadMap, HintRoadMap{
 			Level:       hint.Level,
 			ReducePoint: hint.PointReduce,
 		})
 	}
 }
 
-func (a *activity) isUsedHint(userHintsDB []UserHintDB, hintID int) bool {
+func (a *Activity) isUsedHint(userHintsDB []general.UserHintDB, hintID int) bool {
 	for _, userHint := range userHintsDB {
 		if userHint.HintID == hintID {
 			return true
@@ -109,7 +89,7 @@ func (a *activity) isUsedHint(userHintsDB []UserHintDB, hintID int) bool {
 	return false
 }
 
-func (a *activity) PrepareMultipleChoice(multipleChoice []MultipleChoiceDB) interface{} {
+func (a *Activity) PrepareMultipleChoice(multipleChoice []general.MultipleChoiceDB) interface{} {
 	preparedChoices := make([]map[string]interface{}, 0)
 	utils.NewHelper().Shuffle(multipleChoice)
 	for _, v := range multipleChoice {
@@ -121,7 +101,7 @@ func (a *activity) PrepareMultipleChoice(multipleChoice []MultipleChoiceDB) inte
 	return preparedChoices
 }
 
-func (a *activity) PrepareMatchingChoice(matchingChoice []MatchingChoiceDB) interface{} {
+func (a *Activity) PrepareMatchingChoice(matchingChoice []general.MatchingChoiceDB) interface{} {
 	pairItem1List := make([]interface{}, 0)
 	pairItem2List := make([]interface{}, 0)
 	for _, v := range matchingChoice {
@@ -137,7 +117,7 @@ func (a *activity) PrepareMatchingChoice(matchingChoice []MatchingChoiceDB) inte
 	return prepared
 }
 
-func (a *activity) PrepareCompletionChoice(completionChoice []CompletionChoiceDB) interface{} {
+func (a *Activity) PrepareCompletionChoice(completionChoice []general.CompletionChoiceDB) interface{} {
 	contents := make([]interface{}, 0)
 	questions := make([]interface{}, 0)
 	for _, v := range completionChoice {
@@ -157,7 +137,7 @@ func (a *activity) PrepareCompletionChoice(completionChoice []CompletionChoiceDB
 	return prepared
 }
 
-func (a *activity) IsMatchingCorrect(choices []MatchingChoiceDB, answer []PairItemRequest) bool {
+func (a *Activity) IsMatchingCorrect(choices []general.MatchingChoiceDB, answer []request.PairItemRequest) bool {
 	Item1Item2Map := map[string]string{}
 	for _, correct := range choices {
 		Item1Item2Map[correct.PairItem1] = correct.PairItem2
@@ -170,7 +150,7 @@ func (a *activity) IsMatchingCorrect(choices []MatchingChoiceDB, answer []PairIt
 	return true
 }
 
-func (a *activity) IsCompletionCorrect(choices []CompletionChoiceDB, answer []PairContentRequest) bool {
+func (a *Activity) IsCompletionCorrect(choices []general.CompletionChoiceDB, answer []request.PairContentRequest) bool {
 	for _, correct := range choices {
 		for _, answer := range answer {
 			if (correct.ID == *answer.ID) && (correct.Content != *answer.Content) {
@@ -181,7 +161,7 @@ func (a *activity) IsCompletionCorrect(choices []CompletionChoiceDB, answer []Pa
 	return true
 }
 
-func (a *activity) IsMultipleCorrect(choices []MultipleChoiceDB, answer int) bool {
+func (a *Activity) IsMultipleCorrect(choices []general.MultipleChoiceDB, answer int) bool {
 	for _, v := range choices {
 		if v.IsCorrect && v.ID == answer {
 			return true
@@ -190,14 +170,14 @@ func (a *activity) IsMultipleCorrect(choices []MultipleChoiceDB, answer int) boo
 	return false
 }
 
-func (a *activity) convertToPairItem(raw interface{}) ([]PairItemRequest, error) {
-	result := make([]PairItemRequest, 0)
+func (a *Activity) convertToPairItem(raw interface{}) ([]request.PairItemRequest, error) {
+	result := make([]request.PairItemRequest, 0)
 	list, ok := raw.([]interface{})
 	if !ok {
 		return nil, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
 	}
 	for _, v := range list {
-		temp := PairItemRequest{}
+		temp := request.PairItemRequest{}
 		utils.NewType().StructToStruct(v, &temp)
 		err := temp.Validate()
 		if err != nil {
@@ -208,9 +188,9 @@ func (a *activity) convertToPairItem(raw interface{}) ([]PairItemRequest, error)
 	return result, nil
 }
 
-func (a *activity) checkMatchingCorrect(answer interface{}) (bool, error) {
-	matchingChoices, choiceOK := a.Choices.([]MatchingChoiceDB)
-	_answer, answerOK := answer.([]PairItemRequest)
+func (a *Activity) checkMatchingCorrect(answer interface{}) (bool, error) {
+	matchingChoices, choiceOK := a.Choices.([]general.MatchingChoiceDB)
+	_answer, answerOK := answer.([]request.PairItemRequest)
 	if !answerOK {
 		var err error
 		_answer, err = a.convertToPairItem(answer)
@@ -224,22 +204,22 @@ func (a *activity) checkMatchingCorrect(answer interface{}) (bool, error) {
 	return a.IsMatchingCorrect(matchingChoices, _answer), nil
 }
 
-func (a *activity) checkMultipleCorrect(answer interface{}) (bool, error) {
-	multipleChoices, choiceOK := a.Choices.([]MultipleChoiceDB)
+func (a *Activity) checkMultipleCorrect(answer interface{}) (bool, error) {
+	multipleChoices, choiceOK := a.Choices.([]general.MultipleChoiceDB)
 	if !choiceOK {
 		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
 	}
 	return a.IsMultipleCorrect(multipleChoices, utils.NewType().ParseInt(answer)), nil
 }
 
-func (a *activity) convertToPairContent(raw interface{}) ([]PairContentRequest, error) {
-	result := make([]PairContentRequest, 0)
+func (a *Activity) convertToPairContent(raw interface{}) ([]request.PairContentRequest, error) {
+	result := make([]request.PairContentRequest, 0)
 	list, ok := raw.([]interface{})
 	if !ok {
 		return nil, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
 	}
 	for _, v := range list {
-		temp := PairContentRequest{}
+		temp := request.PairContentRequest{}
 		utils.NewType().StructToStruct(v, &temp)
 		err := temp.Validate()
 		if err != nil {
@@ -250,9 +230,9 @@ func (a *activity) convertToPairContent(raw interface{}) ([]PairContentRequest, 
 	return result, nil
 }
 
-func (a *activity) checkCompletionCorrect(answer interface{}) (bool, error) {
-	completionChoices, choiceOK := a.Choices.([]CompletionChoiceDB)
-	_answer, answerOK := answer.([]PairContentRequest)
+func (a *Activity) checkCompletionCorrect(answer interface{}) (bool, error) {
+	completionChoices, choiceOK := a.Choices.([]general.CompletionChoiceDB)
+	_answer, answerOK := answer.([]request.PairContentRequest)
 	if !answerOK || !choiceOK {
 		var err error
 		_answer, err = a.convertToPairContent(answer)
@@ -266,7 +246,7 @@ func (a *activity) checkCompletionCorrect(answer interface{}) (bool, error) {
 	return a.IsCompletionCorrect(completionChoices, _answer), nil
 }
 
-func (a *activity) IsAnswerCorrect(answer interface{}) (bool, error) {
+func (a *Activity) IsAnswerCorrect(answer interface{}) (bool, error) {
 	if a.Info.TypeID == 1 {
 		return a.checkMatchingCorrect(answer)
 	} else if a.Info.TypeID == 2 {

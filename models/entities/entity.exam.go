@@ -1,37 +1,37 @@
-package models
+package entities
 
 import (
+	"DatabaseCamp/models/general"
+	"DatabaseCamp/models/request"
 	"DatabaseCamp/utils"
 	"sync"
 	"time"
 )
 
-type ExamType string
-
-var Exam = struct {
-	Pretest  ExamType
-	MiniExam ExamType
-	Posttest ExamType
+var ExamType = struct {
+	Pretest  string
+	MiniExam string
+	Posttest string
 }{
 	"PRE",
 	"MINI",
 	"POST",
 }
 
-type examActivityResult struct {
+type ExamActivityResult struct {
 	ActivityID int
 	Score      int
 }
 
-type examResultOverview struct {
+type ExamResultOverview struct {
 	ExamResultID     int                  `json:"exam_result_id"`
 	TotalScore       int                  `json:"score"`
 	IsPassed         bool                 `json:"is_passed"`
-	ActivitiesResult []examActivityResult `json:"activities_result,omitempty"`
+	ActivitiesResult []ExamActivityResult `json:"activities_result,omitempty"`
 	CreatedTimestamp time.Time            `json:"created_timestamp"`
 }
 
-type examInfo struct {
+type ExamInfo struct {
 	ID               int       `json:"exam_id"`
 	Type             string    `json:"exam_type"`
 	Instruction      string    `json:"instruction"`
@@ -41,37 +41,20 @@ type examInfo struct {
 	BadgeID          int       `json:"badge_id"`
 }
 
-type exam struct {
-	Info       examInfo            `json:"exam"`
-	Activities []activity          `json:"activities"`
-	Result     *examResultOverview `json:"result"`
+type Exam struct {
+	Info       ExamInfo            `json:"exam"`
+	Activities []Activity          `json:"activities"`
+	Result     *ExamResultOverview `json:"result"`
 }
 
-func NewExam() *exam {
-	return &exam{}
-}
-
-func (e *exam) GetInfo() examInfo {
+func (e *Exam) GetInfo() ExamInfo {
 	return e.Info
 }
 
-func (e *exam) ToExamResultOverviewResponse() *ExamResultOverviewResponse {
-	return &ExamResultOverviewResponse{
-		ExamID:           e.Info.ID,
-		ExamResultID:     e.Result.ExamResultID,
-		ExamType:         e.Info.Type,
-		ContentGroupName: e.Info.ContentGroupName,
-		CreatedTimestamp: e.Result.CreatedTimestamp,
-		Score:            e.Result.TotalScore,
-		IsPassed:         e.Result.IsPassed,
-		ActivitiesResult: e.Result.ActivitiesResult,
-	}
-}
-
-func (e *exam) ToExamResultActivitiesDB() []ExamResultActivityDB {
-	resultActivities := make([]ExamResultActivityDB, 0)
+func (e *Exam) ToExamResultActivitiesDB() []general.ExamResultActivityDB {
+	resultActivities := make([]general.ExamResultActivityDB, 0)
 	for _, resultActivity := range e.Result.ActivitiesResult {
-		resultActivities = append(resultActivities, ExamResultActivityDB{
+		resultActivities = append(resultActivities, general.ExamResultActivityDB{
 			ActivityID: resultActivity.ActivityID,
 			Score:      resultActivity.Score,
 		})
@@ -79,8 +62,8 @@ func (e *exam) ToExamResultActivitiesDB() []ExamResultActivityDB {
 	return resultActivities
 }
 
-func (e *exam) ToExamResultDB(userID int) *ExamResultDB {
-	return &ExamResultDB{
+func (e *Exam) ToExamResultDB(userID int) *general.ExamResultDB {
+	return &general.ExamResultDB{
 		ExamID:           e.Info.ID,
 		UserID:           userID,
 		Score:            e.Result.TotalScore,
@@ -89,23 +72,8 @@ func (e *exam) ToExamResultDB(userID int) *ExamResultDB {
 	}
 }
 
-func (e *exam) ToResponse() *ExamResponse {
-	activitiesResponse := make([]ActivityResponse, 0)
-	for _, activity := range e.Activities {
-		activitiesResponse = append(activitiesResponse, ActivityResponse{
-			Activity: activity.Info,
-			Choices:  activity.PropositionChoices,
-		})
-	}
-	response := ExamResponse{
-		Exam:       e.Info,
-		Activities: activitiesResponse,
-	}
-	return &response
-}
-
-func (e *exam) PrepareResult(examResultDB ExamResultDB) {
-	e.Result = &examResultOverview{
+func (e *Exam) PrepareResult(examResultDB general.ExamResultDB) {
+	e.Result = &ExamResultOverview{
 		ExamResultID:     examResultDB.ID,
 		TotalScore:       examResultDB.Score,
 		IsPassed:         examResultDB.IsPassed,
@@ -113,13 +81,13 @@ func (e *exam) PrepareResult(examResultDB ExamResultDB) {
 	}
 }
 
-func (e *exam) Prepare(examActivitiesDB []ExamActivityDB) {
+func (e *Exam) Prepare(examActivitiesDB []general.ExamActivityDB) {
 	activityChoiceDBMap := map[int]interface{}{}
-	examActivityDBMap := map[int]ActivityDB{}
+	examActivityDBMap := map[int]general.ActivityDB{}
 	for _, examActivityDB := range examActivitiesDB {
-		activity := ActivityDB{}
+		activity := general.ActivityDB{}
 		utils.NewType().StructToStruct(examActivityDB, &e.Info)
-		if examActivityDB.ExamType == string(Exam.Posttest) {
+		if examActivityDB.ExamType == string(ExamType.Posttest) {
 			e.Info.BadgeID = 3
 		}
 		utils.NewType().StructToStruct(examActivityDB, &activity)
@@ -131,22 +99,22 @@ func (e *exam) Prepare(examActivitiesDB []ExamActivityDB) {
 	}
 
 	for _, examActivityDB := range examActivityDBMap {
-		activity := NewActivity()
+		activity := Activity{}
 		activity.PrepareActivity(examActivityDB)
 		activity.PrepareChoicesByChoiceDB(activityChoiceDBMap[examActivityDB.ID])
-		e.Activities = append(e.Activities, *activity)
+		e.Activities = append(e.Activities, activity)
 	}
 }
 
-func (e *exam) initialActivityChoiceMap(activityID int, typeID int, activityChoiceMap map[int]interface{}) {
+func (e *Exam) initialActivityChoiceMap(activityID int, typeID int, activityChoiceMap map[int]interface{}) {
 	if typeID == 1 {
-		temp := make([]MatchingChoiceDB, 0)
+		temp := make([]general.MatchingChoiceDB, 0)
 		activityChoiceMap[activityID] = temp
 	} else if typeID == 2 {
-		temp := make([]MultipleChoiceDB, 0)
+		temp := make([]general.MultipleChoiceDB, 0)
 		activityChoiceMap[activityID] = temp
 	} else if typeID == 3 {
-		temp := make([]CompletionChoiceDB, 0)
+		temp := make([]general.CompletionChoiceDB, 0)
 		activityChoiceMap[activityID] = temp
 	} else {
 		temp := make([]interface{}, 0)
@@ -154,35 +122,35 @@ func (e *exam) initialActivityChoiceMap(activityID int, typeID int, activityChoi
 	}
 }
 
-func (e *exam) appendExamActivityChoice(examActivity ExamActivityDB, activityChoiceMap map[int]interface{}) {
+func (e *Exam) appendExamActivityChoice(examActivity general.ExamActivityDB, activityChoiceMap map[int]interface{}) {
 	choices := activityChoiceMap[examActivity.ActivityID]
 	if examActivity.ActivityTypeID == 1 {
-		temp := choices.([]MatchingChoiceDB)
-		temp = append(temp, e.examActivityToChoice(examActivity).(MatchingChoiceDB))
+		temp := choices.([]general.MatchingChoiceDB)
+		temp = append(temp, e.examActivityToChoice(examActivity).(general.MatchingChoiceDB))
 		activityChoiceMap[examActivity.ActivityID] = temp
 	} else if examActivity.ActivityTypeID == 2 {
-		temp := choices.([]MultipleChoiceDB)
-		temp = append(temp, e.examActivityToChoice(examActivity).(MultipleChoiceDB))
+		temp := choices.([]general.MultipleChoiceDB)
+		temp = append(temp, e.examActivityToChoice(examActivity).(general.MultipleChoiceDB))
 		activityChoiceMap[examActivity.ActivityID] = temp
 	} else if examActivity.ActivityTypeID == 3 {
-		temp := choices.([]CompletionChoiceDB)
-		temp = append(temp, e.examActivityToChoice(examActivity).(CompletionChoiceDB))
+		temp := choices.([]general.CompletionChoiceDB)
+		temp = append(temp, e.examActivityToChoice(examActivity).(general.CompletionChoiceDB))
 		activityChoiceMap[examActivity.ActivityID] = temp
 	}
 }
 
-func (e *exam) examActivityToChoice(examActivity ExamActivityDB) interface{} {
+func (e *Exam) examActivityToChoice(examActivity general.ExamActivityDB) interface{} {
 	if examActivity.ActivityTypeID == 1 {
-		choice := MatchingChoiceDB{}
+		choice := general.MatchingChoiceDB{}
 		utils.NewType().StructToStruct(examActivity, &choice)
 		return choice
 	} else if examActivity.ActivityTypeID == 2 {
-		choice := MultipleChoiceDB{}
+		choice := general.MultipleChoiceDB{}
 		examActivity.Content = examActivity.MultipleChoiceContent
 		utils.NewType().StructToStruct(examActivity, &choice)
 		return choice
 	} else if examActivity.ActivityTypeID == 3 {
-		choice := CompletionChoiceDB{}
+		choice := general.CompletionChoiceDB{}
 		examActivity.Content = examActivity.CompletionChoiceContent
 		utils.NewType().StructToStruct(examActivity, &choice)
 		return choice
@@ -191,18 +159,18 @@ func (e *exam) examActivityToChoice(examActivity ExamActivityDB) interface{} {
 	}
 }
 
-func (e *exam) CheckAnswer(answers []ExamActivityAnswer) (*examResultOverview, error) {
+func (e *Exam) CheckAnswer(answers []request.ExamActivityAnswer) (*ExamResultOverview, error) {
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
 	var err error
-	concurrent := Concurrent{Wg: &wg, Err: &err, Mutex: &mutex}
+	concurrent := general.Concurrent{Wg: &wg, Err: &err, Mutex: &mutex}
 
-	activityMap := map[int]*activity{}
+	activityMap := map[int]*Activity{}
 	for _, activity := range e.Activities {
 		activityMap[activity.Info.ID] = &activity
 	}
 
-	e.Result = &examResultOverview{
+	e.Result = &ExamResultOverview{
 		TotalScore:       0,
 		IsPassed:         false,
 		CreatedTimestamp: time.Now().Local(),
@@ -218,13 +186,13 @@ func (e *exam) CheckAnswer(answers []ExamActivityAnswer) (*examResultOverview, e
 	return e.Result, err
 }
 
-func (e *exam) summaryResult() {
+func (e *Exam) summaryResult() {
 	answerTotalScore := e.GetAnswerTotalScore()
 	activitiesTotalScore := e.GetActivitiesTotalScore()
 	e.Result.IsPassed = e.isPassed(answerTotalScore, activitiesTotalScore)
 }
 
-func (e *exam) GetAnswerTotalScore() int {
+func (e *Exam) GetAnswerTotalScore() int {
 	sum := 0
 	for _, activityResult := range e.Result.ActivitiesResult {
 		sum += activityResult.Score
@@ -233,7 +201,7 @@ func (e *exam) GetAnswerTotalScore() int {
 	return sum
 }
 
-func (e *exam) GetActivitiesTotalScore() int {
+func (e *Exam) GetActivitiesTotalScore() int {
 	sum := 0
 	for _, activity := range e.Activities {
 		sum += activity.Info.Point
@@ -241,7 +209,7 @@ func (e *exam) GetActivitiesTotalScore() int {
 	return sum
 }
 
-func (e *exam) isPassed(answerTotalScore int, activitiesTotalScore int) bool {
+func (e *Exam) isPassed(answerTotalScore int, activitiesTotalScore int) bool {
 	passedRate := 0.5
 	if activitiesTotalScore == 0 {
 		return true
@@ -251,7 +219,7 @@ func (e *exam) isPassed(answerTotalScore int, activitiesTotalScore int) bool {
 
 }
 
-func (e *exam) checkActivityAsync(concurrent *Concurrent, activity activity, answer interface{}) {
+func (e *Exam) checkActivityAsync(concurrent *general.Concurrent, activity Activity, answer interface{}) {
 	defer concurrent.Wg.Done()
 	score := 0
 	isCorrect := true
@@ -266,7 +234,7 @@ func (e *exam) checkActivityAsync(concurrent *Concurrent, activity activity, ans
 	}
 
 	concurrent.Mutex.Lock()
-	e.Result.ActivitiesResult = append(e.Result.ActivitiesResult, examActivityResult{
+	e.Result.ActivitiesResult = append(e.Result.ActivitiesResult, ExamActivityResult{
 		ActivityID: activity.Info.ID,
 		Score:      score,
 	})

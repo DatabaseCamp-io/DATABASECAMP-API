@@ -5,7 +5,10 @@ import (
 	"DatabaseCamp/database"
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
-	"DatabaseCamp/models"
+	"DatabaseCamp/models/entities"
+	"DatabaseCamp/models/general"
+	"DatabaseCamp/models/request"
+	"DatabaseCamp/models/response"
 	"DatabaseCamp/repositories"
 	"DatabaseCamp/utils"
 )
@@ -16,17 +19,17 @@ type examController struct {
 }
 
 type IExamController interface {
-	GetExam(examID int, userID int) (*models.ExamResponse, error)
-	GetOverview(userID int) (*models.ExamOverviewResponse, error)
-	CheckExam(userID int, request models.ExamAnswerRequest) (*models.ExamResultOverviewResponse, error)
-	GetExamResult(userID int, examResultID int) (*models.ExamResultOverviewResponse, error)
+	GetExam(examID int, userID int) (*response.ExamResponse, error)
+	GetOverview(userID int) (*response.ExamOverviewResponse, error)
+	CheckExam(userID int, request request.ExamAnswerRequest) (*response.ExamResultOverviewResponse, error)
+	GetExamResult(userID int, examResultID int) (*response.ExamResultOverviewResponse, error)
 }
 
 func NewExamController(examRepo repositories.IExamRepository, userRepo repositories.IUserRepository) examController {
 	return examController{examRepo: examRepo, userRepo: userRepo}
 }
 
-func (c examController) GetExam(examID int, userID int) (*models.ExamResponse, error) {
+func (c examController) GetExam(examID int, userID int) (*response.ExamResponse, error) {
 	loader := loaders.NewExamLoader(c.examRepo, c.userRepo)
 	err := loader.Load(userID, examID)
 	if err != nil || len(loader.ExamActivitiesDB) == 0 {
@@ -34,18 +37,18 @@ func (c examController) GetExam(examID int, userID int) (*models.ExamResponse, e
 		return nil, errs.ErrExamNotFound
 	}
 
-	exam := models.NewExam()
+	exam := entities.Exam{}
 	exam.Prepare(loader.ExamActivitiesDB)
 
-	if exam.Info.Type == string(models.Exam.Posttest) && !c.canDoFianlExam(loader.CorrectedBadgeDB) {
+	if exam.Info.Type == string(entities.ExamType.Posttest) && !c.canDoFianlExam(loader.CorrectedBadgeDB) {
 		return nil, errs.ErrFinalExamBadgesNotEnough
 	}
 
-	response := exam.ToResponse()
+	response := response.NewExamResponse(exam)
 	return response, nil
 }
 
-func (c examController) GetOverview(userID int) (*models.ExamOverviewResponse, error) {
+func (c examController) GetOverview(userID int) (*response.ExamOverviewResponse, error) {
 	loader := loaders.NewExamOverviewLoader(c.examRepo, c.userRepo)
 	err := loader.Load(userID)
 	if err != nil {
@@ -53,14 +56,11 @@ func (c examController) GetOverview(userID int) (*models.ExamOverviewResponse, e
 		return nil, errs.ErrLoadError
 	}
 
-	examOverview := models.NewExamOverview()
-	examOverview.PrepareExamOverview(loader.ExamResultsDB, loader.ExamDB, c.canDoFianlExam(loader.CorrectedBadgeDB))
-
-	response := examOverview.ToResponse()
+	response := response.NewExamOverviewResponse(loader.ExamResultsDB, loader.ExamDB, c.canDoFianlExam(loader.CorrectedBadgeDB))
 	return response, nil
 }
 
-func (c examController) canDoFianlExam(correctedBadgesDB []models.CorrectedBadgeDB) bool {
+func (c examController) canDoFianlExam(correctedBadgesDB []general.CorrectedBadgeDB) bool {
 	for _, correctedBadgeDB := range correctedBadgesDB {
 		if correctedBadgeDB.UserID == nil && correctedBadgeDB.BadgeID != 3 {
 			return false
@@ -69,14 +69,14 @@ func (c examController) canDoFianlExam(correctedBadgesDB []models.CorrectedBadge
 	return true
 }
 
-func (c examController) CheckExam(userID int, request models.ExamAnswerRequest) (*models.ExamResultOverviewResponse, error) {
+func (c examController) CheckExam(userID int, request request.ExamAnswerRequest) (*response.ExamResultOverviewResponse, error) {
 	examActivities, err := c.examRepo.GetExamActivity(*request.ExamID)
 	if err != nil || len(examActivities) == 0 {
 		logs.New().Error(err)
 		return nil, errs.ErrExamNotFound
 	}
 
-	exam := models.NewExam()
+	exam := entities.Exam{}
 	exam.Prepare(examActivities)
 	if len(request.Activities) != len(exam.Activities) {
 		return nil, errs.ErrActivitiesNumberIncorrect
@@ -87,7 +87,7 @@ func (c examController) CheckExam(userID int, request models.ExamAnswerRequest) 
 		return nil, err
 	}
 
-	userBadgeDB := models.UserBadgeDB{
+	userBadgeDB := general.UserBadgeDB{
 		UserID:  userID,
 		BadgeID: exam.Info.BadgeID,
 	}
@@ -101,14 +101,14 @@ func (c examController) CheckExam(userID int, request models.ExamAnswerRequest) 
 	}
 
 	exam.Result.ExamResultID = examResultDB.ID
-	response := exam.ToExamResultOverviewResponse()
+	response := response.NewExamResultOverviewResponse(exam)
 	return response, nil
 }
 
-func (c examController) addExamResultID(examResultID int, examResultActivity []models.ExamResultActivityDB) []models.ExamResultActivityDB {
-	newExamResultActivity := make([]models.ExamResultActivityDB, 0)
+func (c examController) addExamResultID(examResultID int, examResultActivity []general.ExamResultActivityDB) []general.ExamResultActivityDB {
+	newExamResultActivity := make([]general.ExamResultActivityDB, 0)
 	for _, v := range examResultActivity {
-		newExamResultActivity = append(newExamResultActivity, models.ExamResultActivityDB{
+		newExamResultActivity = append(newExamResultActivity, general.ExamResultActivityDB{
 			ExamResultID: examResultID,
 			ActivityID:   v.ActivityID,
 			Score:        v.Score,
@@ -117,7 +117,7 @@ func (c examController) addExamResultID(examResultID int, examResultActivity []m
 	return newExamResultActivity
 }
 
-func (c examController) saveExamResult(examType string, userBadgeDB models.UserBadgeDB, examResultDB *models.ExamResultDB, resultActivitiesDB []models.ExamResultActivityDB) error {
+func (c examController) saveExamResult(examType string, userBadgeDB general.UserBadgeDB, examResultDB *general.ExamResultDB, resultActivitiesDB []general.ExamResultActivityDB) error {
 	var err error
 	tx := database.NewTransaction()
 	tx.Begin()
@@ -134,7 +134,7 @@ func (c examController) saveExamResult(examType string, userBadgeDB models.UserB
 		return err
 	}
 
-	if examType == string(models.Exam.MiniExam) || examType == string(models.Exam.Posttest) && examResultDB.IsPassed {
+	if examType == entities.ExamType.MiniExam || examType == entities.ExamType.Posttest && examResultDB.IsPassed {
 		_, err = c.userRepo.InsertUserBadgeTransaction(tx, userBadgeDB)
 		if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
 			tx.Rollback()
@@ -147,7 +147,7 @@ func (c examController) saveExamResult(examType string, userBadgeDB models.UserB
 	return nil
 }
 
-func (c examController) GetExamResult(userID int, examResultID int) (*models.ExamResultOverviewResponse, error) {
+func (c examController) GetExamResult(userID int, examResultID int) (*response.ExamResultOverviewResponse, error) {
 
 	examResults, err := c.userRepo.GetExamResultByID(userID, examResultID)
 	if err != nil || len(examResults) == 0 {
@@ -161,10 +161,9 @@ func (c examController) GetExamResult(userID int, examResultID int) (*models.Exa
 		return nil, errs.ErrExamNotFound
 	}
 
-	exam := models.NewExam()
+	exam := entities.Exam{}
 	exam.Prepare(examActivities)
 	exam.PrepareResult(examResults[0])
-	response := exam.ToExamResultOverviewResponse()
-
+	response := response.NewExamResultOverviewResponse(exam)
 	return response, nil
 }

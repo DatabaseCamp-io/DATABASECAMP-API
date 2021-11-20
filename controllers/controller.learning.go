@@ -21,7 +21,7 @@ type learningController struct {
 
 type ILearningController interface {
 	GetVideoLecture(id int) (*models.VideoLectureResponse, error)
-	GetOverview(userID int) (*models.OverviewResponse, error)
+	GetOverview(userID int) (*models.ContentOverviewResponse, error)
 	GetActivity(userID int, activityID int) (*models.ActivityResponse, error)
 	UseHint(userID int, activityID int) (*models.HintDB, error)
 	GetContentRoadmap(userID int, contentID int) (*models.ContentRoadmapResponse, error)
@@ -62,18 +62,14 @@ func (c learningController) GetVideoLecture(id int) (*models.VideoLectureRespons
 	return &res, nil
 }
 
-func (c learningController) GetOverview(userID int) (*models.OverviewResponse, error) {
+func (c learningController) GetOverview(userID int) (*models.ContentOverviewResponse, error) {
 	loader := loaders.NewLearningOverviewLoader(c.learningRepo, c.userRepo)
 	err := loader.Load(userID)
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.ErrLoadError
 	}
-
-	overview := models.NewOverview()
-	overview.Prepare(loader.OverviewDB, loader.LearningProgressionDB)
-
-	response := overview.ToResponse()
+	response := models.NewContentOverviewResponse(loader.OverviewDB, loader.LearningProgressionDB)
 	return response, nil
 }
 
@@ -91,12 +87,12 @@ func (c learningController) GetActivity(userID int, activityID int) (*models.Act
 		return nil, errs.ErrActivitiesNotFound
 	}
 
-	activity := models.NewActivity()
+	activity := models.Activity{}
 	activity.PrepareActivity(*loader.ActivityDB)
 	activity.PrepareChoicesByChoiceDB(choiceDB)
 	activity.PrepareHint(loader.ActivityHintsDB, loader.UserHintsDB)
 
-	response := activity.ToPropositionResponse()
+	response := models.NewActivityResponse(activity)
 	return response, nil
 }
 
@@ -244,11 +240,7 @@ func (c learningController) GetContentRoadmap(userID int, contentID int) (*model
 		logs.New().Error(err)
 		return nil, errs.ErrContentNotFound
 	}
-
-	roadmap := models.NewContentRoadmap()
-	roadmap.Prepare(*loader.ContentDB, loader.ContentActivityDB, loader.LearningProgressionDB)
-
-	response := roadmap.ToResponse()
+	response := models.NewContentRoadmapResponse(*loader.ContentDB, loader.ContentActivityDB, loader.LearningProgressionDB)
 	return response, nil
 }
 
@@ -264,7 +256,7 @@ func (c learningController) CheckAnswer(userID int, activityID int, typeID int, 
 		return nil, errs.ErrActivityTypeInvalid
 	}
 
-	activity := models.NewActivity()
+	activity := models.Activity{}
 	activity.PrepareActivity(*loader.ActivityDB)
 	activity.PrepareChoicesByChoiceDB(loader.ChoicesDB)
 
@@ -287,6 +279,6 @@ func (c learningController) CheckAnswer(userID int, activityID int, typeID int, 
 		return nil, errs.ErrUserNotFound
 	}
 
-	response := activity.ToAnswerResponse(userDB.Point, isCorrect)
+	response := models.NewActivityAnswerResponse(activity, userDB.Point, isCorrect)
 	return response, nil
 }
