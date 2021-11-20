@@ -10,7 +10,7 @@ type AnswerResponse struct {
 
 func NewActivityAnswerResponse(activity entities.Activity, updatedPoint int, isCorrect bool) *AnswerResponse {
 	return &AnswerResponse{
-		ActivityID:   activity.Info.ID,
+		ActivityID:   activity.GetInfo().ID,
 		IsCorrect:    isCorrect,
 		UpdatedPoint: updatedPoint,
 	}

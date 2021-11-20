@@ -29,51 +29,63 @@ type ActivityDetail struct {
 }
 
 type Activity struct {
-	Info               ActivityDetail `json:"activity"`
-	PropositionChoices interface{}    `json:"proposition_choices"`
-	Choices            interface{}    `json:"choices"`
-	Hint               *ActivityHint  `json:"hint"`
+	info               ActivityDetail
+	propositionChoices interface{}
+	choices            interface{}
+	hint               *ActivityHint
 }
 
-func (a *Activity) PrepareActivity(activityDB general.ActivityDB) {
-	utils.NewType().StructToStruct(activityDB, &a.Info)
+func (a *Activity) GetHint() *ActivityHint {
+	return a.hint
 }
 
-func (a *Activity) PrepareChoicesByChoiceDB(choiceDB interface{}) error {
-	a.Choices = choiceDB
-	if a.Info.TypeID == 1 {
+func (a *Activity) GetPropositionChoices() interface{} {
+	return a.propositionChoices
+}
+
+func (a *Activity) GetInfo() ActivityDetail {
+	return a.info
+}
+
+func (a *Activity) SetActivity(activityDB general.ActivityDB) {
+	utils.NewType().StructToStruct(activityDB, &a.info)
+}
+
+func (a *Activity) SetChoicesByChoiceDB(choiceDB interface{}) error {
+	a.choices = choiceDB
+	if a.info.TypeID == 1 {
 		propositionChoices, choiceOK := choiceDB.([]general.MatchingChoiceDB)
 		if !choiceOK {
 			return errs.NewInternalServerError("รูปแบบของตัวเลือกไม่ถูกต้อง", "Invalid Choice")
 		}
-		a.PropositionChoices = a.PrepareMatchingChoice(propositionChoices)
-	} else if a.Info.TypeID == 2 {
+		a.propositionChoices = a.PrepareMatchingChoice(propositionChoices)
+	} else if a.info.TypeID == 2 {
 		propositionChoices, choiceOK := choiceDB.([]general.MultipleChoiceDB)
 		if !choiceOK {
 			return errs.NewInternalServerError("รูปแบบของตัวเลือกไม่ถูกต้อง", "Invalid Choice")
 		}
-		a.PropositionChoices = a.PrepareMultipleChoice(propositionChoices)
-	} else if a.Info.TypeID == 3 {
+		a.propositionChoices = a.PrepareMultipleChoice(propositionChoices)
+	} else if a.info.TypeID == 3 {
 		propositionChoices, choiceOK := choiceDB.([]general.CompletionChoiceDB)
 		if !choiceOK {
 			return errs.NewInternalServerError("รูปแบบของตัวเลือกไม่ถูกต้อง", "Invalid Choice")
 		}
-		a.PropositionChoices = a.PrepareCompletionChoice(propositionChoices)
+		a.propositionChoices = a.PrepareCompletionChoice(propositionChoices)
 	} else {
-		a.PropositionChoices = nil
+		a.propositionChoices = nil
 	}
 	return nil
 }
 
-func (a *Activity) PrepareHint(activityHints []general.HintDB, userHintsDB []general.UserHintDB) {
-	a.Hint = &ActivityHint{
+func (a *Activity) SetHint(activityHints []general.HintDB, userHintsDB []general.UserHintDB) {
+	a.hint = &ActivityHint{
 		TotalHint: len(activityHints),
 	}
 	for _, hint := range activityHints {
 		if a.isUsedHint(userHintsDB, hint.ID) {
-			a.Hint.UsedHints = append(a.Hint.UsedHints, hint)
+			a.hint.UsedHints = append(a.hint.UsedHints, hint)
 		}
-		a.Hint.HintRoadMap = append(a.Hint.HintRoadMap, HintRoadMap{
+		a.hint.HintRoadMap = append(a.hint.HintRoadMap, HintRoadMap{
 			Level:       hint.Level,
 			ReducePoint: hint.PointReduce,
 		})
@@ -189,7 +201,7 @@ func (a *Activity) convertToPairItem(raw interface{}) ([]request.PairItemRequest
 }
 
 func (a *Activity) checkMatchingCorrect(answer interface{}) (bool, error) {
-	matchingChoices, choiceOK := a.Choices.([]general.MatchingChoiceDB)
+	matchingChoices, choiceOK := a.choices.([]general.MatchingChoiceDB)
 	_answer, answerOK := answer.([]request.PairItemRequest)
 	if !answerOK {
 		var err error
@@ -205,7 +217,7 @@ func (a *Activity) checkMatchingCorrect(answer interface{}) (bool, error) {
 }
 
 func (a *Activity) checkMultipleCorrect(answer interface{}) (bool, error) {
-	multipleChoices, choiceOK := a.Choices.([]general.MultipleChoiceDB)
+	multipleChoices, choiceOK := a.choices.([]general.MultipleChoiceDB)
 	if !choiceOK {
 		return false, errs.NewBadRequestError("รูปแบบของคำตอบไม่ถูกต้อง", "Invalid Answer Format")
 	}
@@ -231,7 +243,7 @@ func (a *Activity) convertToPairContent(raw interface{}) ([]request.PairContentR
 }
 
 func (a *Activity) checkCompletionCorrect(answer interface{}) (bool, error) {
-	completionChoices, choiceOK := a.Choices.([]general.CompletionChoiceDB)
+	completionChoices, choiceOK := a.choices.([]general.CompletionChoiceDB)
 	_answer, answerOK := answer.([]request.PairContentRequest)
 	if !answerOK || !choiceOK {
 		var err error
@@ -247,11 +259,11 @@ func (a *Activity) checkCompletionCorrect(answer interface{}) (bool, error) {
 }
 
 func (a *Activity) IsAnswerCorrect(answer interface{}) (bool, error) {
-	if a.Info.TypeID == 1 {
+	if a.info.TypeID == 1 {
 		return a.checkMatchingCorrect(answer)
-	} else if a.Info.TypeID == 2 {
+	} else if a.info.TypeID == 2 {
 		return a.checkMultipleCorrect(answer)
-	} else if a.Info.TypeID == 3 {
+	} else if a.info.TypeID == 3 {
 		return a.checkCompletionCorrect(answer)
 	} else {
 		return false, errs.NewBadRequestError("ประเภทของกิจกรรมไม่ถูกต้อง", "Invalid Activity Type")

@@ -40,7 +40,7 @@ func (c examController) GetExam(examID int, userID int) (*response.ExamResponse,
 	exam := entities.Exam{}
 	exam.Prepare(loader.ExamActivitiesDB)
 
-	if exam.Info.Type == string(entities.ExamType.Posttest) && !c.canDoFianlExam(loader.CorrectedBadgeDB) {
+	if exam.GetInfo().Type == string(entities.ExamType.Posttest) && !c.canDoFianlExam(loader.CorrectedBadgeDB) {
 		return nil, errs.ErrFinalExamBadgesNotEnough
 	}
 
@@ -78,7 +78,7 @@ func (c examController) CheckExam(userID int, request request.ExamAnswerRequest)
 
 	exam := entities.Exam{}
 	exam.Prepare(examActivities)
-	if len(request.Activities) != len(exam.Activities) {
+	if len(request.Activities) != len(exam.GetActivities()) {
 		return nil, errs.ErrActivitiesNumberIncorrect
 	}
 
@@ -89,18 +89,18 @@ func (c examController) CheckExam(userID int, request request.ExamAnswerRequest)
 
 	userBadgeDB := general.UserBadgeDB{
 		UserID:  userID,
-		BadgeID: exam.Info.BadgeID,
+		BadgeID: exam.GetInfo().BadgeID,
 	}
 	examResultDB := exam.ToExamResultDB(userID)
 	examResultActivities := exam.ToExamResultActivitiesDB()
 
-	err = c.saveExamResult(exam.Info.Type, userBadgeDB, examResultDB, examResultActivities)
+	err = c.saveExamResult(exam.GetInfo().Type, userBadgeDB, examResultDB, examResultActivities)
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.ErrInsertError
 	}
 
-	exam.Result.ExamResultID = examResultDB.ID
+	exam.GetResult().ExamResultID = examResultDB.ID
 	response := response.NewExamResultOverviewResponse(exam)
 	return response, nil
 }

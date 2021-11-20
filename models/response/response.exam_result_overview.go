@@ -18,13 +18,13 @@ type ExamResultOverviewResponse struct {
 
 func NewExamResultOverviewResponse(exam entities.Exam) *ExamResultOverviewResponse {
 	return &ExamResultOverviewResponse{
-		ExamID:           exam.Info.ID,
-		ExamResultID:     exam.Result.ExamResultID,
-		ExamType:         exam.Info.Type,
-		ContentGroupName: exam.Info.ContentGroupName,
-		CreatedTimestamp: exam.Result.CreatedTimestamp,
-		Score:            exam.Result.TotalScore,
-		IsPassed:         exam.Result.IsPassed,
-		ActivitiesResult: exam.Result.ActivitiesResult,
+		ExamID:           exam.GetInfo().ID,
+		ExamResultID:     exam.GetResult().ExamResultID,
+		ExamType:         exam.GetInfo().Type,
+		ContentGroupName: exam.GetInfo().ContentGroupName,
+		CreatedTimestamp: exam.GetResult().CreatedTimestamp,
+		Score:            exam.GetResult().TotalScore,
+		IsPassed:         exam.GetResult().IsPassed,
+		ActivitiesResult: exam.GetResult().ActivitiesResult,
 	}
 }

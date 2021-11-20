@@ -10,8 +10,8 @@ type ActivityResponse struct {
 
 func NewActivityResponse(activity entities.Activity) *ActivityResponse {
 	return &ActivityResponse{
-		Activity: activity.Info,
-		Choices:  activity.PropositionChoices,
-		Hint:     *activity.Hint,
+		Activity: activity.GetInfo(),
+		Choices:  activity.GetPropositionChoices(),
+		Hint:     *activity.GetHint(),
 	}
 }

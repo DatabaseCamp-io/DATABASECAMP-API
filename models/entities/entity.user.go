@@ -29,33 +29,32 @@ type Badge struct {
 
 // User Class
 type User struct {
-	ID                    int       `json:"user_id"`
-	Name                  string    `json:"name"`
-	Email                 string    `json:"email"`
-	Password              string    `json:"password"`
-	AccessToken           string    `json:"access_token"`
-	Point                 int       `json:"point"`
-	ActivityCount         int       `json:"activity_count"`
-	Ranking               int       `json:"ranking"`
-	Badges                []Badge   `json:"badges"`
-	ExpiredTokenTimestamp time.Time `json:"expired_token_timestamp"`
-	CreatedTimestamp      time.Time `json:"created_timestamp"`
-	UpdatedTimestamp      time.Time `json:"updated_timestamp"`
+	id               int
+	name             string
+	email            string
+	password         string
+	badges           []Badge
+	createdTimestamp time.Time
+	updatedTimestamp time.Time
+}
+
+func (u *User) SetID(id int) {
+	u.id = id
 }
 
 func (u *User) HashPassword() {
-	u.Password = utils.NewHelper().HashAndSalt(u.Password)
+	u.password = utils.NewHelper().HashAndSalt(u.password)
 }
 
 func (u *User) SetTimestamp() {
-	u.CreatedTimestamp = time.Now().Local()
-	u.UpdatedTimestamp = time.Now().Local()
+	u.createdTimestamp = time.Now().Local()
+	u.updatedTimestamp = time.Now().Local()
 }
 
 // Setter for set corrected badge
 func (u *User) SetCorrectedBadges(allBadgesDB []general.BadgeDB, correctedBadgesDB []general.UserBadgeDB) {
 	for _, badgeDB := range allBadgesDB {
-		u.Badges = append(u.Badges, Badge{
+		u.badges = append(u.badges, Badge{
 			ID:          badgeDB.ID,
 			ImagePath:   badgeDB.ImagePath,
 			Name:        badgeDB.Name,
@@ -79,16 +78,16 @@ func (u *User) ToDB() general.UserDB {
 	tokenExpireHour := time.Hour * utils.NewType().ParseDuration(os.Getenv("TOKEN_EXPIRE_HOUR"))
 	expiredTokenTimestamp := time.Now().Local().Add(tokenExpireHour)
 	return general.UserDB{
-		Name:                  u.Name,
-		Email:                 u.Email,
-		Password:              u.Password,
-		CreatedTimestamp:      u.CreatedTimestamp,
-		UpdatedTimestamp:      u.CreatedTimestamp,
+		Name:                  u.name,
+		Email:                 u.email,
+		Password:              u.password,
+		CreatedTimestamp:      u.createdTimestamp,
+		UpdatedTimestamp:      u.updatedTimestamp,
 		ExpiredTokenTimestamp: expiredTokenTimestamp,
 	}
 }
 
 // Check password with hashpassword
 func (u *User) IsPasswordCorrect(password string) bool {
-	return utils.NewHelper().ComparePasswords(u.Password, password)
+	return utils.NewHelper().ComparePasswords(u.password, password)
 }

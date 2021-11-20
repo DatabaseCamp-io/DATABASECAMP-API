@@ -17,12 +17,12 @@ func NewExamResponse(exam entities.Exam) *ExamResponse {
 
 func (e *ExamResponse) prepare(exam entities.Exam) {
 	activitiesResponse := make([]ActivityResponse, 0)
-	for _, activity := range exam.Activities {
+	for _, activity := range exam.GetActivities() {
 		activitiesResponse = append(activitiesResponse, ActivityResponse{
-			Activity: activity.Info,
-			Choices:  activity.PropositionChoices,
+			Activity: activity.GetInfo(),
+			Choices:  activity.GetPropositionChoices(),
 		})
 	}
 	e.Activities = activitiesResponse
-	e.Exam = exam.Info
+	e.Exam = exam.GetInfo()
 }

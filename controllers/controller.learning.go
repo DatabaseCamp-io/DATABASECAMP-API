@@ -5,7 +5,9 @@ import (
 	"DatabaseCamp/database"
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
-	"DatabaseCamp/models"
+	"DatabaseCamp/models/entities"
+	"DatabaseCamp/models/general"
+	"DatabaseCamp/models/response"
 	"DatabaseCamp/repositories"
 	"DatabaseCamp/services"
 	"DatabaseCamp/utils"
@@ -20,12 +22,12 @@ type learningController struct {
 }
 
 type ILearningController interface {
-	GetVideoLecture(id int) (*models.VideoLectureResponse, error)
-	GetOverview(userID int) (*models.ContentOverviewResponse, error)
-	GetActivity(userID int, activityID int) (*models.ActivityResponse, error)
-	UseHint(userID int, activityID int) (*models.HintDB, error)
-	GetContentRoadmap(userID int, contentID int) (*models.ContentRoadmapResponse, error)
-	CheckAnswer(userID int, activityID int, typeID int, answer interface{}) (*models.AnswerResponse, error)
+	GetVideoLecture(id int) (*response.VideoLectureResponse, error)
+	GetOverview(userID int) (*response.ContentOverviewResponse, error)
+	GetActivity(userID int, activityID int) (*response.ActivityResponse, error)
+	UseHint(userID int, activityID int) (*general.HintDB, error)
+	GetContentRoadmap(userID int, contentID int) (*response.ContentRoadmapResponse, error)
+	CheckAnswer(userID int, activityID int, typeID int, answer interface{}) (*response.AnswerResponse, error)
 }
 
 func NewLearningController(
@@ -40,7 +42,7 @@ func NewLearningController(
 	}
 }
 
-func (c learningController) GetVideoLecture(id int) (*models.VideoLectureResponse, error) {
+func (c learningController) GetVideoLecture(id int) (*response.VideoLectureResponse, error) {
 	contentDB, err := c.learningRepo.GetContent(id)
 	if err != nil || contentDB == nil {
 		logs.New().Error(err)
@@ -53,7 +55,7 @@ func (c learningController) GetVideoLecture(id int) (*models.VideoLectureRespons
 		return nil, errs.ErrServiceUnavailableError
 	}
 
-	res := models.VideoLectureResponse{
+	res := response.VideoLectureResponse{
 		ContentID:   contentDB.ID,
 		ContentName: contentDB.Name,
 		VideoLink:   videoLink,
@@ -62,18 +64,18 @@ func (c learningController) GetVideoLecture(id int) (*models.VideoLectureRespons
 	return &res, nil
 }
 
-func (c learningController) GetOverview(userID int) (*models.ContentOverviewResponse, error) {
+func (c learningController) GetOverview(userID int) (*response.ContentOverviewResponse, error) {
 	loader := loaders.NewLearningOverviewLoader(c.learningRepo, c.userRepo)
 	err := loader.Load(userID)
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.ErrLoadError
 	}
-	response := models.NewContentOverviewResponse(loader.OverviewDB, loader.LearningProgressionDB)
+	response := response.NewContentOverviewResponse(loader.OverviewDB, loader.LearningProgressionDB)
 	return response, nil
 }
 
-func (c learningController) GetActivity(userID int, activityID int) (*models.ActivityResponse, error) {
+func (c learningController) GetActivity(userID int, activityID int) (*response.ActivityResponse, error) {
 	loader := loaders.NewActivityLoader(c.learningRepo, c.userRepo)
 	err := loader.Load(userID, activityID)
 	if err != nil {
@@ -87,12 +89,12 @@ func (c learningController) GetActivity(userID int, activityID int) (*models.Act
 		return nil, errs.ErrActivitiesNotFound
 	}
 
-	activity := models.Activity{}
-	activity.PrepareActivity(*loader.ActivityDB)
-	activity.PrepareChoicesByChoiceDB(choiceDB)
-	activity.PrepareHint(loader.ActivityHintsDB, loader.UserHintsDB)
+	activity := entities.Activity{}
+	activity.SetActivity(*loader.ActivityDB)
+	activity.SetChoicesByChoiceDB(choiceDB)
+	activity.SetHint(loader.ActivityHintsDB, loader.UserHintsDB)
 
-	response := models.NewActivityResponse(activity)
+	response := response.NewActivityResponse(activity)
 	return response, nil
 }
 
@@ -112,7 +114,7 @@ func (c learningController) finishActivityTrasaction(userID int, activityID int,
 	tx := database.NewTransaction()
 	tx.Begin()
 
-	progression := models.LearningProgressionDB{
+	progression := general.LearningProgressionDB{
 		UserID:           userID,
 		ActivityID:       activityID,
 		CreatedTimestamp: time.Now().Local(),
@@ -125,7 +127,7 @@ func (c learningController) finishActivityTrasaction(userID int, activityID int,
 	}
 
 	if !utils.NewHelper().IsSqlDuplicateError(err) {
-		err = c.userRepo.ChangePointTransaction(tx, userID, addPoint, models.Mode.Add)
+		err = c.userRepo.ChangePointTransaction(tx, userID, addPoint, entities.Mode.Add)
 	}
 
 	if err != nil {
@@ -139,7 +141,7 @@ func (c learningController) finishActivityTrasaction(userID int, activityID int,
 	return nil
 }
 
-func (c learningController) UseHint(userID int, activityID int) (*models.HintDB, error) {
+func (c learningController) UseHint(userID int, activityID int) (*general.HintDB, error) {
 	loader := loaders.NewHintLoader(c.learningRepo, c.userRepo)
 	err := loader.Load(userID, activityID)
 	if err != nil || len(loader.ActivityHintsDB) == 0 {
@@ -165,7 +167,7 @@ func (c learningController) UseHint(userID int, activityID int) (*models.HintDB,
 	return nextLevelHint, nil
 }
 
-func (c learningController) isUsedHint(userHints []models.UserHintDB, hintID int) bool {
+func (c learningController) isUsedHint(userHints []general.UserHintDB, hintID int) bool {
 	for _, userHint := range userHints {
 		if userHint.HintID == hintID {
 			return true
@@ -174,7 +176,7 @@ func (c learningController) isUsedHint(userHints []models.UserHintDB, hintID int
 	return false
 }
 
-func (c learningController) getNextLevelHint(ActivityHintsDB []models.HintDB, userHintsDB []models.UserHintDB) *models.HintDB {
+func (c learningController) getNextLevelHint(ActivityHintsDB []general.HintDB, userHintsDB []general.UserHintDB) *general.HintDB {
 	for _, activityHint := range ActivityHintsDB {
 		if !c.isUsedHint(userHintsDB, activityHint.ID) {
 			return &activityHint
@@ -188,8 +190,8 @@ func (c learningController) useHintTransaction(userID int, reducePoint int, hint
 	var err error
 	tx := database.NewTransaction()
 
-	ct := models.ConcurrentTransaction{
-		Concurrent: &models.Concurrent{
+	ct := general.ConcurrentTransaction{
+		Concurrent: &general.Concurrent{
 			Wg:  &wg,
 			Err: &err,
 		},
@@ -197,7 +199,7 @@ func (c learningController) useHintTransaction(userID int, reducePoint int, hint
 	}
 
 	wg.Add(2)
-	go c.updateUserPointAsyncTrasaction(&ct, userID, reducePoint, models.Mode.Reduce)
+	go c.updateUserPointAsyncTrasaction(&ct, userID, reducePoint, entities.Mode.Reduce)
 	go c.insertUserHintAsyncTransaction(&ct, userID, hintID)
 	wg.Wait()
 
@@ -212,7 +214,7 @@ func (c learningController) useHintTransaction(userID int, reducePoint int, hint
 	return nil
 }
 
-func (c learningController) updateUserPointAsyncTrasaction(ct *models.ConcurrentTransaction, userID int, updatePoint int, mode models.ChangePointMode) {
+func (c learningController) updateUserPointAsyncTrasaction(ct *general.ConcurrentTransaction, userID int, updatePoint int, mode entities.ChangePointMode) {
 	defer ct.Concurrent.Wg.Done()
 	err := c.userRepo.ChangePointTransaction(ct.Transaction, userID, updatePoint, mode)
 	if err != nil {
@@ -220,9 +222,9 @@ func (c learningController) updateUserPointAsyncTrasaction(ct *models.Concurrent
 	}
 }
 
-func (c learningController) insertUserHintAsyncTransaction(ct *models.ConcurrentTransaction, userID int, hintID int) {
+func (c learningController) insertUserHintAsyncTransaction(ct *general.ConcurrentTransaction, userID int, hintID int) {
 	defer ct.Concurrent.Wg.Done()
-	hint := models.UserHintDB{
+	hint := general.UserHintDB{
 		UserID:           userID,
 		HintID:           hintID,
 		CreatedTimestamp: time.Now().Local(),
@@ -233,18 +235,18 @@ func (c learningController) insertUserHintAsyncTransaction(ct *models.Concurrent
 	}
 }
 
-func (c learningController) GetContentRoadmap(userID int, contentID int) (*models.ContentRoadmapResponse, error) {
+func (c learningController) GetContentRoadmap(userID int, contentID int) (*response.ContentRoadmapResponse, error) {
 	loader := loaders.NewContentRoadmapLoader(c.learningRepo, c.userRepo)
 	err := loader.Load(userID, contentID)
 	if err != nil || loader.ContentDB == nil {
 		logs.New().Error(err)
 		return nil, errs.ErrContentNotFound
 	}
-	response := models.NewContentRoadmapResponse(*loader.ContentDB, loader.ContentActivityDB, loader.LearningProgressionDB)
+	response := response.NewContentRoadmapResponse(*loader.ContentDB, loader.ContentActivityDB, loader.LearningProgressionDB)
 	return response, nil
 }
 
-func (c learningController) CheckAnswer(userID int, activityID int, typeID int, answer interface{}) (*models.AnswerResponse, error) {
+func (c learningController) CheckAnswer(userID int, activityID int, typeID int, answer interface{}) (*response.AnswerResponse, error) {
 	loader := loaders.NewCheckAnswerLoader(c.learningRepo)
 	err := loader.Load(activityID, typeID, c.getChoices)
 	if err != nil || loader.ActivityDB == nil {
@@ -256,9 +258,9 @@ func (c learningController) CheckAnswer(userID int, activityID int, typeID int, 
 		return nil, errs.ErrActivityTypeInvalid
 	}
 
-	activity := models.Activity{}
-	activity.PrepareActivity(*loader.ActivityDB)
-	activity.PrepareChoicesByChoiceDB(loader.ChoicesDB)
+	activity := entities.Activity{}
+	activity.SetActivity(*loader.ActivityDB)
+	activity.SetChoicesByChoiceDB(loader.ChoicesDB)
 
 	isCorrect, err := activity.IsAnswerCorrect(answer)
 	if err != nil {
@@ -266,7 +268,7 @@ func (c learningController) CheckAnswer(userID int, activityID int, typeID int, 
 	}
 
 	if isCorrect {
-		err = c.finishActivityTrasaction(userID, activityID, activity.Info.Point)
+		err = c.finishActivityTrasaction(userID, activityID, activity.GetInfo().Point)
 		if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
 			logs.New().Error(err)
 			return nil, errs.ErrInsertError
@@ -279,6 +281,6 @@ func (c learningController) CheckAnswer(userID int, activityID int, typeID int, 
 		return nil, errs.ErrUserNotFound
 	}
 
-	response := models.NewActivityAnswerResponse(activity, userDB.Point, isCorrect)
+	response := response.NewActivityAnswerResponse(activity, userDB.Point, isCorrect)
 	return response, nil
 }

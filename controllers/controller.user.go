@@ -3,7 +3,9 @@ package controllers
 import (
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
-	"DatabaseCamp/models"
+	"DatabaseCamp/models/entities"
+	"DatabaseCamp/models/request"
+	"DatabaseCamp/models/response"
 	"DatabaseCamp/repositories"
 	"DatabaseCamp/utils"
 )
@@ -13,19 +15,19 @@ type userController struct {
 }
 
 type IUserController interface {
-	Register(request models.UserRequest) (*models.UserResponse, error)
-	Login(request models.UserRequest) (*models.UserResponse, error)
-	GetProfile(userID int) (*models.GetProfileResponse, error)
-	EditProfile(userID int, request models.UserRequest) (*models.EditProfileResponse, error)
-	GetRanking(id int) (*models.RankingResponse, error)
+	Register(request request.UserRequest) (*response.UserResponse, error)
+	Login(request request.UserRequest) (*response.UserResponse, error)
+	GetProfile(userID int) (*response.GetProfileResponse, error)
+	EditProfile(userID int, request request.UserRequest) (*response.EditProfileResponse, error)
+	GetRanking(id int) (*response.RankingResponse, error)
 }
 
 func NewUserController(repo repositories.IUserRepository) userController {
 	return userController{repo: repo}
 }
 
-func (c userController) Register(request models.UserRequest) (*models.UserResponse, error) {
-	user := models.User{}
+func (c userController) Register(request request.UserRequest) (*response.UserResponse, error) {
+	user := entities.User{}
 	utils.NewType().StructToStruct(request, &user)
 	user.SetTimestamp()
 	user.HashPassword()
@@ -39,24 +41,24 @@ func (c userController) Register(request models.UserRequest) (*models.UserRespon
 		}
 	}
 
-	user.ID = userDB.ID
-	response := models.NewUserReponse(user)
+	user.SetID(userDB.ID)
+	response := response.NewUserReponse(user)
 	return &response, nil
 }
 
-func (c userController) Login(request models.UserRequest) (*models.UserResponse, error) {
+func (c userController) Login(request request.UserRequest) (*response.UserResponse, error) {
 	userDB, err := c.repo.GetUserByEmail(request.Email)
-	user := models.User{}
+	user := entities.User{}
 	utils.NewType().StructToStruct(userDB, &user)
 	if err != nil || !user.IsPasswordCorrect(request.Password) {
 		logs.New().Error(err)
 		return nil, errs.ErrEmailOrPasswordNotCorrect
 	}
-	response := models.NewUserReponse(user)
+	response := response.NewUserReponse(user)
 	return &response, nil
 }
 
-func (c userController) GetProfile(id int) (*models.GetProfileResponse, error) {
+func (c userController) GetProfile(id int) (*response.GetProfileResponse, error) {
 	profileDB, err := c.repo.GetProfile(id)
 	if err != nil || profileDB == nil {
 		logs.New().Error(err)
@@ -75,25 +77,25 @@ func (c userController) GetProfile(id int) (*models.GetProfileResponse, error) {
 		return nil, errs.ErrLoadError
 	}
 
-	user := models.User{}
+	user := entities.User{}
 	utils.NewType().StructToStruct(profileDB, &user)
 	user.SetCorrectedBadges(allBadge, userBadgeGain)
 
-	response := models.NewGetProfileResponse(user)
+	response := response.NewGetProfileResponse(user)
 	return &response, nil
 }
 
-func (c userController) EditProfile(userID int, request models.UserRequest) (*models.EditProfileResponse, error) {
+func (c userController) EditProfile(userID int, request request.UserRequest) (*response.EditProfileResponse, error) {
 	err := c.repo.UpdatesByID(userID, map[string]interface{}{"name": request.Name})
 	if err != nil {
 		logs.New().Error(err)
 		return nil, errs.ErrUpdateError
 	}
-	response := models.EditProfileResponse{UpdatedName: request.Name}
+	response := response.EditProfileResponse{UpdatedName: request.Name}
 	return &response, nil
 }
 
-func (c userController) GetRanking(userID int) (*models.RankingResponse, error) {
+func (c userController) GetRanking(userID int) (*response.RankingResponse, error) {
 	userRanking, err := c.repo.GetPointRanking(userID)
 	if err != nil || userRanking == nil {
 		logs.New().Error(err)
@@ -106,7 +108,7 @@ func (c userController) GetRanking(userID int) (*models.RankingResponse, error) 
 		return nil, errs.ErrLeaderBoardNotFound
 	}
 
-	response := models.RankingResponse{
+	response := response.RankingResponse{
 		UserRanking: *userRanking,
 		LeaderBoard: leaderBoard,
 	}

@@ -42,18 +42,26 @@ type ExamInfo struct {
 }
 
 type Exam struct {
-	Info       ExamInfo            `json:"exam"`
-	Activities []Activity          `json:"activities"`
-	Result     *ExamResultOverview `json:"result"`
+	info       ExamInfo
+	activities []Activity
+	result     *ExamResultOverview
+}
+
+func (e *Exam) GetResult() *ExamResultOverview {
+	return e.result
+}
+
+func (e *Exam) GetActivities() []Activity {
+	return e.activities
 }
 
 func (e *Exam) GetInfo() ExamInfo {
-	return e.Info
+	return e.info
 }
 
 func (e *Exam) ToExamResultActivitiesDB() []general.ExamResultActivityDB {
 	resultActivities := make([]general.ExamResultActivityDB, 0)
-	for _, resultActivity := range e.Result.ActivitiesResult {
+	for _, resultActivity := range e.result.ActivitiesResult {
 		resultActivities = append(resultActivities, general.ExamResultActivityDB{
 			ActivityID: resultActivity.ActivityID,
 			Score:      resultActivity.Score,
@@ -64,16 +72,16 @@ func (e *Exam) ToExamResultActivitiesDB() []general.ExamResultActivityDB {
 
 func (e *Exam) ToExamResultDB(userID int) *general.ExamResultDB {
 	return &general.ExamResultDB{
-		ExamID:           e.Info.ID,
+		ExamID:           e.info.ID,
 		UserID:           userID,
-		Score:            e.Result.TotalScore,
-		IsPassed:         e.Result.IsPassed,
+		Score:            e.result.TotalScore,
+		IsPassed:         e.result.IsPassed,
 		CreatedTimestamp: time.Now().Local(),
 	}
 }
 
 func (e *Exam) PrepareResult(examResultDB general.ExamResultDB) {
-	e.Result = &ExamResultOverview{
+	e.result = &ExamResultOverview{
 		ExamResultID:     examResultDB.ID,
 		TotalScore:       examResultDB.Score,
 		IsPassed:         examResultDB.IsPassed,
@@ -86,9 +94,9 @@ func (e *Exam) Prepare(examActivitiesDB []general.ExamActivityDB) {
 	examActivityDBMap := map[int]general.ActivityDB{}
 	for _, examActivityDB := range examActivitiesDB {
 		activity := general.ActivityDB{}
-		utils.NewType().StructToStruct(examActivityDB, &e.Info)
+		utils.NewType().StructToStruct(examActivityDB, &e.info)
 		if examActivityDB.ExamType == string(ExamType.Posttest) {
-			e.Info.BadgeID = 3
+			e.info.BadgeID = 3
 		}
 		utils.NewType().StructToStruct(examActivityDB, &activity)
 		examActivityDBMap[examActivityDB.ActivityID] = activity
@@ -100,9 +108,9 @@ func (e *Exam) Prepare(examActivitiesDB []general.ExamActivityDB) {
 
 	for _, examActivityDB := range examActivityDBMap {
 		activity := Activity{}
-		activity.PrepareActivity(examActivityDB)
-		activity.PrepareChoicesByChoiceDB(activityChoiceDBMap[examActivityDB.ID])
-		e.Activities = append(e.Activities, activity)
+		activity.SetActivity(examActivityDB)
+		activity.SetChoicesByChoiceDB(activityChoiceDBMap[examActivityDB.ID])
+		e.activities = append(e.activities, activity)
 	}
 }
 
@@ -166,11 +174,11 @@ func (e *Exam) CheckAnswer(answers []request.ExamActivityAnswer) (*ExamResultOve
 	concurrent := general.Concurrent{Wg: &wg, Err: &err, Mutex: &mutex}
 
 	activityMap := map[int]*Activity{}
-	for _, activity := range e.Activities {
-		activityMap[activity.Info.ID] = &activity
+	for _, activity := range e.activities {
+		activityMap[activity.GetInfo().ID] = &activity
 	}
 
-	e.Result = &ExamResultOverview{
+	e.result = &ExamResultOverview{
 		TotalScore:       0,
 		IsPassed:         false,
 		CreatedTimestamp: time.Now().Local(),
@@ -183,28 +191,28 @@ func (e *Exam) CheckAnswer(answers []request.ExamActivityAnswer) (*ExamResultOve
 	wg.Wait()
 
 	e.summaryResult()
-	return e.Result, err
+	return e.result, err
 }
 
 func (e *Exam) summaryResult() {
 	answerTotalScore := e.GetAnswerTotalScore()
 	activitiesTotalScore := e.GetActivitiesTotalScore()
-	e.Result.IsPassed = e.isPassed(answerTotalScore, activitiesTotalScore)
+	e.result.IsPassed = e.isPassed(answerTotalScore, activitiesTotalScore)
 }
 
 func (e *Exam) GetAnswerTotalScore() int {
 	sum := 0
-	for _, activityResult := range e.Result.ActivitiesResult {
+	for _, activityResult := range e.result.ActivitiesResult {
 		sum += activityResult.Score
 	}
-	e.Result.TotalScore = sum
+	e.result.TotalScore = sum
 	return sum
 }
 
 func (e *Exam) GetActivitiesTotalScore() int {
 	sum := 0
-	for _, activity := range e.Activities {
-		sum += activity.Info.Point
+	for _, activity := range e.activities {
+		sum += activity.GetInfo().Point
 	}
 	return sum
 }
@@ -230,12 +238,12 @@ func (e *Exam) checkActivityAsync(concurrent *general.Concurrent, activity Activ
 	}
 
 	if isCorrect {
-		score += activity.Info.Point
+		score += activity.GetInfo().Point
 	}
 
 	concurrent.Mutex.Lock()
-	e.Result.ActivitiesResult = append(e.Result.ActivitiesResult, ExamActivityResult{
-		ActivityID: activity.Info.ID,
+	e.result.ActivitiesResult = append(e.result.ActivitiesResult, ExamActivityResult{
+		ActivityID: activity.GetInfo().ID,
 		Score:      score,
 	})
 	concurrent.Mutex.Unlock()
