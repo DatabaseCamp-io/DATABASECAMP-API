@@ -134,7 +134,7 @@ func (c examController) saveExamResult(examType string, userBadgeDB general.User
 		return err
 	}
 
-	if examType == entities.ExamType.MiniExam || examType == entities.ExamType.Posttest && examResultDB.IsPassed {
+	if (examType == entities.ExamType.MiniExam || examType == entities.ExamType.Posttest) && examResultDB.IsPassed {
 		_, err = c.userRepo.InsertUserBadgeTransaction(tx, userBadgeDB)
 		if err != nil && !utils.NewHelper().IsSqlDuplicateError(err) {
 			tx.Rollback()

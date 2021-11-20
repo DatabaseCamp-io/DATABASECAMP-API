@@ -154,6 +154,7 @@ func (r userRepository) GetRankingLeaderBoard() ([]general.RankingDB, error) {
 		Limit(20).
 		Order("ranking ASC").
 		Order("name ASC").
+		Order(models.IDName.User + " ASC").
 		Find(&ranking).
 		Error
 	return ranking, err

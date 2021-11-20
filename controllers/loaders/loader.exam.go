@@ -21,7 +21,7 @@ func (l *examLoader) Load(userID int, examID int) error {
 	var wg sync.WaitGroup
 	var err error
 	concurrent := general.Concurrent{Wg: &wg, Err: &err}
-	wg.Add(3)
+	wg.Add(2)
 	go l.loadCorrectedBadgeAsync(&concurrent, userID)
 	go l.loadExamActivityAsync(&concurrent, examID)
 	wg.Wait()

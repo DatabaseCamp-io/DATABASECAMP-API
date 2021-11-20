@@ -17,6 +17,7 @@ type group struct {
 type lastedGroupOverview struct {
 	GroupID     int    `json:"group_id"`
 	ContentID   int    `json:"content_id"`
+	ActivityID  int    `json:"activity_id"`
 	GroupName   string `json:"group_name"`
 	ContentName string `json:"content_name"`
 	Progress    int    `json:"progress"`
@@ -76,6 +77,7 @@ func (o *ContentOverviewResponse) prepare(overviewDB []general.OverviewDB, learn
 					GroupID:     group.id,
 					ContentID:   content.id,
 					GroupName:   group.name,
+					ActivityID:  *lastedActivityID,
 					ContentName: content.name,
 					Progress:    contentProgress,
 				}
