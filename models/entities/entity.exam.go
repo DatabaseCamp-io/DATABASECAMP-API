@@ -173,9 +173,9 @@ func (e *Exam) CheckAnswer(answers []request.ExamActivityAnswer) (*ExamResultOve
 	var err error
 	concurrent := general.Concurrent{Wg: &wg, Err: &err, Mutex: &mutex}
 
-	activityMap := map[int]*Activity{}
+	activityMap := map[int]Activity{}
 	for _, activity := range e.activities {
-		activityMap[activity.GetInfo().ID] = &activity
+		activityMap[activity.GetInfo().ID] = activity
 	}
 
 	e.result = &ExamResultOverview{
@@ -186,7 +186,7 @@ func (e *Exam) CheckAnswer(answers []request.ExamActivityAnswer) (*ExamResultOve
 
 	wg.Add(len(answers))
 	for _, answer := range answers {
-		go e.checkActivityAsync(&concurrent, *activityMap[answer.ActivityID], answer.Answer)
+		go e.checkActivityAsync(&concurrent, activityMap[answer.ActivityID], answer.Answer)
 	}
 	wg.Wait()
 
