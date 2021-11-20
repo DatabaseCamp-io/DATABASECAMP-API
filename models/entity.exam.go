@@ -2,6 +2,7 @@ package models
 
 import (
 	"DatabaseCamp/utils"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -197,9 +198,10 @@ func (e *exam) CheckAnswer(answers []ExamActivityAnswer) (*examResultOverview, e
 	var err error
 	concurrent := Concurrent{Wg: &wg, Err: &err, Mutex: &mutex}
 
-	activityMap := map[int]*activity{}
+	activityMap := map[int]activity{}
 	for _, activity := range e.Activities {
-		activityMap[activity.Info.ID] = &activity
+		fmt.Println(activity.Info.ID)
+		activityMap[activity.Info.ID] = activity
 	}
 
 	e.Result = &examResultOverview{
@@ -210,7 +212,7 @@ func (e *exam) CheckAnswer(answers []ExamActivityAnswer) (*examResultOverview, e
 
 	wg.Add(len(answers))
 	for _, answer := range answers {
-		go e.checkActivityAsync(&concurrent, *activityMap[answer.ActivityID], answer.Answer)
+		go e.checkActivityAsync(&concurrent, activityMap[answer.ActivityID], answer.Answer)
 	}
 	wg.Wait()
 
