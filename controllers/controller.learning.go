@@ -55,13 +55,8 @@ func (c learningController) GetVideoLecture(id int) (*response.VideoLectureRespo
 		return nil, errs.ErrServiceUnavailableError
 	}
 
-	res := response.VideoLectureResponse{
-		ContentID:   contentDB.ID,
-		ContentName: contentDB.Name,
-		VideoLink:   videoLink,
-	}
-
-	return &res, nil
+	response := response.NewVideoLectureResponse(contentDB.ID, contentDB.Name, videoLink)
+	return response, nil
 }
 
 func (c learningController) GetOverview(userID int) (*response.ContentOverviewResponse, error) {
