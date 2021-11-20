@@ -2,7 +2,6 @@ package models
 
 import (
 	"DatabaseCamp/utils"
-	"fmt"
 	"sync"
 	"time"
 )
@@ -200,7 +199,6 @@ func (e *exam) CheckAnswer(answers []ExamActivityAnswer) (*examResultOverview, e
 
 	activityMap := map[int]activity{}
 	for _, activity := range e.Activities {
-		fmt.Println(activity.Info.ID)
 		activityMap[activity.Info.ID] = activity
 	}
 
