@@ -1,9 +1,14 @@
 package main
 
 import (
+	"DatabaseCamp/controllers"
 	"DatabaseCamp/database"
+	"DatabaseCamp/handlers"
 	"DatabaseCamp/logs"
+	"DatabaseCamp/middleware"
+	"DatabaseCamp/repositories"
 	"DatabaseCamp/router"
+	"DatabaseCamp/services"
 	"os"
 	"time"
 
@@ -24,7 +29,7 @@ func setupTimeZone() error {
 
 func getConfig() fiber.Config {
 	return fiber.Config{
-		Prefork:       true,
+		Prefork:       false,
 		CaseSensitive: true,
 		StrictRouting: true,
 		ServerHeader:  "Fiber",
@@ -34,13 +39,22 @@ func getConfig() fiber.Config {
 
 func setupFiber() error {
 	app := fiber.New(getConfig())
-
 	app.Use(cors.New())
 	app.Use(recover.New())
-
-	router.New(app)
+	db := database.New()
+	service := services.GetAwsServiceInstance()
+	userRepo := repositories.NewUserRepository(db)
+	learningRepo := repositories.NewLearningRepository(db, service)
+	examRepo := repositories.NewExamRepository(db)
+	jwt := middleware.NewJwtMiddleware(userRepo)
+	learningController := controllers.NewLearningController(learningRepo, userRepo)
+	examController := controllers.NewExamController(examRepo, userRepo)
+	userController := controllers.NewUserController(userRepo)
+	learningHandler := handlers.NewLearningHandler(learningController)
+	examHandler := handlers.NewExamHandler(examController)
+	userHandler := handlers.NewUserHandler(userController, jwt)
+	router.New(app, examHandler, learningHandler, userHandler, jwt)
 	err := app.Listen(":" + os.Getenv("PORT"))
-
 	return err
 }
 

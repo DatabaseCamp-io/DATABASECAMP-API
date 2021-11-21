@@ -43,3 +43,11 @@ func NewBadRequestError(thMessage string, enMessage string) error {
 		EnMessage: enMessage,
 	}
 }
+
+func NewServiceUnavailableError(thMessage string, enMessage string) error {
+	return AppError{
+		Code:      http.StatusServiceUnavailable,
+		ThMessage: thMessage,
+		EnMessage: enMessage,
+	}
+}
