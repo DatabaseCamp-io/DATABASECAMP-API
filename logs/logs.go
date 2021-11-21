@@ -9,12 +9,6 @@ type log struct {
 	log *zap.Logger
 }
 
-type ILog interface {
-	Info(message string, fields ...zapcore.Field)
-	Debug(message string, fields ...zapcore.Field)
-	Error(message interface{}, fields ...zapcore.Field)
-}
-
 var instantiated *log = nil
 
 func New() *log {
