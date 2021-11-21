@@ -1,19 +1,22 @@
 package main
 
 import (
+	"DatabaseCamp/controllers"
 	"DatabaseCamp/database"
+	"DatabaseCamp/handlers"
 	"DatabaseCamp/logs"
+	"DatabaseCamp/middleware"
+	"DatabaseCamp/repositories"
 	"DatabaseCamp/router"
-	"net/http"
+	"DatabaseCamp/services"
 	"os"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
-
-var allowOrigin []string
 
 func setupTimeZone() error {
 	location, err := time.LoadLocation("Asia/Bangkok")
@@ -24,35 +27,35 @@ func setupTimeZone() error {
 	return nil
 }
 
-func getCORSConfig() middleware.CORSConfig {
-	return middleware.CORSConfig{
-		AllowOrigins: allowOrigin,
-		AllowMethods: []string{
-			http.MethodGet,
-			http.MethodPut,
-			http.MethodPost,
-			http.MethodDelete,
-			http.MethodOptions,
-		},
+func getConfig() fiber.Config {
+	return fiber.Config{
+		Prefork:       false,
+		CaseSensitive: true,
+		StrictRouting: true,
+		ServerHeader:  "Fiber",
+		AppName:       "Database Camp",
 	}
 }
 
-func setupEcho() error {
-	e := echo.New()
-
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORSWithConfig(getCORSConfig()))
-	e.Pre(middleware.AddTrailingSlash())
-
-	router.New(e)
-
-	err := e.Start(":" + os.Getenv("PORT"))
-	if err != nil {
-		return err
-	}
-
-	return nil
+func setupFiber() error {
+	app := fiber.New(getConfig())
+	app.Use(cors.New())
+	app.Use(recover.New())
+	db := database.New()
+	service := services.GetAwsServiceInstance()
+	userRepo := repositories.NewUserRepository(db)
+	learningRepo := repositories.NewLearningRepository(db, service)
+	examRepo := repositories.NewExamRepository(db)
+	jwt := middleware.NewJwtMiddleware(userRepo)
+	learningController := controllers.NewLearningController(learningRepo, userRepo)
+	examController := controllers.NewExamController(examRepo, userRepo)
+	userController := controllers.NewUserController(userRepo)
+	learningHandler := handlers.NewLearningHandler(learningController)
+	examHandler := handlers.NewExamHandler(examController)
+	userHandler := handlers.NewUserHandler(userController, jwt)
+	router.New(app, examHandler, learningHandler, userHandler, jwt)
+	err := app.Listen(":" + os.Getenv("PORT"))
+	return err
 }
 
 func main() {
@@ -76,7 +79,7 @@ func main() {
 	}
 	defer db.CloseDB()
 
-	err = setupEcho()
+	err = setupFiber()
 	if err != nil {
 		logs.New().Error(err)
 		return

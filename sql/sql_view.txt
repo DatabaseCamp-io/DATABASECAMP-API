@@ -1,0 +1,37 @@
+=============== Profile View SQL ===============
+
+SELECT
+    `database_camp`.`User`.`user_id` AS `user_id`,
+    `database_camp`.`User`.`name` AS `name`,
+    `database_camp`.`User`.`point` AS `point`,
+    `database_camp`.`User`.`created_timestamp` AS `created_timestamp`,
+    COUNT(
+        `database_camp`.`LearningProgression`.`activity_id`
+    ) AS `activity_count`
+FROM
+    (
+        `database_camp`.`User`
+    LEFT JOIN `database_camp`.`LearningProgression` ON
+        (
+            `database_camp`.`User`.`user_id` = `database_camp`.`LearningProgression`.`user_id`
+        )
+    )
+GROUP BY
+    `database_camp`.`User`.`user_id`
+
+=============== Ranking View SQL ===============
+
+SELECT
+    `database_camp`.`User`.`user_id` AS `user_id`,
+    `database_camp`.`User`.`name` AS `name`,
+    `database_camp`.`User`.`email` AS `email`,
+    `database_camp`.`User`.`point` AS `point`,
+    row_number() over(
+    ORDER BY
+        `database_camp`.`User`.`point`
+    DESC
+) AS `ranking`
+FROM
+    `database_camp`.`User`
+WHERE
+    1

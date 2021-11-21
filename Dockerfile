@@ -17,5 +17,8 @@ WORKDIR /usr/src/app
 COPY --from=builder /src/DatabaseCamp /usr/src/app/DatabaseCamp
 COPY --from=builder /src/.env /usr/src/app/.env
 
+RUN apk add dumb-init
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+
 EXPOSE 8080
 CMD ["./DatabaseCamp"]
