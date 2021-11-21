@@ -23,7 +23,7 @@ type ExamOverviewResponse struct {
 func NewExamOverviewResponse(examResultsDB []storages.ExamResultDB, examsDB []storages.ExamDB, canDoFinalExam bool) *ExamOverviewResponse {
 	response := ExamOverviewResponse{}
 	response.prepare(examResultsDB, examsDB, canDoFinalExam)
-	return &ExamOverviewResponse{}
+	return &response
 }
 
 func (o *ExamOverviewResponse) prepare(examResultsDB []storages.ExamResultDB, examsDB []storages.ExamDB, canDoFinalExam bool) {
