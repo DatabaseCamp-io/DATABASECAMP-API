@@ -100,7 +100,7 @@ func (c examController) CheckExam(userID int, request request.ExamAnswerRequest)
 		return nil, errs.ErrInsertError
 	}
 
-	exam.GetResult().ExamResultID = examResultDB.ID
+	exam.SetResultID(examResultDB.ID)
 	response := response.NewExamResultOverviewResponse(exam)
 	return response, nil
 }

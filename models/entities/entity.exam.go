@@ -60,6 +60,10 @@ func (e *Exam) GetInfo() ExamInfo {
 	return e.info
 }
 
+func (e *Exam) SetResultID(id int) {
+	e.result.ExamResultID = id
+}
+
 func (e *Exam) ToExamResultActivitiesDB() []storages.ExamResultActivityDB {
 	resultActivities := make([]storages.ExamResultActivityDB, 0)
 	for _, resultActivity := range e.result.ActivitiesResult {
