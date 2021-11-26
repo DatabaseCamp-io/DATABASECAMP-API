@@ -89,21 +89,21 @@ func (c userController) EditProfile(userID int, request request.UserRequest) (*r
 }
 
 func (c userController) GetRanking(userID int) (*response.RankingResponse, error) {
-	userRanking, err := c.Repo.GetPointRanking(userID)
-	if err != nil || userRanking == nil {
+	userRankingDB, err := c.Repo.GetPointRanking(userID)
+	if err != nil || userRankingDB == nil {
 		logs.New().Error(err)
 		return nil, errs.ErrUserNotFound
 	}
 
-	leaderBoard, err := c.Repo.GetRankingLeaderBoard()
-	if err != nil || leaderBoard == nil {
+	leaderBoardDB, err := c.Repo.GetRankingLeaderBoard()
+	if err != nil || leaderBoardDB == nil {
 		logs.New().Error(err)
 		return nil, errs.ErrLeaderBoardNotFound
 	}
 
 	response := response.RankingResponse{
-		UserRanking: *userRanking,
-		LeaderBoard: leaderBoard,
+		UserRanking: *userRankingDB,
+		LeaderBoard: leaderBoardDB,
 	}
 	return &response, nil
 }
