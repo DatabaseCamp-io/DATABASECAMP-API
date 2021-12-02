@@ -11,7 +11,7 @@ import (
 type userRepository struct {
 	Database database.IDatabase
 }
-//Interface that show how others function call and use function in this module
+//Interface that show how others function call and use function in module user respository
 type IUserRepository interface {
 	GetUserByEmail(email string) (*storages.UserDB, error)
 	GetUserByID(id int) (*storages.UserDB, error)
@@ -35,11 +35,13 @@ type IUserRepository interface {
 	InsertUserBadgeTransaction(tx database.ITransaction, userBadge storages.UserBadgeDB) (*storages.UserBadgeDB, error)
 	ChangePointTransaction(tx database.ITransaction, userID int, point int, mode entities.ChangePointMode) error
 }
-// 
+
+// create user respository instance
 func NewUserRepository(db database.IDatabase) userRepository {
 	return userRepository{Database: db}
 }
-// Get user email from database
+
+// Get user by email from database
 func (r userRepository) GetUserByEmail(email string) (*storages.UserDB, error) {
 	user := storages.UserDB{}
 	err := r.Database.GetDB().
@@ -49,7 +51,8 @@ func (r userRepository) GetUserByEmail(email string) (*storages.UserDB, error) {
 		Error
 	return &user, err
 }
-// Get user Id from database
+
+// Get user by Id from database
 func (r userRepository) GetUserByID(id int) (*storages.UserDB, error) {
 	user := storages.UserDB{}
 	err := r.Database.GetDB().
@@ -59,7 +62,8 @@ func (r userRepository) GetUserByID(id int) (*storages.UserDB, error) {
 		Error
 	return &user, err
 }
-// Get user Profile from database
+
+// Get user by Profile from database
 func (r userRepository) GetProfile(id int) (*storages.ProfileDB, error) {
 	profile := storages.ProfileDB{}
 	err := r.Database.GetDB().
@@ -72,8 +76,8 @@ func (r userRepository) GetProfile(id int) (*storages.ProfileDB, error) {
 	}
 	return &profile, err
 }
-// Get use learning progression from database
-// use time stamp
+
+// Get learning progression from database
 func (r userRepository) GetLearningProgression(id int) ([]storages.LearningProgressionDB, error) {
 	learningProgrogression := make([]storages.LearningProgressionDB, 0)
 	err := r.Database.GetDB().
@@ -84,7 +88,8 @@ func (r userRepository) GetLearningProgression(id int) ([]storages.LearningProgr
 		Error
 	return learningProgrogression, err
 }
-// Get all badge from database
+
+// Get all user's badge from database
 func (r userRepository) GetAllBadge() ([]storages.BadgeDB, error) {
 	badge := make([]storages.BadgeDB, 0)
 	err := r.Database.GetDB().
@@ -93,16 +98,18 @@ func (r userRepository) GetAllBadge() ([]storages.BadgeDB, error) {
 		Error
 	return badge, err
 }
+
 // Get user badge from database
 func (r userRepository) GetUserBadge(id int) ([]storages.UserBadgeDB, error) {
-	badgePair := make([]storages.UserBadgeDB, 0)
+	userBadgeDB := make([]storages.UserBadgeDB, 0)
 	err := r.Database.GetDB().
 		Table(storages.TableName.UserBadge).
 		Where(storages.IDName.User+" = ?", id).
-		Find(&badgePair).
+		Find(&userBadgeDB).
 		Error
-	return badgePair, err
+	return userBadgeDB, err
 }
+
 // Get badge that user already collect from database
 func (r userRepository) GetCollectedBadge(userID int) ([]storages.CorrectedBadgeDB, error) {
 	correctedBadge := make([]storages.CorrectedBadgeDB, 0)
@@ -127,7 +134,8 @@ func (r userRepository) GetCollectedBadge(userID int) ([]storages.CorrectedBadge
 		Error
 	return correctedBadge, err
 }
-// Get user point ranking from database
+
+// Get user's point ranking from database
 func (r userRepository) GetPointRanking(id int) (*storages.RankingDB, error) {
 	ranking := storages.RankingDB{}
 	err := r.Database.GetDB().
@@ -137,8 +145,9 @@ func (r userRepository) GetPointRanking(id int) (*storages.RankingDB, error) {
 		Error
 	return &ranking, err
 }
-// Get leaderboard from database
-// sort by point
+
+// Get all user's point ranking from database
+// order by point ranking, name, id respectively
 func (r userRepository) GetRankingLeaderBoard() ([]storages.RankingDB, error) {
 	ranking := make([]storages.RankingDB, 0)
 	err := r.Database.GetDB().
@@ -151,6 +160,7 @@ func (r userRepository) GetRankingLeaderBoard() ([]storages.RankingDB, error) {
 		Error
 	return ranking, err
 }
+
 // Get hint that user already use from database
 func (r userRepository) GetUserHint(userID int, activityID int) ([]storages.UserHintDB, error) {
 	userhint := make([]storages.UserHintDB, 0)
@@ -169,7 +179,8 @@ func (r userRepository) GetUserHint(userID int, activityID int) ([]storages.User
 
 	return userhint, err
 }
-// Get user exam result from database
+
+// Get user's exam result from database
 func (r userRepository) GetExamResult(userID int) ([]storages.ExamResultDB, error) {
 	examResults := make([]storages.ExamResultDB, 0)
 	err := r.Database.GetDB().
@@ -195,7 +206,8 @@ func (r userRepository) GetExamResult(userID int) ([]storages.ExamResultDB, erro
 		Error
 	return examResults, err
 }
-// Get user exam result from database by exam ID 
+
+// Get user's exam result from database by exam id
 func (r userRepository) GetExamResultByID(userID int, examResultID int) ([]storages.ExamResultDB, error) {
 	examResults := make([]storages.ExamResultDB, 0)
 	err := r.Database.GetDB().
@@ -221,7 +233,8 @@ func (r userRepository) GetExamResultByID(userID int, examResultID int) ([]stora
 		Error
 	return examResults, err
 }
-// insert new user into database
+
+// Insert user into database
 func (r userRepository) InsertUser(user storages.UserDB) (*storages.UserDB, error) {
 	err := r.Database.GetDB().
 		Table(storages.TableName.User).
@@ -229,7 +242,8 @@ func (r userRepository) InsertUser(user storages.UserDB) (*storages.UserDB, erro
 		Error
 	return &user, err
 }
-// insert new user hint into database
+
+// Insert user hint into database
 func (r userRepository) InsertUserHint(userHint storages.UserHintDB) (*storages.UserHintDB, error) {
 	err := r.Database.GetDB().
 		Table(storages.TableName.UserHint).
@@ -237,6 +251,7 @@ func (r userRepository) InsertUserHint(userHint storages.UserHintDB) (*storages.
 		Error
 	return &userHint, err
 }
+
 // Update user information into database
 func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) error {
 	err := r.Database.GetDB().
@@ -247,7 +262,8 @@ func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) e
 		Error
 	return err
 }
-// Insert user hint trtansaction into database
+
+// Insert user hint into database by database transaction
 func (r userRepository) InsertUserHintTransaction(tx database.ITransaction, userHint storages.UserHintDB) (*storages.UserHintDB, error) {
 	err := tx.GetDB().
 		Table(storages.TableName.UserHint).
@@ -255,7 +271,8 @@ func (r userRepository) InsertUserHintTransaction(tx database.ITransaction, user
 		Error
 	return &userHint, err
 }
-// Insert user learning progression trtansaction into database
+
+// Insert user learning progression into database by database transaction
 func (r userRepository) InsertLearningProgressionTransaction(tx database.ITransaction, progression storages.LearningProgressionDB) (*storages.LearningProgressionDB, error) {
 	err := tx.GetDB().
 		Table(storages.TableName.LearningProgression).
@@ -263,7 +280,8 @@ func (r userRepository) InsertLearningProgressionTransaction(tx database.ITransa
 		Error
 	return &progression, err
 }
-// Insert user badge trtansaction into database
+
+// Insert user's badge into database by database transaction
 func (r userRepository) InsertUserBadgeTransaction(tx database.ITransaction, userBadge storages.UserBadgeDB) (*storages.UserBadgeDB, error) {
 	err := tx.GetDB().
 		Table(storages.TableName.UserBadge).
@@ -271,7 +289,11 @@ func (r userRepository) InsertUserBadgeTransaction(tx database.ITransaction, use
 		Error
 	return &userBadge, err
 }
-// Update point transaction into database
+
+// Update user's point into database by database transaction
+/*mode used to select mode to change user's point
+1. entities.Mode.Add to add user's point
+2. entities.Mode.Reduce to reduce user's point*/
 func (r userRepository) ChangePointTransaction(tx database.ITransaction, userID int, point int, mode entities.ChangePointMode) error {
 	statement := fmt.Sprintf("UPDATE %s SET point = point %s %d WHERE %s = %d",
 		storages.TableName.User,

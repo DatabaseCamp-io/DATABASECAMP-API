@@ -10,7 +10,8 @@ type learningRepository struct {
 	Database database.IDatabase
 	Service  services.IAwsService
 }
-//Interface that show how others function call and use function in this module
+
+//Interface that show how others function call and use function in module learning respository
 type ILearningRepository interface {
 	GetContent(id int) (*storages.ContentDB, error)
 	GetOverview() ([]storages.OverviewDB, error)
@@ -23,10 +24,12 @@ type ILearningRepository interface {
 	GetContentActivity(contentID int) ([]storages.ActivityDB, error)
 	GetVideoFileLink(imagekey string) (string, error)
 }
+
 // Create learning repository in database
 func NewLearningRepository(db database.IDatabase, service services.IAwsService) learningRepository {
 	return learningRepository{Database: db, Service: service}
 }
+
 // Get content from database
 func (r learningRepository) GetContent(id int) (*storages.ContentDB, error) {
 	content := storages.ContentDB{}
@@ -37,6 +40,7 @@ func (r learningRepository) GetContent(id int) (*storages.ContentDB, error) {
 		Error
 	return &content, err
 }
+
 // Get overview from database
 func (r learningRepository) GetOverview() ([]storages.OverviewDB, error) {
 	overview := make([]storages.OverviewDB, 0)
@@ -55,6 +59,7 @@ func (r learningRepository) GetOverview() ([]storages.OverviewDB, error) {
 		Error
 	return overview, err
 }
+
 // Get exam content from database
 func (r learningRepository) GetContentExam(examType string) ([]storages.ContentExamDB, error) {
 	contentExam := make([]storages.ContentExamDB, 0)
@@ -71,6 +76,7 @@ func (r learningRepository) GetContentExam(examType string) ([]storages.ContentE
 		Error
 	return contentExam, err
 }
+
 // Get activity content from database
 func (r learningRepository) GetContentActivity(contentID int) ([]storages.ActivityDB, error) {
 	activity := make([]storages.ActivityDB, 0)
@@ -83,6 +89,7 @@ func (r learningRepository) GetContentActivity(contentID int) ([]storages.Activi
 
 	return activity, err
 }
+
 // Get activity from database
 func (r learningRepository) GetActivity(id int) (*storages.ActivityDB, error) {
 	activity := storages.ActivityDB{}
@@ -95,6 +102,7 @@ func (r learningRepository) GetActivity(id int) (*storages.ActivityDB, error) {
 
 	return &activity, err
 }
+
 // Get matching choice activity from database
 func (r learningRepository) GetMatchingChoice(activityID int) ([]storages.MatchingChoiceDB, error) {
 	matchingChoice := make([]storages.MatchingChoiceDB, 0)
@@ -107,6 +115,7 @@ func (r learningRepository) GetMatchingChoice(activityID int) ([]storages.Matchi
 
 	return matchingChoice, err
 }
+
 // Get multiple choice activity from database
 func (r learningRepository) GetMultipleChoice(activityID int) ([]storages.MultipleChoiceDB, error) {
 	multipleChoice := make([]storages.MultipleChoiceDB, 0)
@@ -119,6 +128,7 @@ func (r learningRepository) GetMultipleChoice(activityID int) ([]storages.Multip
 
 	return multipleChoice, err
 }
+
 // Get completion choice activity from database
 func (r learningRepository) GetCompletionChoice(activityID int) ([]storages.CompletionChoiceDB, error) {
 	completionChoice := make([]storages.CompletionChoiceDB, 0)
@@ -131,6 +141,7 @@ func (r learningRepository) GetCompletionChoice(activityID int) ([]storages.Comp
 
 	return completionChoice, err
 }
+
 // Get activity hint from database
 func (r learningRepository) GetActivityHints(activityID int) ([]storages.HintDB, error) {
 	hints := make([]storages.HintDB, 0)
@@ -144,7 +155,8 @@ func (r learningRepository) GetActivityHints(activityID int) ([]storages.HintDB,
 
 	return hints, err
 }
-// Get video link from database
+
+// Get video link from AWS service
 func (r learningRepository) GetVideoFileLink(imagekey string) (string, error) {
 	return r.Service.GetFileLink(imagekey)
 }

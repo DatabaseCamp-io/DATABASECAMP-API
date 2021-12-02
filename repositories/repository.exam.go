@@ -9,7 +9,8 @@ import (
 type examRepository struct {
 	Database database.IDatabase
 }
-//Interface that show how others function call and use function in this module
+
+//Interface that show how others function call and use function in module exam respository
 type IExamRepository interface {
 	GetExamActivity(examID int) ([]storages.ExamActivityDB, error)
 	GetExamOverview() ([]storages.ExamDB, error)
@@ -17,10 +18,12 @@ type IExamRepository interface {
 	InsertExamResultTransaction(tx database.ITransaction, examResult storages.ExamResultDB) (storages.ExamResultDB, error)
 	InsertExamResultActivityTransaction(tx database.ITransaction, examResultActivity []storages.ExamResultActivityDB) ([]storages.ExamResultActivityDB, error)
 }
-// create exam respository
+
+// Create exam respository instance
 func NewExamRepository(db database.IDatabase) examRepository {
 	return examRepository{Database: db}
 }
+
 // Get exam overview from database
 func (r examRepository) GetExamOverview() ([]storages.ExamDB, error) {
 	exam := make([]storages.ExamDB, 0)
@@ -46,6 +49,7 @@ func (r examRepository) GetExamOverview() ([]storages.ExamDB, error) {
 		Error
 	return exam, err
 }
+
 // Get all exam activity from database
 func (r examRepository) GetExamActivity(examID int) ([]storages.ExamActivityDB, error) {
 	examActivity := make([]storages.ExamActivityDB, 0)
@@ -121,6 +125,7 @@ func (r examRepository) GetExamActivity(examID int) ([]storages.ExamActivityDB, 
 		Error
 	return examActivity, err
 }
+
 // Insert exam result transaction into database
 func (r examRepository) InsertExamResultTransaction(tx database.ITransaction, examResult storages.ExamResultDB) (storages.ExamResultDB, error) {
 	err := tx.GetDB().
@@ -129,6 +134,7 @@ func (r examRepository) InsertExamResultTransaction(tx database.ITransaction, ex
 		Error
 	return examResult, err
 }
+
 // Insert activity result from database
 func (r examRepository) InsertExamResultActivityTransaction(tx database.ITransaction, examResultActivity []storages.ExamResultActivityDB) ([]storages.ExamResultActivityDB, error) {
 	err := tx.GetDB().
