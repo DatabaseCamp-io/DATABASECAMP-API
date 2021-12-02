@@ -1,5 +1,6 @@
 package errs
 
+// Thai and english message about server error
 const (
 	INTERNAL_SERVER_ERROR_TH = "เกิดข้อผิดพลาด"
 	INTERNAL_SERVER_ERROR_EN = "Internal server error"
@@ -11,6 +12,7 @@ const (
 	BAD_REQUEST_ERROR_EN = "Bad request"
 )
 
+// Thai and english message for insert error, load error and update error
 const (
 	INSERT_ERROR_TH = "เกิดข้อผิดพลาดในการบันทึกข้อมูล"
 	INSERT_ERROR_EN = "Saving data error"
@@ -22,6 +24,7 @@ const (
 	UPDATE_ERROR_EN = "Update data error"
 )
 
+// Thai and english message about exam and activity error
 const (
 	EXAM_NOT_FOUND_TH = "ไม่พบข้อสอบ"
 	EXAM_NOT_FOUND_EN = "Exam not found"
@@ -48,6 +51,7 @@ const (
 	FINAL_EXAM_BAGES_NOT_ENOUGH_EN = "Not enough badges to do final exam"
 )
 
+// Thai and english message about user error
 const (
 	USER_NOT_FOUND_TH = "ไม่พบผู้ใช้"
 	USER_NOT_FOUND_EN = "User not found"
@@ -62,6 +66,7 @@ const (
 	EMAIL_OR_PASSWORD_NOT_CORRECT_EN = "Email or password not correct"
 )
 
+// Thai and english message for unexpected signing method
 const (
 	UNEXPECTED_SIGNING_METHOD_TH = "วิธีการลงนามที่ไม่คาดคิด"
 	UNEXPECTED_SIGNING_METHOD_EN = "Unexpected signing method"
