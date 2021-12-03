@@ -11,6 +11,7 @@ type log struct {
 
 var instantiated *log = nil
 
+// Create log instance
 func New() *log {
 	var buildedLog *zap.Logger
 	if instantiated == nil {
@@ -20,6 +21,7 @@ func New() *log {
 	return instantiated
 }
 
+// Init log
 func initLog() (*zap.Logger, error) {
 	config := zap.NewProductionConfig()
 	config.EncoderConfig.TimeKey = "timestamp"
@@ -28,14 +30,17 @@ func initLog() (*zap.Logger, error) {
 	return buildedLog, err
 }
 
+// Create info logs
 func (l log) Info(message string, fields ...zapcore.Field) {
 	l.log.Info(message, fields...)
 }
 
+// Debug logs
 func (l log) Debug(message string, fields ...zapcore.Field) {
 	l.log.Debug(message, fields...)
 }
 
+// Return error message log
 func (l log) Error(message interface{}, fields ...zapcore.Field) {
 	switch v := message.(type) {
 	case error:
