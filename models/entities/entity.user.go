@@ -61,30 +61,37 @@ func NewUserByUserDB(userDB storages.UserDB) User {
 	}
 }
 
+// Get user's id
 func (u *User) GetID() int {
 	return u.id
 }
 
+
+// Get user's name
 func (u *User) GetName() string {
 	return u.name
 }
-
+// Get user's email
 func (u *User) GetEmail() string {
 	return u.email
 }
 
+// Get user's badges
 func (u *User) GetBadges() []Badge {
 	return u.badges
 }
 
+// Get user's create profile timestamp
 func (u *User) GetCreatedTimestamp() time.Time {
 	return u.createdTimestamp
 }
 
+// Get user's update profile timestamp
 func (u *User) GetUpdatedTimstamp() time.Time {
 	return u.updatedTimestamp
 }
 
+// Set user's id
 func (u *User) SetID(id int) {
 	u.id = id
 }

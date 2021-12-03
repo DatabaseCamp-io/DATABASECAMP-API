@@ -48,22 +48,27 @@ type Exam struct {
 	result     *ExamResultOverview
 }
 
+// Get exam result
 func (e *Exam) GetResult() *ExamResultOverview {
 	return e.result
 }
 
+// Get exam activity
 func (e *Exam) GetActivities() []Activity {
 	return e.activities
 }
 
+// Get exam information
 func (e *Exam) GetInfo() ExamInfo {
 	return e.info
 }
 
+// Set exam result id in claa property
 func (e *Exam) SetResultID(id int) {
 	e.result.ExamResultID = id
 }
 
+// Change type of activity result to DB type
 func (e *Exam) ToExamResultActivitiesDB() []storages.ExamResultActivityDB {
 	resultActivities := make([]storages.ExamResultActivityDB, 0)
 	for _, resultActivity := range e.result.ActivitiesResult {
@@ -75,6 +80,7 @@ func (e *Exam) ToExamResultActivitiesDB() []storages.ExamResultActivityDB {
 	return resultActivities
 }
 
+// Change type of exam result to DB type
 func (e *Exam) ToExamResultDB(userID int) *storages.ExamResultDB {
 	return &storages.ExamResultDB{
 		ExamID:           e.info.ID,
@@ -85,6 +91,7 @@ func (e *Exam) ToExamResultDB(userID int) *storages.ExamResultDB {
 	}
 }
 
+// Prepare exam result
 func (e *Exam) PrepareResult(examResultDB storages.ExamResultDB) {
 	e.result = &ExamResultOverview{
 		ExamResultID:     examResultDB.ID,
@@ -94,6 +101,7 @@ func (e *Exam) PrepareResult(examResultDB storages.ExamResultDB) {
 	}
 }
 
+// Prepare exam activity
 func (e *Exam) Prepare(examActivitiesDB []storages.ExamActivityDB) {
 	activityChoiceDBMap := map[int]interface{}{}
 	examActivityDBMap := map[int]storages.ActivityDB{}
@@ -119,6 +127,7 @@ func (e *Exam) Prepare(examActivitiesDB []storages.ExamActivityDB) {
 	}
 }
 
+// Match type of activity to activity
 func (e *Exam) initialActivityChoiceMap(activityID int, typeID int, activityChoiceMap map[int]interface{}) {
 	if typeID == 1 {
 		temp := make([]storages.MatchingChoiceDB, 0)
@@ -135,6 +144,7 @@ func (e *Exam) initialActivityChoiceMap(activityID int, typeID int, activityChoi
 	}
 }
 
+// Connect choice to another from activity type
 func (e *Exam) appendExamActivityChoice(examActivity storages.ExamActivityDB, activityChoiceMap map[int]interface{}) {
 	choices := activityChoiceMap[examActivity.ActivityID]
 	if examActivity.ActivityTypeID == 1 {
@@ -152,6 +162,7 @@ func (e *Exam) appendExamActivityChoice(examActivity storages.ExamActivityDB, ac
 	}
 }
 
+// Chose choice for activity by activity type
 func (e *Exam) examActivityToChoice(examActivity storages.ExamActivityDB) interface{} {
 	if examActivity.ActivityTypeID == 1 {
 		choice := storages.MatchingChoiceDB{}
@@ -172,6 +183,7 @@ func (e *Exam) examActivityToChoice(examActivity storages.ExamActivityDB) interf
 	}
 }
 
+// Check exam answer
 func (e *Exam) CheckAnswer(answers []request.ExamActivityAnswer) (*ExamResultOverview, error) {
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
@@ -199,12 +211,14 @@ func (e *Exam) CheckAnswer(answers []request.ExamActivityAnswer) (*ExamResultOve
 	return e.result, err
 }
 
+// Summary exam result
 func (e *Exam) summaryResult() {
 	answerTotalScore := e.GetAnswerTotalScore()
 	activitiesTotalScore := e.GetActivitiesTotalScore()
 	e.result.IsPassed = e.isPassed(answerTotalScore, activitiesTotalScore)
 }
 
+// Calculate score from answer
 func (e *Exam) GetAnswerTotalScore() int {
 	sum := 0
 	for _, activityResult := range e.result.ActivitiesResult {
@@ -214,6 +228,7 @@ func (e *Exam) GetAnswerTotalScore() int {
 	return sum
 }
 
+// Calculate score from activity
 func (e *Exam) GetActivitiesTotalScore() int {
 	sum := 0
 	for _, activity := range e.activities {
@@ -222,6 +237,7 @@ func (e *Exam) GetActivitiesTotalScore() int {
 	return sum
 }
 
+// Check if user passed the exam
 func (e *Exam) isPassed(answerTotalScore int, activitiesTotalScore int) bool {
 	passedRate := 0.5
 	if activitiesTotalScore == 0 {
@@ -232,6 +248,7 @@ func (e *Exam) isPassed(answerTotalScore int, activitiesTotalScore int) bool {
 
 }
 
+// Keep exam score in concurency 
 func (e *Exam) checkActivityAsync(concurrent *general.Concurrent, activity Activity, answer interface{}) {
 	defer concurrent.Wg.Done()
 	score := 0
