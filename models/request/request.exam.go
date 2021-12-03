@@ -12,6 +12,7 @@ type ExamAnswerRequest struct {
 	Activities []ExamActivityAnswer `json:"activities"`
 }
 
+// Request exam answer from exam id
 func (r ExamAnswerRequest) Validate() error {
 	if r.ExamID == nil {
 		return errs.NewBadRequestError("ไม่พบรหัสของข้อสอบในคำร้องขอ", "Exam ID Not Found")

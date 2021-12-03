@@ -7,6 +7,7 @@ type MultipleChoiceAnswerRequest struct {
 	Answer     *int `json:"answer"`
 }
 
+// Check multiple choice answer from activity id
 func (r MultipleChoiceAnswerRequest) Validate() error {
 	if r.ActivityID == nil {
 		return errs.NewBadRequestError("ไม่พบไอดีของกิจกรรมในคำร้องขอ", "Activity ID Not Found")
@@ -21,6 +22,7 @@ type MatchingChoiceAnswerRequest struct {
 	Answer     []PairItemRequest `json:"answer"`
 }
 
+// Check matching choice answer existence
 func (r MatchingChoiceAnswerRequest) validatePairItem(pairItem PairItemRequest) error {
 	if pairItem.Item1 == nil || pairItem.Item2 == nil {
 		return errs.NewBadRequestError("ไม่พบคำตอบในคำร้องขอ", "Answer Not Found")
@@ -28,6 +30,7 @@ func (r MatchingChoiceAnswerRequest) validatePairItem(pairItem PairItemRequest) 
 	return nil
 }
 
+// Check matching choice answer from activity id
 func (r MatchingChoiceAnswerRequest) Validate() error {
 	if r.ActivityID == nil {
 		return errs.NewBadRequestError("ไม่พบไอดีของกิจกรรมในคำร้องขอ", "Activity ID Not Found")
@@ -49,6 +52,7 @@ type CompletionAnswerRequest struct {
 	Answer     []PairContentRequest `json:"answer"`
 }
 
+// Check completion choice answer existence
 func (r CompletionAnswerRequest) validatePairItem(pairContent PairContentRequest) error {
 	if pairContent.Content == nil || pairContent.ID == nil {
 		return errs.NewBadRequestError("ไม่พบคำตอบในคำร้องขอ", "Answer Not Found")
@@ -56,6 +60,7 @@ func (r CompletionAnswerRequest) validatePairItem(pairContent PairContentRequest
 	return nil
 }
 
+// Check completion choice answer from activity id
 func (r CompletionAnswerRequest) Validate() error {
 	if r.ActivityID == nil {
 		return errs.NewBadRequestError("ไม่พบไอดีของกิจกรรมในคำร้องขอ", "Activity ID Not Found")
@@ -77,6 +82,7 @@ type PairItemRequest struct {
 	Item2 *string `json:"item2"`
 }
 
+// Check pair item existence
 func (m PairItemRequest) Validate() error {
 	if m.Item1 == nil || m.Item2 == nil {
 		return errs.NewBadRequestError("ไม่พบเนื้อหาของคำตอบในคำร้องขอ", "Content Answer Not Found")
@@ -89,6 +95,7 @@ type PairContentRequest struct {
 	Content *string `json:"content"`
 }
 
+// Check pair content existence
 func (m PairContentRequest) Validate() error {
 	if m.ID == nil {
 		return errs.NewBadRequestError("ไม่พบไอดีของช้อยในคำร้องขอ", "Choice ID Not Found")
