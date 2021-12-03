@@ -14,10 +14,12 @@ type message struct {
 
 type handle struct{}
 
+// Create handle instance
 func NewHandle() handle {
 	return handle{}
 }
 
+// Use to handle error
 func (h *handle) HandleError(c *fiber.Ctx, err error) error {
 	switch e := err.(type) {
 	case errs.AppError:
@@ -31,6 +33,7 @@ func (h *handle) HandleError(c *fiber.Ctx, err error) error {
 	return nil
 }
 
+// Use to bind request
 func (h *handle) BindRequest(c *fiber.Ctx, request interface{}) error {
 	err := c.BodyParser(&request)
 	if err != nil {

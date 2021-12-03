@@ -15,6 +15,7 @@ func NewHelper() helper {
 	return helper{}
 }
 
+// Use to Generate form password
 func (h helper) HashAndSalt(pwd string) string {
 	bytePassword := []byte(pwd)
 	hash, err := bcrypt.GenerateFromPassword(bytePassword, 4)
@@ -24,6 +25,7 @@ func (h helper) HashAndSalt(pwd string) string {
 	return string(hash)
 }
 
+// Use to compare password and form
 func (h helper) ComparePasswords(hashedPwd string, plainPwd string) bool {
 	bytePlainPassword := []byte(plainPwd)
 	byteHash := []byte(hashedPwd)
@@ -31,16 +33,19 @@ func (h helper) ComparePasswords(hashedPwd string, plainPwd string) bool {
 	return err == nil
 }
 
+// Usto check validity of email
 func (h helper) IsEmailValid(email string) bool {
 	_, err := mail.ParseAddress(email)
 	return err == nil
 }
 
+// Check duplicate sql
 func (h helper) IsSqlDuplicateError(err error) bool {
 	sqlError, ok := err.(*m.MySQLError)
 	return ok && sqlError.Number == 1062
 }
 
+// Use to get list of key
 func (h helper) GetKeyList(value map[string]interface{}) (result []string) {
 	for k := range value {
 		result = append(result, k)
@@ -48,6 +53,7 @@ func (h helper) GetKeyList(value map[string]interface{}) (result []string) {
 	return
 }
 
+// Use to shuffle varieble
 func (h helper) Shuffle(slice interface{}) {
 	rv := reflect.ValueOf(slice)
 	swap := reflect.Swapper(slice)
