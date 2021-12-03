@@ -16,6 +16,7 @@ type ExamResultOverviewResponse struct {
 	ActivitiesResult []entities.ExamActivityResult `json:"activities_result"`
 }
 
+// Create exan result overview response instance
 func NewExamResultOverviewResponse(exam entities.Exam) *ExamResultOverviewResponse {
 	return &ExamResultOverviewResponse{
 		ExamID:           exam.GetInfo().ID,

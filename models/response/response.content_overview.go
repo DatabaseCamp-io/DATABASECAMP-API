@@ -44,12 +44,14 @@ type ContentOverviewResponse struct {
 	ContentGroupOverview []contentGroupOverview `json:"content_group_overview"`
 }
 
+// Create content overview response instance
 func NewContentOverviewResponse(overviewDB []storages.OverviewDB, learningProgressionDB []storages.LearningProgressionDB) *ContentOverviewResponse {
 	response := ContentOverviewResponse{}
 	response.prepare(overviewDB, learningProgressionDB)
 	return &response
 }
 
+// Prepare content overview data and learning progression data
 func (o *ContentOverviewResponse) prepare(overviewDB []storages.OverviewDB, learningProgressionDB []storages.LearningProgressionDB) {
 	groupMap := o.createGroupMap(overviewDB)
 	activityContentIDMap := o.createActivityContentIDMap(overviewDB)
@@ -95,6 +97,7 @@ func (o *ContentOverviewResponse) prepare(overviewDB []storages.OverviewDB, lear
 	}
 }
 
+// Create group map, group content and content activity
 func (o *ContentOverviewResponse) createGroupMap(overviewDB []storages.OverviewDB) map[int]*group {
 	groupMap := map[int]*group{}
 	for _, overview := range overviewDB {
@@ -126,6 +129,7 @@ func (o *ContentOverviewResponse) createGroupMap(overviewDB []storages.OverviewD
 	return groupMap
 }
 
+// Create activity content id map
 func (o *ContentOverviewResponse) createActivityContentIDMap(overviewDB []storages.OverviewDB) map[int]int {
 	activityContentIDMap := map[int]int{}
 	for _, overview := range overviewDB {
@@ -136,6 +140,7 @@ func (o *ContentOverviewResponse) createActivityContentIDMap(overviewDB []storag
 	return activityContentIDMap
 }
 
+// Get lasted activity 
 func (o *ContentOverviewResponse) getLastedActivityID(learningProgressionDB []storages.LearningProgressionDB) *int {
 	if len(learningProgressionDB) == 0 {
 		return nil
@@ -144,6 +149,7 @@ func (o *ContentOverviewResponse) getLastedActivityID(learningProgressionDB []st
 	}
 }
 
+// Create user's activity count from content id
 func (o *ContentOverviewResponse) createUserActivityCountByContentID(learningProgressionDB []storages.LearningProgressionDB, activityContentIDMap map[int]int) map[int]int {
 	userActivityCount := map[int]int{}
 	for _, learningProgression := range learningProgressionDB {
@@ -152,6 +158,7 @@ func (o *ContentOverviewResponse) createUserActivityCountByContentID(learningPro
 	return userActivityCount
 }
 
+// Calculate progression
 func (o *ContentOverviewResponse) calculateProgress(progress int, total int) int {
 	if total == 0 {
 		return 0
@@ -162,6 +169,7 @@ func (o *ContentOverviewResponse) calculateProgress(progress int, total int) int
 
 }
 
+// Get lasted content
 func (o *ContentOverviewResponse) getLastedContentID(activityContentIDMap map[int]int, lastedActivityID *int) *int {
 	if lastedActivityID == nil {
 		return nil

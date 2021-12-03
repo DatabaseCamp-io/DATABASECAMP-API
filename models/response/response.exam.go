@@ -9,12 +9,14 @@ type ExamResponse struct {
 	Activities []ActivityResponse `json:"activities"`
 }
 
+// Create exam response instance
 func NewExamResponse(exam entities.Exam) *ExamResponse {
 	response := ExamResponse{}
 	response.prepare(exam)
 	return &response
 }
 
+// Prepare exam entities
 func (e *ExamResponse) prepare(exam entities.Exam) {
 	activitiesResponse := make([]ActivityResponse, 0)
 	for _, activity := range exam.GetActivities() {

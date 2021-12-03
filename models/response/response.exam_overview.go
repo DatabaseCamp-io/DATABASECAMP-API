@@ -20,12 +20,14 @@ type ExamOverviewResponse struct {
 	FinalExam *examDetailOverview   `json:"final_exam"`
 }
 
+// Create exam overview response instance
 func NewExamOverviewResponse(examResultsDB []storages.ExamResultDB, examsDB []storages.ExamDB, canDoFinalExam bool) *ExamOverviewResponse {
 	response := ExamOverviewResponse{}
 	response.prepare(examResultsDB, examsDB, canDoFinalExam)
 	return &response
 }
 
+// Prepare exam result data
 func (o *ExamOverviewResponse) prepare(examResultsDB []storages.ExamResultDB, examsDB []storages.ExamDB, canDoFinalExam bool) {
 	examResultMap := o.createExamResultMap(examResultsDB)
 	for _, examDB := range examsDB {
@@ -60,6 +62,7 @@ func (o *ExamOverviewResponse) prepare(examResultsDB []storages.ExamResultDB, ex
 	}
 }
 
+// Create exam result map
 func (o *ExamOverviewResponse) createExamResultMap(examResultsDB []storages.ExamResultDB) map[int]*[]entities.ExamResultOverview {
 	examResultMap := map[int]*[]entities.ExamResultOverview{}
 	examScoreCount := o.countExamScore(examResultsDB)
@@ -78,6 +81,7 @@ func (o *ExamOverviewResponse) createExamResultMap(examResultsDB []storages.Exam
 	return examResultMap
 }
 
+// Calculate exam score
 func (o *ExamOverviewResponse) countExamScore(examResultsDB []storages.ExamResultDB) map[int]int {
 	examCountScore := map[int]int{}
 	for _, examResultDB := range examResultsDB {

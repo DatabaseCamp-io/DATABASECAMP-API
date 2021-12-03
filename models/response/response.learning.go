@@ -8,6 +8,7 @@ type VideoLectureResponse struct {
 	VideoLink   string `json:"video_link"`
 }
 
+// Create vider lecture response instance
 func NewVideoLectureResponse(contentID int, contentName string, videoLink string) *VideoLectureResponse {
 	return &VideoLectureResponse{
 		ContentID:   contentID,
@@ -22,6 +23,7 @@ type ActivityResponse struct {
 	Hint     entities.ActivityHint   `json:"hint"`
 }
 
+// Create activity response instance
 func NewActivityResponse(activity entities.Activity) *ActivityResponse {
 	return &ActivityResponse{
 		Activity: activity.GetInfo(),
@@ -36,6 +38,7 @@ type AnswerResponse struct {
 	UpdatedPoint int  `json:"updated_point"`
 }
 
+// Create activity answer response instance
 func NewActivityAnswerResponse(activity entities.Activity, updatedPoint int, isCorrect bool) *AnswerResponse {
 	return &AnswerResponse{
 		ActivityID:   activity.GetInfo().ID,

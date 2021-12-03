@@ -14,12 +14,14 @@ type ContentRoadmapResponse struct {
 	Items       []contentRoadmapItem `json:"items"`
 }
 
+// Create content roadmap response instance
 func NewContentRoadmapResponse(contentDB storages.ContentDB, contentActivitiesDB []storages.ActivityDB, learningProgressionDB []storages.LearningProgressionDB) *ContentRoadmapResponse {
 	response := ContentRoadmapResponse{}
 	response.prepare(contentDB, contentActivitiesDB, learningProgressionDB)
 	return &response
 }
 
+// Prepare content roadmap
 func (c *ContentRoadmapResponse) prepare(contentDB storages.ContentDB, contentActivitiesDB []storages.ActivityDB, learningProgressionDB []storages.LearningProgressionDB) {
 	c.ContentID = contentDB.ID
 	c.ContentName = contentDB.Name
