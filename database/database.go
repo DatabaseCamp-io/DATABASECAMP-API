@@ -20,6 +20,7 @@ type IDatabase interface {
 
 var instantiated *database = nil
 
+// Create database instance
 func New() *database {
 	if instantiated == nil {
 		instantiated = new(database)
@@ -27,6 +28,7 @@ func New() *database {
 	return instantiated
 }
 
+// Get DSN
 func getDSN() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		os.Getenv("DB_USERNAME"),
@@ -37,6 +39,7 @@ func getDSN() string {
 	)
 }
 
+// Connect to database
 func (db *database) OpenConnection() error {
 	var err error
 	dsn := getDSN()
@@ -45,10 +48,12 @@ func (db *database) OpenConnection() error {
 	return err
 }
 
+// Get DB variable
 func (db *database) GetDB() *gorm.DB {
 	return db.db
 }
 
+// Close DB
 func (db *database) CloseDB() error {
 	sql, err := db.db.DB()
 	if err != nil {
