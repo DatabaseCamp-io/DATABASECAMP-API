@@ -41,6 +41,7 @@ func New(
 	return instantiated
 }
 
+// Set up init
 func (r *router) init() {
 	r.setupLearning()
 	r.setupUser()
