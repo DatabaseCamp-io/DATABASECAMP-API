@@ -24,10 +24,12 @@ type ILearningHandler interface {
 	CheckCompletionAnswer(c *fiber.Ctx) error
 }
 
+// Create learning handler instance
 func NewLearningHandler(controller controllers.ILearningController) learningHandler {
 	return learningHandler{Controller: controller}
 }
 
+// Get content roadmap
 func (h learningHandler) GetContentRoadmap(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))
@@ -39,6 +41,7 @@ func (h learningHandler) GetContentRoadmap(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// Get video lecture
 func (h learningHandler) GetVideo(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	contentID := c.Params("id")
@@ -49,6 +52,7 @@ func (h learningHandler) GetVideo(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// Get ovverview page
 func (h learningHandler) GetOverview(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	id := c.Locals("id")
@@ -58,7 +62,7 @@ func (h learningHandler) GetOverview(c *fiber.Ctx) error {
 	}
 	return c.Status(http.StatusOK).JSON(response)
 }
-
+// Get activity
 func (h learningHandler) GetActivity(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))
@@ -69,7 +73,7 @@ func (h learningHandler) GetActivity(c *fiber.Ctx) error {
 	}
 	return c.Status(http.StatusOK).JSON(response)
 }
-
+// Get hint used
 func (h learningHandler) UseHint(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))
@@ -83,6 +87,7 @@ func (h learningHandler) UseHint(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// Check matching choice answer
 func (h learningHandler) CheckMatchingAnswer(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))
@@ -106,6 +111,7 @@ func (h learningHandler) CheckMatchingAnswer(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// Check multiple choice answer
 func (h learningHandler) CheckMultipleAnswer(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))
@@ -129,6 +135,7 @@ func (h learningHandler) CheckMultipleAnswer(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// Check completion choice answer
 func (h learningHandler) CheckCompletionAnswer(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))

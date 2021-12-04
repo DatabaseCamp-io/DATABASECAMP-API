@@ -20,10 +20,12 @@ type IExamHandler interface {
 	GetExamResult(c *fiber.Ctx) error
 }
 
+// Create exam handler instance
 func NewExamHandler(controller controllers.IExamController) examHandler {
 	return examHandler{Controller: controller}
 }
 
+// Get exam from id
 func (h examHandler) GetExam(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	examID := utils.NewType().ParseInt(c.Params("id"))
@@ -35,6 +37,7 @@ func (h examHandler) GetExam(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// Check exam status
 func (h examHandler) CheckExam(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))
@@ -58,6 +61,7 @@ func (h examHandler) CheckExam(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// Get exam overview
 func (h examHandler) GetExamOverview(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))
@@ -68,6 +72,7 @@ func (h examHandler) GetExamOverview(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// Get exam result
 func (h examHandler) GetExamResult(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	userID := utils.NewType().ParseInt(c.Locals("id"))

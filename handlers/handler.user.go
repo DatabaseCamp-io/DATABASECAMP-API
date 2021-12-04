@@ -24,10 +24,14 @@ type IUserHandler interface {
 	Edit(c *fiber.Ctx) error
 }
 
+// Crate user handler instance
 func NewUserHandler(controller controllers.IUserController, jwt middleware.IJwt) userHandler {
 	return userHandler{Controller: controller, Jwt: jwt}
 }
 
+// Get token
+// Validaate register
+// Register user's id
 func (h userHandler) Register(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	request := request.UserRequest{}
@@ -57,6 +61,7 @@ func (h userHandler) Register(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// Log user into website
 func (h userHandler) Login(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	request := request.UserRequest{}
@@ -86,6 +91,7 @@ func (h userHandler) Login(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// Convert id to parseint type
 func (h userHandler) GetProfile(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	id := c.Params("id")
@@ -96,6 +102,7 @@ func (h userHandler) GetProfile(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// Get user's profile
 func (h userHandler) GetOwnProfile(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	id := c.Locals("id")
@@ -106,6 +113,7 @@ func (h userHandler) GetOwnProfile(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// Get user ranking
 func (h userHandler) GetUserRanking(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	id := c.Locals("id")
@@ -116,6 +124,7 @@ func (h userHandler) GetUserRanking(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// Edit user's profile
 func (h userHandler) Edit(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	request := request.UserRequest{}
