@@ -1,5 +1,10 @@
 package middleware
 
+// middleware.jwt.go
+/**
+ * 	This file is a part of middleware, used to verificate user
+ */
+
 import (
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
@@ -15,19 +20,32 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+/**
+ * This class verificate user
+ */
 type jwtMiddleware struct {
-	Repo repositories.IUserRepository
+	Repo repositories.IUserRepository // User repository for getting user data
 }
 
-type IJwt interface {
-	JwtSign(id int) (string, error)
-	JwtVerify(c *fiber.Ctx) error
-}
-
+/**
+ * Constructor creates a new jwtMiddleware instance
+ *
+ * @param 	repo User repository for getting user data
+ *
+ * @return 	instance of jwtMiddleware
+ */
 func NewJwtMiddleware(repo repositories.IUserRepository) jwtMiddleware {
 	return jwtMiddleware{Repo: repo}
 }
 
+/**
+ * Sign user for verification
+ *
+ * @param 	id  User ID to sign
+ *
+ * @return signing token
+ * @return the error of signing
+ */
 func (j jwtMiddleware) JwtSign(id int) (string, error) {
 	atClaims := jwt.MapClaims{}
 	atClaims["id"] = id
@@ -49,6 +67,13 @@ func (j jwtMiddleware) JwtSign(id int) (string, error) {
 	return token, nil
 }
 
+/**
+ * Verify request by token
+ *
+ * @param 	c  Context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (j jwtMiddleware) JwtVerify(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	bearer, err := j.jwtFromHeader(c)
@@ -90,6 +115,14 @@ func (j jwtMiddleware) JwtVerify(c *fiber.Ctx) error {
 	return c.Next()
 }
 
+/**
+ * Update user token into the database
+ *
+ * @param 	id  	User ID to update token
+ * @param 	token  	token to be updated
+ *
+ * @return the error of updating token
+ */
 func (j jwtMiddleware) updateToken(id int, token string) error {
 	tokenExpireHour := time.Hour * utils.NewType().ParseDuration(os.Getenv("TOKEN_EXPIRE_HOUR"))
 	expiredTokenTimestamp := time.Now().Local().Add(tokenExpireHour)
@@ -100,6 +133,14 @@ func (j jwtMiddleware) updateToken(id int, token string) error {
 	return err
 }
 
+/**
+ * Get claims of the token
+ *
+ * @param 	token  	JWT token
+ *
+ * @return claims of the token
+ * @return the error of getting claims
+ */
 func (j jwtMiddleware) getClaims(token *jwt.Token) (jwt.MapClaims, error) {
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
@@ -109,6 +150,12 @@ func (j jwtMiddleware) getClaims(token *jwt.Token) (jwt.MapClaims, error) {
 	}
 }
 
+/**
+ * Set claims to the header of the request
+ *
+ * @param	c  			Context of the web framework
+ * @param 	claims  	claims of the token to set
+ */
 func (j jwtMiddleware) setClaims(c *fiber.Ctx, claims jwt.MapClaims) {
 	for k, v := range claims {
 		if k != "secret" {
@@ -117,6 +164,14 @@ func (j jwtMiddleware) setClaims(c *fiber.Ctx, claims jwt.MapClaims) {
 	}
 }
 
+/**
+ * Check user token
+ *
+ * @param	token  		Token of the request
+ * @param 	id  		User ID to check token
+ *
+ * @return 	true if user token is valid, false otherwise
+ */
 func (j jwtMiddleware) validUser(token string, id int) bool {
 	userDB, err := j.Repo.GetUserByID(id)
 	if err != nil || userDB == nil {
@@ -130,6 +185,14 @@ func (j jwtMiddleware) validUser(token string, id int) bool {
 	return true
 }
 
+/**
+ * Get token from the header of the request
+ *
+ * @param 	c  Context of the web framework
+ *
+ * @return 	token from the header
+ * @return 	the error of the getting token
+ */
 func (j jwtMiddleware) jwtFromHeader(c *fiber.Ctx) (string, error) {
 	auth := c.Get("Authorization")
 	l := len("Bearer")
