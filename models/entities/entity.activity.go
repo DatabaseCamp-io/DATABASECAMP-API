@@ -54,6 +54,7 @@ type Activity struct {
 func (a *Activity) GetHint() *ActivityHint {
 	return a.hint
 }
+
 /**
  * Getter for getting proposition choices of the activity
  *
@@ -85,6 +86,8 @@ func (a *Activity) SetActivity(activityDB storages.ActivityDB) {
  * Setter for set choice by choiceDB
  *
  * @param choiceDB to set choice
+ *
+ * @return the error of setting
  */
 func (a *Activity) SetChoicesByChoiceDB(choiceDB interface{}) error {
 	a.choices = choiceDB
@@ -113,9 +116,10 @@ func (a *Activity) SetChoicesByChoiceDB(choiceDB interface{}) error {
 }
 
 /**
- * Setter for set hint 
+ * Setter for set hint
  *
- * @param activityHints to set hint
+ * @param activityHints Activity hints model from database to set hint
+ * @param userHintsDB 	User hints model from database to set hint
  */
 func (a *Activity) SetHint(activityHints []storages.HintDB, userHintsDB []storages.UserHintDB) {
 	a.hint = &ActivityHint{
@@ -133,11 +137,12 @@ func (a *Activity) SetHint(activityHints []storages.HintDB, userHintsDB []storag
 }
 
 /**
- * Check if hint is used 
+ * Check if hint is used
  *
- * @param userHintsDB data to check
+ * @param userHintsDB	Hints of the user to check
+ * @param hintID		Hint ID to check
  *
- * @return true if hint used, false if not
+ * @return true if hint is used, false if not
  */
 func (a *Activity) isUsedHint(userHintsDB []storages.UserHintDB, hintID int) bool {
 	for _, userHint := range userHintsDB {
@@ -151,7 +156,9 @@ func (a *Activity) isUsedHint(userHintsDB []storages.UserHintDB, hintID int) boo
 /**
  * Prepare multipleChoice
  *
- * @param 	multipleChoice 	multiple choice to prepare
+ * @param 	multipleChoice 	Multiple choice to prepare
+ *
+ * @return prepared multiple choice
  */
 func (a *Activity) PrepareMultipleChoice(multipleChoice []storages.MultipleChoiceDB) interface{} {
 	preparedChoices := make([]map[string]interface{}, 0)
@@ -168,7 +175,9 @@ func (a *Activity) PrepareMultipleChoice(multipleChoice []storages.MultipleChoic
 /**
  * Prepare matchingchoice
  *
- * @param 	matchingChoice 	matching choice to prepare
+ * @param 	matchingChoice 	Matching choice to prepare
+ *
+ * @return prepared matching choice
  */
 func (a *Activity) PrepareMatchingChoice(matchingChoice []storages.MatchingChoiceDB) interface{} {
 	pairItem1List := make([]interface{}, 0)
@@ -189,7 +198,9 @@ func (a *Activity) PrepareMatchingChoice(matchingChoice []storages.MatchingChoic
 /**
  * Prepare completionchoice
  *
- * @param 	completionchoice 	completion choice to prepare
+ * @param 	completionchoice 	Completion choice to prepare
+ *
+ * @return prepared completion choice
  */
 func (a *Activity) PrepareCompletionChoice(completionChoice []storages.CompletionChoiceDB) interface{} {
 	contents := make([]interface{}, 0)
@@ -215,6 +226,7 @@ func (a *Activity) PrepareCompletionChoice(completionChoice []storages.Completio
  * Check answer for matching choice
  *
  * @param 	choices 	Choices of activity
+ * @param 	answer 		Answer of matching choice
  *
  * @return 	true if input answer is correct, false if not
  */
@@ -235,6 +247,7 @@ func (a *Activity) IsMatchingCorrect(choices []storages.MatchingChoiceDB, answer
  * Check answer for completion choice
  *
  * @param 	choices 	Choices of activity
+ * @param 	answer 		Answer of completion choice
  *
  * @return 	true if input answer is correct, false if not
  */
@@ -253,6 +266,7 @@ func (a *Activity) IsCompletionCorrect(choices []storages.CompletionChoiceDB, an
  * Check answer for multiple choice
  *
  * @param 	choices 	Choices of activity
+ * @param 	answer 		Answer of multiple choice
  *
  * @return 	true if input answer is correct, false if not
  */
@@ -268,9 +282,10 @@ func (a *Activity) IsMultipleCorrect(choices []storages.MultipleChoiceDB, answer
 /**
  * Convert type of choice to pair item
  *
- * @param 	raw 			item for convert to pair item request
+ * @param 	raw 	Item for convert to pair item
  *
  * @return  choice that converted to pair item
+ * @return  the error converting
  */
 func (a *Activity) convertToPairItem(raw interface{}) ([]request.PairItemRequest, error) {
 	result := make([]request.PairItemRequest, 0)
@@ -290,14 +305,13 @@ func (a *Activity) convertToPairItem(raw interface{}) ([]request.PairItemRequest
 	return result, nil
 }
 
-
 /**
  * Check answer for matching choice
  *
- * @param 	answer 	answer of activity
+ * @param 	answer 	Answer of activity
  *
  * @return 	true if input answer is correct, false if not
- * @return  error if input error
+ * @return  the error of checking matching choice
  */
 func (a *Activity) checkMatchingCorrect(answer interface{}) (bool, error) {
 	matchingChoices, choiceOK := a.choices.([]storages.MatchingChoiceDB)
@@ -321,7 +335,7 @@ func (a *Activity) checkMatchingCorrect(answer interface{}) (bool, error) {
  * @param 	answer 	answer of activity
  *
  * @return 	true if input answer is correct, false if not
- * @return  error if input error
+ * @return  the error of checking multiple choice
  */
 func (a *Activity) checkMultipleCorrect(answer interface{}) (bool, error) {
 	multipleChoices, choiceOK := a.choices.([]storages.MultipleChoiceDB)
@@ -337,6 +351,7 @@ func (a *Activity) checkMultipleCorrect(answer interface{}) (bool, error) {
  * @param 	raw 		item for convert to pair content request
  *
  * @return  choice that converted to pair content
+ * @return  the error of converting
  */
 func (a *Activity) convertToPairContent(raw interface{}) ([]request.PairContentRequest, error) {
 	result := make([]request.PairContentRequest, 0)
@@ -359,10 +374,10 @@ func (a *Activity) convertToPairContent(raw interface{}) ([]request.PairContentR
 /**
  * Check answer for completion choice
  *
- * @param 	answer 	answer of activity
+ * @param 	answer 	Answer of activity
  *
  * @return 	true if input answer is correct, false if not
- * @return  error if input error
+ * @return  the error of checking completion choice
  */
 func (a *Activity) checkCompletionCorrect(answer interface{}) (bool, error) {
 	completionChoices, choiceOK := a.choices.([]storages.CompletionChoiceDB)
@@ -383,10 +398,10 @@ func (a *Activity) checkCompletionCorrect(answer interface{}) (bool, error) {
 /**
  * Check if answer is correct
  *
- * @param 	answer 	answer of activity
+ * @param 	answer 	Answer of activity
  *
- * @return 	1 if answer is matching choice, 2 if answer is multiple choice,3 if answer is completion choice
- * @return  error if input error
+ * @return 	true if the answer is correct, false if not
+ * @return  the error of checking answer
  */
 func (a *Activity) IsAnswerCorrect(answer interface{}) (bool, error) {
 	if a.info.TypeID == 1 {
