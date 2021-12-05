@@ -31,8 +31,8 @@ type learningController struct {
 /**
  * Constructor creates a new learningController instance
  *
- * @param   LearningRepo    	Learning Repository for load learning data
- * @param   UserRepo        	User Repository for load user data
+ * @param   learningRepo    	Learning Repository for load learning data
+ * @param   userRepo        	User Repository for load user data
  *
  * @return 	instance of learningController
  */

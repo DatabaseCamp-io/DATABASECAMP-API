@@ -25,7 +25,7 @@ type userController struct {
 /**
  * Constructor creates a new userController instance
  *
- * @param   UserRepo        	User Repository for load user data
+ * @param   userRepo        	User Repository for load user data
  *
  * @return 	instance of userController
  */

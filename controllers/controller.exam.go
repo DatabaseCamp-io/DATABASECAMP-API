@@ -29,8 +29,8 @@ type examController struct {
 /**
  * Constructor creates a new examController instance
  *
- * @param   ExamRepo    	Exam Repository for load exam data
- * @param   UserRepo        User Repository for load user data
+ * @param   examRepo    	Exam Repository for load exam data
+ * @param   userRepo        User Repository for load user data
  *
  * @return 	instance of examController
  */

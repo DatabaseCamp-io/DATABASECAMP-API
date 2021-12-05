@@ -1,5 +1,10 @@
 package handlers
 
+// handler.user.go
+/**
+ * 	This file is a part of handler, used to handle request of the user
+ */
+
 import (
 	"DatabaseCamp/controllers"
 	"DatabaseCamp/middleware"
@@ -10,30 +15,36 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+/**
+ * This class handle request of the user
+ */
 type userHandler struct {
-	Controller controllers.IUserController
-	Jwt        middleware.IJwt
+	Controller controllers.IUserController // User controller for doing business logic of the user
+	Jwt        middleware.IJwt             // Jwt middleware for user verification
 }
 
-type IUserHandler interface {
-	Register(c *fiber.Ctx) error
-	Login(c *fiber.Ctx) error
-	GetProfile(c *fiber.Ctx) error
-	GetOwnProfile(c *fiber.Ctx) error
-	GetUserRanking(c *fiber.Ctx) error
-	Edit(c *fiber.Ctx) error
-}
-
-// Crate user handler instance
+/**
+ * Constructor creates a new userHandler instance
+ *
+ * @param   controller    	User controller for doing business logic of the user
+ * @param   jwt    			Jwt middleware for user verification
+ *
+ * @return 	instance of userHandler
+ */
 func NewUserHandler(controller controllers.IUserController, jwt middleware.IJwt) userHandler {
 	return userHandler{Controller: controller, Jwt: jwt}
 }
 
-// Get token
-// Validaate register
-// Register user's id
+/**
+ * Register
+ *
+ * @param 	c  context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h userHandler) Register(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	request := request.UserRequest{}
 
 	err := handleUtil.BindRequest(c, &request)
@@ -61,9 +72,16 @@ func (h userHandler) Register(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
-// Log user into website
+/**
+ * Login
+ *
+ * @param 	c  context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h userHandler) Login(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	request := request.UserRequest{}
 
 	err := handleUtil.BindRequest(c, &request)
@@ -91,42 +109,76 @@ func (h userHandler) Login(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
-// Convert id to parseint type
+/**
+ * Get user profile
+ *
+ * @param 	c  context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h userHandler) GetProfile(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	id := c.Params("id")
+
 	response, err := h.Controller.GetProfile(utils.NewType().ParseInt(id))
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
+
 	return c.Status(http.StatusOK).JSON(response)
 }
 
-// Get user's profile
+/**
+ * Get own profile
+ *
+ * @param 	c  context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h userHandler) GetOwnProfile(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	id := c.Locals("id")
+
 	response, err := h.Controller.GetProfile(utils.NewType().ParseInt(id))
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
+
 	return c.Status(http.StatusOK).JSON(response)
 }
 
-// Get user ranking
+/**
+ * Get ranking
+ *
+ * @param 	c  context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h userHandler) GetUserRanking(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	id := c.Locals("id")
+
 	response, err := h.Controller.GetRanking(utils.NewType().ParseInt(id))
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
+
 	return c.Status(http.StatusOK).JSON(response)
 }
 
-// Edit user's profile
+/**
+ * Edit user profile
+ *
+ * @param 	c  context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h userHandler) Edit(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	request := request.UserRequest{}
 	userID := utils.NewType().ParseInt(c.Locals("id"))
 
