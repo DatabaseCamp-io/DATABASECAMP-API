@@ -1,5 +1,10 @@
 package entities
 
+// entity.activity.go
+/**
+ * 	This file is a part of models, used to collect model for entities of activity
+ */
+
 import (
 	"DatabaseCamp/errs"
 	"DatabaseCamp/models/request"
