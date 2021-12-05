@@ -2,7 +2,7 @@ package response
 
 // response.content_roadmap.go
 /**
- * 	This file is a part of models, used to correct response of content roadmap
+ * 	This file is a part of models, used to collect response of content roadmap
  */
 
 import "DatabaseCamp/models/storages"

@@ -2,7 +2,7 @@ package storages
 
 // database.go
 /**
- * 	This file is a part of models, used to correct data structure of data in the database
+ * 	This file is a part of models, used to collect data structure of data in the database
  */
 
 import "time"
