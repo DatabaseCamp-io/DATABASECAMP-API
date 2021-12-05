@@ -1,19 +1,27 @@
 package response
 
+// response.content_overview.go
+/**
+ * 	This file is a part of models, used to correct response of content overview
+ */
+
 import "DatabaseCamp/models/storages"
 
+// Model of content to prepare Content overview response
 type content struct {
 	id         int
 	name       string
 	activities []int
 }
 
+// Model of group to prepare Content overview response
 type group struct {
 	id       int
 	name     string
 	contents map[int]*content
 }
 
+// Model of lasted group overview to prepare Content overview response
 type lastedGroupOverview struct {
 	GroupID     int    `json:"group_id"`
 	ContentID   int    `json:"content_id"`
@@ -23,6 +31,7 @@ type lastedGroupOverview struct {
 	Progress    int    `json:"progress"`
 }
 
+// Model of content overview to prepare Content overview response
 type contentOverview struct {
 	ContentID   int    `json:"content_id"`
 	ContentName string `json:"content_name"`
@@ -30,6 +39,7 @@ type contentOverview struct {
 	Progress    int    `json:"progress"`
 }
 
+// Model of content group overview to prepare Content overview response
 type contentGroupOverview struct {
 	GroupID     int               `json:"group_id"`
 	IsRecommend bool              `json:"is_recommend"`
@@ -39,19 +49,34 @@ type contentGroupOverview struct {
 	Contents    []contentOverview `json:"contents"`
 }
 
+/**
+ * This class represent content overview response
+ */
 type ContentOverviewResponse struct {
 	LastedGroup          *lastedGroupOverview   `json:"lasted_group"`
 	ContentGroupOverview []contentGroupOverview `json:"content_group_overview"`
 }
 
-// Create content overview response instance
+/**
+ * Constructor creates a new ContentOverviewResponse instance
+ *
+ * @param overviewDB				Overview model from database to prepare overview response
+ * @param learningProgressionDB		Learning progression from database to prepare overview response
+ *
+ * @return 	instance of ContentOverviewResponse
+ */
 func NewContentOverviewResponse(overviewDB []storages.OverviewDB, learningProgressionDB []storages.LearningProgressionDB) *ContentOverviewResponse {
 	response := ContentOverviewResponse{}
 	response.prepare(overviewDB, learningProgressionDB)
 	return &response
 }
 
-// Prepare content overview data and learning progression data
+/**
+ * Prepare content overview response
+ *
+ * @param overviewDB				Overview model from database to prepare overview response
+ * @param learningProgressionDB		Learning progression from database to prepare overview response
+ */
 func (o *ContentOverviewResponse) prepare(overviewDB []storages.OverviewDB, learningProgressionDB []storages.LearningProgressionDB) {
 	groupMap := o.createGroupMap(overviewDB)
 	activityContentIDMap := o.createActivityContentIDMap(overviewDB)
@@ -97,7 +122,15 @@ func (o *ContentOverviewResponse) prepare(overviewDB []storages.OverviewDB, lear
 	}
 }
 
-// Create group map, group content and content activity
+/**
+ * Create content group map to used for prepare
+ * [key] 	content id
+ * [value] 	group model
+ *
+ * @param overviewDB				Overview model from database to prepare overview response
+ *
+ * @return map of the content group
+ */
 func (o *ContentOverviewResponse) createGroupMap(overviewDB []storages.OverviewDB) map[int]*group {
 	groupMap := map[int]*group{}
 	for _, overview := range overviewDB {
@@ -129,7 +162,15 @@ func (o *ContentOverviewResponse) createGroupMap(overviewDB []storages.OverviewD
 	return groupMap
 }
 
-// Create activity content id map
+/**
+ * Create activity content id map to used for prepare
+ * [key] 	activity id
+ * [value] 	content id
+ *
+ * @param overviewDB	Overview model from database to prepare overview response
+ *
+ * @return map of the activity content
+ */
 func (o *ContentOverviewResponse) createActivityContentIDMap(overviewDB []storages.OverviewDB) map[int]int {
 	activityContentIDMap := map[int]int{}
 	for _, overview := range overviewDB {
@@ -140,7 +181,13 @@ func (o *ContentOverviewResponse) createActivityContentIDMap(overviewDB []storag
 	return activityContentIDMap
 }
 
-// Get lasted activity 
+/**
+ * Get lasted activity ID
+ *
+ * @param learningProgressionDB		Learning progression from database to prepare overview response
+ *
+ * @return lasted activity ID
+ */
 func (o *ContentOverviewResponse) getLastedActivityID(learningProgressionDB []storages.LearningProgressionDB) *int {
 	if len(learningProgressionDB) == 0 {
 		return nil
@@ -149,7 +196,16 @@ func (o *ContentOverviewResponse) getLastedActivityID(learningProgressionDB []st
 	}
 }
 
-// Create user's activity count from content id
+/**
+ * Create user activity count map by content id to used for prepare
+ * [key] 	content id
+ * [value] 	activity count
+ *
+ * @param learningProgressionDB		Learning progression from database to prepare overview response
+ * @param activityContentIDMap		Map of the activity content
+ *
+ * @return map of the activity count
+ */
 func (o *ContentOverviewResponse) createUserActivityCountByContentID(learningProgressionDB []storages.LearningProgressionDB, activityContentIDMap map[int]int) map[int]int {
 	userActivityCount := map[int]int{}
 	for _, learningProgression := range learningProgressionDB {
@@ -158,7 +214,14 @@ func (o *ContentOverviewResponse) createUserActivityCountByContentID(learningPro
 	return userActivityCount
 }
 
-// Calculate progression
+/**
+ * Calculate progression percent
+ *
+ * @param 	progress	Number of progress
+ * @param 	total		Total of progress
+ *
+ * @return progression percent
+ */
 func (o *ContentOverviewResponse) calculateProgress(progress int, total int) int {
 	if total == 0 {
 		return 0
@@ -169,7 +232,14 @@ func (o *ContentOverviewResponse) calculateProgress(progress int, total int) int
 
 }
 
-// Get lasted content
+/**
+ * Get lasted learning content ID
+ *
+ * @param 	activityContentIDMap	Map of the activity count
+ * @param 	lastedActivityID		Lasted learning Activity ID
+ *
+ * @return lasted learning content ID
+ */
 func (o *ContentOverviewResponse) getLastedContentID(activityContentIDMap map[int]int, lastedActivityID *int) *int {
 	if lastedActivityID == nil {
 		return nil
