@@ -2,7 +2,7 @@ package loaders
 
 // loader.exam_overview.go
 /**
- * 	This file is a part of controller, used to load concurrency overview of the exam
+ * 	This file is a part of controllers, used to load concurrency overview of the exam
  */
 
 import (

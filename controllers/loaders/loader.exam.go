@@ -2,7 +2,7 @@ package loaders
 
 // loader.exam.go
 /**
- * 	This file is a part of controller, used to load exam data
+ * 	This file is a part of controllers, used to load exam data
  */
 
 import (

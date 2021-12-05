@@ -2,7 +2,7 @@ package loaders
 
 // loader.content_roadmap.go
 /**
- * 	This file is a part of controller, used to load concurrency roadmap of the learning content
+ * 	This file is a part of controllers, used to load concurrency roadmap of the learning content
  */
 
 import (

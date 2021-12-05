@@ -2,7 +2,7 @@ package loaders
 
 // loader.activity.go
 /**
- * 	This file is a part of controller, used to load concurrency activity data
+ * 	This file is a part of controllers, used to load concurrency activity data
  */
 
 import (

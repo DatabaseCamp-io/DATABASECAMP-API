@@ -23,6 +23,7 @@ type IExamController interface {
 	 * @param 	userID 		   User ID for getting detail of user about the exam
 	 *
 	 * @return response of the exam
+	 * @return error of getting the exam
 	 */
 	GetExam(examID int, userID int) (*response.ExamResponse, error)
 
@@ -32,6 +33,7 @@ type IExamController interface {
 	 * @param 	userID 		   User ID for getting detail of user about the exam overview
 	 *
 	 * @return response of the exam overview
+	 * @return error of getting exam overview
 	 */
 	GetOverview(userID int) (*response.ExamOverviewResponse, error)
 
@@ -42,6 +44,7 @@ type IExamController interface {
 	 * @param 	request 		Exam answer request for check answer of the exam
 	 *
 	 * @return response of the exam result overview
+	 * @return error of checking exam
 	 */
 	CheckExam(userID int, request request.ExamAnswerRequest) (*response.ExamResultOverviewResponse, error)
 
@@ -52,6 +55,7 @@ type IExamController interface {
 	 * @param 	examResultID 	Exam result ID for getting exam results of the user
 	 *
 	 * @return response of the exam result overview
+	 * @return error of getting exam result
 	 */
 	GetExamResult(userID int, examResultID int) (*response.ExamResultOverviewResponse, error)
 }
@@ -67,6 +71,7 @@ type ILearningController interface {
 	 * @param 	id 		   	Content ID for getting video lecture of the content
 	 *
 	 * @return response of the video lecture
+	 * @return error of getting video lecture
 	 */
 	GetVideoLecture(id int) (*response.VideoLectureResponse, error)
 
@@ -76,6 +81,7 @@ type ILearningController interface {
 	 * @param 	userID 		   	User ID for getting content overview of the user
 	 *
 	 * @return response of the content overview
+	 * @return error of getting content overview
 	 */
 	GetOverview(userID int) (*response.ContentOverviewResponse, error)
 
@@ -86,6 +92,7 @@ type ILearningController interface {
 	 * @param 	activityID 			Activity ID for getting activity data
 	 *
 	 * @return response of the activity
+	 * @return error of getting activity
 	 */
 	GetActivity(userID int, activityID int) (*response.ActivityResponse, error)
 
@@ -96,6 +103,7 @@ type ILearningController interface {
 	 * @param 	activityID 			Activity ID for getting all hints of the activity
 	 *
 	 * @return hint of the activity that user can use
+	 * @return error of using hint
 	 */
 	UseHint(userID int, activityID int) (*storages.HintDB, error)
 
@@ -106,6 +114,7 @@ type ILearningController interface {
 	 * @param 	contentID 			Content ID for getting roadmap of the content
 	 *
 	 * @return response of the content roadmap
+	 * @return error of getting content roadmap
 	 */
 	GetContentRoadmap(userID int, contentID int) (*response.ContentRoadmapResponse, error)
 
@@ -118,6 +127,7 @@ type ILearningController interface {
 	 * @param 	answer 				Answer of the user
 	 *
 	 * @return response of the answer
+	 * @return error of checking activity answer
 	 */
 	CheckAnswer(userID int, activityID int, typeID int, answer interface{}) (*response.AnswerResponse, error)
 }
@@ -133,6 +143,7 @@ type IUserController interface {
 	 * @param 	request 		User request for create account
 	 *
 	 * @return response of user
+	 * @return error of register
 	 */
 	Register(request request.UserRequest) (*response.UserResponse, error)
 
@@ -142,6 +153,7 @@ type IUserController interface {
 	 * @param 	request 		User request for login to the platform
 	 *
 	 * @return response of user
+	 * @return error of login
 	 */
 	Login(request request.UserRequest) (*response.UserResponse, error)
 
@@ -151,6 +163,7 @@ type IUserController interface {
 	 * @param 	userID 		   	User ID for getting user profile
 	 *
 	 * @return response of get profile
+	 * @return error of getting profile
 	 */
 	GetProfile(userID int) (*response.GetProfileResponse, error)
 
@@ -161,6 +174,7 @@ type IUserController interface {
 	 * @param 	request 		User request for editing the user profile
 	 *
 	 * @return response of edit profile
+	 * @return error of edit profile
 	 */
 	EditProfile(userID int, request request.UserRequest) (*response.EditProfileResponse, error)
 
@@ -170,6 +184,7 @@ type IUserController interface {
 	 * @param 	id		User ID for getting user ranking
 	 *
 	 * @return response of ranking
+	 * @return error of getting ranking
 	 */
 	GetRanking(id int) (*response.RankingResponse, error)
 }

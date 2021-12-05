@@ -2,7 +2,7 @@ package loaders
 
 // loader.learning_overview.go
 /**
- * 	This file is a part of controller, used to load concurrency learning overview data
+ * 	This file is a part of controllers, used to load concurrency learning overview data
  */
 
 import (

@@ -2,7 +2,7 @@ package loaders
 
 // loader.hint.go
 /**
- * 	This file is a part of controller, used to load concurrency hints data
+ * 	This file is a part of controllers, used to load concurrency hints data
  */
 
 import (

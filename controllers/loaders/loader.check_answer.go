@@ -2,7 +2,7 @@ package loaders
 
 // loader.check_answer.go
 /**
- * 	This file is a part of controller, used to load concurrency activity answer data
+ * 	This file is a part of controllers, used to load concurrency activity answer data
  */
 
 import (
