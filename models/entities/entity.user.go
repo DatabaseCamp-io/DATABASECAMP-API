@@ -2,7 +2,7 @@ package entities
 
 // entity.user.go
 /**
- * 	This file is a part of models, used to collect model for entities of exam
+ * 	This file is a part of models, used to collect model for entities of user
  */
 
 import (
