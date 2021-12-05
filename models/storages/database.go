@@ -1,7 +1,13 @@
 package storages
 
+// database.go
+/**
+ * 	This file is a part of models, used to collect data structure of data in the database
+ */
+
 import "time"
 
+// Table name in the database
 var TableName = struct {
 	User                string
 	Content             string
@@ -40,6 +46,7 @@ var TableName = struct {
 	"ExamResultActivity",
 }
 
+// Primary key of the table in the database
 var IDName = struct {
 	User       string
 	Activity   string
@@ -60,6 +67,7 @@ var IDName = struct {
 	"exam_result_id",
 }
 
+// View name in the database
 var ViewName = struct {
 	Profile string
 	Ranking string

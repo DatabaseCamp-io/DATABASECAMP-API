@@ -1,5 +1,10 @@
 package handlers
 
+// handler.learning.go
+/**
+ * 	This file is a part of handler, used to handle request of the learning
+ */
+
 import (
 	"DatabaseCamp/controllers"
 	"DatabaseCamp/models/request"
@@ -9,69 +14,116 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+/**
+ * This class handle request of the learning
+ */
 type learningHandler struct {
-	Controller controllers.ILearningController
+	Controller controllers.ILearningController // Learning controller for doing business logic of the learning
 }
 
-type ILearningHandler interface {
-	GetContentRoadmap(c *fiber.Ctx) error
-	GetVideo(c *fiber.Ctx) error
-	GetOverview(c *fiber.Ctx) error
-	GetActivity(c *fiber.Ctx) error
-	UseHint(c *fiber.Ctx) error
-	CheckMatchingAnswer(c *fiber.Ctx) error
-	CheckMultipleAnswer(c *fiber.Ctx) error
-	CheckCompletionAnswer(c *fiber.Ctx) error
-}
-
+/**
+ * Constructor creates a new learningHandler instance
+ *
+ * @param   controller    	Learning controller for doing business logic of the learning
+ *
+ * @return 	instance of learningHandler
+ */
 func NewLearningHandler(controller controllers.ILearningController) learningHandler {
 	return learningHandler{Controller: controller}
 }
 
+/**
+ * Get content roadmap
+ *
+ * @param 	c  Context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h learningHandler) GetContentRoadmap(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	userID := utils.NewType().ParseInt(c.Locals("id"))
 	contentID := utils.NewType().ParseInt(c.Params("id"))
+
 	response, err := h.Controller.GetContentRoadmap(userID, contentID)
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
+
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+/**
+ * Get video lecture of the content
+ *
+ * @param 	c  Context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h learningHandler) GetVideo(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	contentID := c.Params("id")
+
 	response, err := h.Controller.GetVideoLecture(utils.NewType().ParseInt(contentID))
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
+
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+/**
+ * Get content overview
+ *
+ * @param 	c  Context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h learningHandler) GetOverview(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	id := c.Locals("id")
+
 	response, err := h.Controller.GetOverview(utils.NewType().ParseInt(id))
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
+
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+/**
+ * Get activity for user to do
+ *
+ * @param 	c  Context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h learningHandler) GetActivity(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	userID := utils.NewType().ParseInt(c.Locals("id"))
 	activityID := utils.NewType().ParseInt(c.Params("id"))
+
 	response, err := h.Controller.GetActivity(userID, activityID)
 	if err != nil {
 		return handleUtil.HandleError(c, err)
 	}
+
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+/**
+ * Use hint of the activity
+ *
+ * @param 	c  Context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h learningHandler) UseHint(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	userID := utils.NewType().ParseInt(c.Locals("id"))
 	activityID := utils.NewType().ParseInt(c.Params("id"))
 
@@ -83,8 +135,16 @@ func (h learningHandler) UseHint(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+/**
+ * Check matching choice answer of the activity
+ *
+ * @param 	c  Context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h learningHandler) CheckMatchingAnswer(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	userID := utils.NewType().ParseInt(c.Locals("id"))
 	request := request.MatchingChoiceAnswerRequest{}
 
@@ -106,8 +166,16 @@ func (h learningHandler) CheckMatchingAnswer(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+/**
+ * Check multiple choice answer of the activity
+ *
+ * @param 	c  Context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h learningHandler) CheckMultipleAnswer(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	userID := utils.NewType().ParseInt(c.Locals("id"))
 	request := request.MultipleChoiceAnswerRequest{}
 
@@ -129,8 +197,16 @@ func (h learningHandler) CheckMultipleAnswer(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+/**
+ * Check completion choice answer of the activity
+ *
+ * @param 	c  Context of the web framework
+ *
+ * @return the error of getting exam
+ */
 func (h learningHandler) CheckCompletionAnswer(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
+
 	userID := utils.NewType().ParseInt(c.Locals("id"))
 	request := request.CompletionAnswerRequest{}
 

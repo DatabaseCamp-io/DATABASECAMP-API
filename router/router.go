@@ -1,5 +1,10 @@
 package router
 
+// router.go
+/**
+ * 	This file used to define path of the API
+ */
+
 import (
 	"DatabaseCamp/handlers"
 	"DatabaseCamp/middleware"
@@ -7,19 +12,34 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+/**
+ * This class manage API route of the application
+ */
 type router struct {
-	App    *fiber.App
-	Router fiber.Router
+	App    *fiber.App   // Web framework application
+	Router fiber.Router // Router of the web framework application
 
-	ExamHandler     handlers.IExamHandler
-	LearningHandler handlers.ILearningHandler
-	UserHandler     handlers.IUserHandler
+	ExamHandler     handlers.IExamHandler     // Exam handler for handle exam requests
+	LearningHandler handlers.ILearningHandler // Learning handler for handle learning requests
+	UserHandler     handlers.IUserHandler     // User handler for handle user requests
 
-	Jwt middleware.IJwt
+	Jwt middleware.IJwt // JWT middleware for verification
 }
 
+// Instance of router class for singleton pattern
 var instantiated *router = nil
 
+/**
+ * Constructor creates a new router instance or geting a router instance
+ *
+ * @param 	app 				Web framework application
+ * @param 	examHandler 		Exam handler for handle exam requests
+ * @param 	learningHandler 	Learning handler for handle learning requests
+ * @param 	userHandler 		User handler for handle user requests
+ * @param 	jwt 				JWT middleware for verification
+ *
+ * @return 	instance of router
+ */
 func New(
 	app *fiber.App,
 	examHandler handlers.IExamHandler,
@@ -41,12 +61,18 @@ func New(
 	return instantiated
 }
 
+/**
+ * Setup route path for each module
+ */
 func (r *router) init() {
 	r.setupLearning()
 	r.setupUser()
 	r.setupExam()
 }
 
+/**
+ * Setup route path for exam module
+ */
 func (r *router) setupExam() {
 	group := r.Router.Group("exam")
 	group.Use(r.Jwt.JwtVerify)
@@ -58,6 +84,9 @@ func (r *router) setupExam() {
 	}
 }
 
+/**
+ * Setup route path for learning module
+ */
 func (r *router) setupLearning() {
 	group := r.Router.Group("learning")
 	group.Use(r.Jwt.JwtVerify)
@@ -73,6 +102,9 @@ func (r *router) setupLearning() {
 	}
 }
 
+/**
+ * Setup route path for user module
+ */
 func (r *router) setupUser() {
 	group := r.Router.Group("user")
 	{
