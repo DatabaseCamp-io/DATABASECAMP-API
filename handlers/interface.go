@@ -15,7 +15,7 @@ type IExamHandler interface {
 	/**
 	 * Get the exam to use for the test
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -24,7 +24,7 @@ type IExamHandler interface {
 	/**
 	 * Check answer of the exam
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -33,7 +33,7 @@ type IExamHandler interface {
 	/**
 	 * Get overview of the exam
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -42,7 +42,7 @@ type IExamHandler interface {
 	/**
 	 * Get exam result of the user
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -57,7 +57,7 @@ type ILearningHandler interface {
 	/**
 	 * Get content roadmap
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -66,7 +66,7 @@ type ILearningHandler interface {
 	/**
 	 * Get video lecture of the content
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -75,7 +75,7 @@ type ILearningHandler interface {
 	/**
 	 * Get content overview
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -84,7 +84,7 @@ type ILearningHandler interface {
 	/**
 	 * Get activity for user to do
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -93,7 +93,7 @@ type ILearningHandler interface {
 	/**
 	 * Use hint of the activity
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -102,7 +102,7 @@ type ILearningHandler interface {
 	/**
 	 * Check matching choice answer of the activity
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -111,7 +111,7 @@ type ILearningHandler interface {
 	/**
 	 * Check multiple choice answer of the activity
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -120,7 +120,7 @@ type ILearningHandler interface {
 	/**
 	 * Check completion choice answer of the activity
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -135,7 +135,7 @@ type IUserHandler interface {
 	/**
 	 * Register
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -144,7 +144,7 @@ type IUserHandler interface {
 	/**
 	 * Login
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -153,7 +153,7 @@ type IUserHandler interface {
 	/**
 	 * Get user profile
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -162,7 +162,7 @@ type IUserHandler interface {
 	/**
 	 * Get own profile
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -171,7 +171,7 @@ type IUserHandler interface {
 	/**
 	 * Get ranking
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */
@@ -180,7 +180,7 @@ type IUserHandler interface {
 	/**
 	 * Edit user profile
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */

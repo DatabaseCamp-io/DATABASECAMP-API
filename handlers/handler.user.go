@@ -38,7 +38,7 @@ func NewUserHandler(controller controllers.IUserController, jwt middleware.IJwt)
 /**
  * Register
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -75,7 +75,7 @@ func (h userHandler) Register(c *fiber.Ctx) error {
 /**
  * Login
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -112,7 +112,7 @@ func (h userHandler) Login(c *fiber.Ctx) error {
 /**
  * Get user profile
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -132,7 +132,7 @@ func (h userHandler) GetProfile(c *fiber.Ctx) error {
 /**
  * Get own profile
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -152,7 +152,7 @@ func (h userHandler) GetOwnProfile(c *fiber.Ctx) error {
 /**
  * Get ranking
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -172,7 +172,7 @@ func (h userHandler) GetUserRanking(c *fiber.Ctx) error {
 /**
  * Edit user profile
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */

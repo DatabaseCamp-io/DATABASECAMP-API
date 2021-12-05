@@ -35,7 +35,7 @@ func NewExamHandler(controller controllers.IExamController) examHandler {
 /**
  * Get the exam to use for the test
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -56,7 +56,7 @@ func (h examHandler) GetExam(c *fiber.Ctx) error {
 /**
  * Check answer of the exam
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -87,7 +87,7 @@ func (h examHandler) CheckExam(c *fiber.Ctx) error {
 /**
  * Get overview of the exam
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -107,7 +107,7 @@ func (h examHandler) GetExamOverview(c *fiber.Ctx) error {
 /**
  * Get exam result of the user
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */

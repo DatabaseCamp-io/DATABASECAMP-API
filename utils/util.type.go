@@ -1,5 +1,10 @@
 package utils
 
+// util.type.go
+/**
+ * 	This file is a part of utilities, used to convert type
+ */
+
 import (
 	"encoding/json"
 	"fmt"
@@ -7,13 +12,28 @@ import (
 	"time"
 )
 
+/**
+ * 	This class convert any type
+ */
 type typeUtils struct{}
 
+/**
+ * Constructor creates a new typeUtils instance
+ *
+ * @return 	instance of typeUtils
+ */
 func NewType() typeUtils {
 	return typeUtils{}
 }
 
-// Convert struct to map
+/**
+ * Convert struct to map
+ *
+ * @param 	obj 	StructToMap to be converted to map
+ *
+ * @return 	map from obj converted
+ * @return 	the error of converting
+ */
 func (t typeUtils) StructToMap(obj interface{}) (newMap map[string]interface{}, err error) {
 	data, err := json.Marshal(obj)
 
@@ -25,7 +45,14 @@ func (t typeUtils) StructToMap(obj interface{}) (newMap map[string]interface{}, 
 	return
 }
 
-// Convert struct to struct
+/**
+ * Convert struct to struct
+ *
+ * @param 	x1 	Original struct to be converted
+ * @param 	x2 	Output struct
+ *
+ * @return 	the error of converting
+ */
 func (t typeUtils) StructToStruct(x1 interface{}, x2 interface{}) error {
 	temp, err := t.StructToMap(x1)
 	if err != nil {
@@ -45,13 +72,25 @@ func (t typeUtils) StructToStruct(x1 interface{}, x2 interface{}) error {
 	return nil
 }
 
-// Use to analyse duration
+/**
+ * Convert any type to duration
+ *
+ * @param 	item 	Item to be converted
+ *
+ * @return 	duration by converted item
+ */
 func (t typeUtils) ParseDuration(item interface{}) time.Duration {
 	intType := t.ParseInt(item)
 	return time.Duration(intType)
 }
 
-// Use to analyse integer
+/**
+ * Convert any type to integer value
+ *
+ * @param 	item 	Item to be converted
+ *
+ * @return 	integer value by converted item
+ */
 func (t typeUtils) ParseInt(item interface{}) int {
 	_item := item
 	switch item.(type) {
@@ -71,7 +110,13 @@ func (t typeUtils) ParseInt(item interface{}) int {
 	}
 }
 
-// Use to analyse string
+/**
+ * Convert any type to string value
+ *
+ * @param 	item 	Item to be converted
+ *
+ * @return 	string value by converted item
+ */
 func (t typeUtils) ParseString(item interface{}) string {
 	return fmt.Sprintf("%v", item)
 }

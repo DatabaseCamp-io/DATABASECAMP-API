@@ -35,7 +35,7 @@ func NewLearningHandler(controller controllers.ILearningController) learningHand
 /**
  * Get content roadmap
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -56,7 +56,7 @@ func (h learningHandler) GetContentRoadmap(c *fiber.Ctx) error {
 /**
  * Get video lecture of the content
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -76,7 +76,7 @@ func (h learningHandler) GetVideo(c *fiber.Ctx) error {
 /**
  * Get content overview
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -96,7 +96,7 @@ func (h learningHandler) GetOverview(c *fiber.Ctx) error {
 /**
  * Get activity for user to do
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -117,7 +117,7 @@ func (h learningHandler) GetActivity(c *fiber.Ctx) error {
 /**
  * Use hint of the activity
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -138,7 +138,7 @@ func (h learningHandler) UseHint(c *fiber.Ctx) error {
 /**
  * Check matching choice answer of the activity
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -169,7 +169,7 @@ func (h learningHandler) CheckMatchingAnswer(c *fiber.Ctx) error {
 /**
  * Check multiple choice answer of the activity
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -200,7 +200,7 @@ func (h learningHandler) CheckMultipleAnswer(c *fiber.Ctx) error {
 /**
  * Check completion choice answer of the activity
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */

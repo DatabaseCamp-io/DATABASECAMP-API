@@ -1,56 +1,42 @@
 package repositories
 
+// repository.exam.go
+/**
+ * 	This file is a part of repositories, used to do data manipulation of exam
+ */
+
 import (
 	"DatabaseCamp/database"
 	"DatabaseCamp/models/storages"
 	"fmt"
 )
 
+/**
+ * 	This class manipulation exam data to other application
+ */
 type examRepository struct {
-	Database database.IDatabase
+	Database database.IDatabase // Database to do database manipulation
 }
 
-//Interface that show how others function call and use function in module exam respository
-type IExamRepository interface {
-	GetExamActivity(examID int) ([]storages.ExamActivityDB, error)
-	GetExamOverview() ([]storages.ExamDB, error)
-
-	InsertExamResultTransaction(tx database.ITransaction, examResult storages.ExamResultDB) (storages.ExamResultDB, error)
-	InsertExamResultActivityTransaction(tx database.ITransaction, examResultActivity []storages.ExamResultActivityDB) ([]storages.ExamResultActivityDB, error)
-}
-
-// Create exam respository instance
+/**
+ * Constructor creates a new examRepository instance
+ *
+ * @param   db    Database to data manipulation
+ *
+ * @return 	instance of examRepository
+ */
 func NewExamRepository(db database.IDatabase) examRepository {
 	return examRepository{Database: db}
 }
 
-// Get exam overview from database
-func (r examRepository) GetExamOverview() ([]storages.ExamDB, error) {
-	exam := make([]storages.ExamDB, 0)
-	err := r.Database.GetDB().
-		Table(storages.TableName.Exam).
-		Select(
-			storages.TableName.Exam+".exam_id AS exam_id",
-			storages.TableName.Exam+".type AS type",
-			storages.TableName.Exam+".instruction AS instruction",
-			storages.TableName.Exam+".created_timestamp AS created_timestamp",
-			storages.TableName.ContentGroup+".content_group_id AS content_group_id",
-			storages.TableName.ContentGroup+".name AS content_group_name",
-			storages.TableName.ContentGroup+".badge_id AS badge_id",
-		).
-		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
-			storages.TableName.ContentGroup,
-			storages.TableName.ContentGroup,
-			storages.IDName.MiniExam,
-			storages.TableName.Exam,
-			storages.IDName.Exam,
-		)).
-		Find(&exam).
-		Error
-	return exam, err
-}
-
-// Get all exam activity from database
+/**
+ * Get activities of the exam from the database
+ *
+ * @param 	examID  Exam ID for getting exam data
+ *
+ * @return activities of the exam
+ * @return the error of getting exam
+ */
 func (r examRepository) GetExamActivity(examID int) ([]storages.ExamActivityDB, error) {
 	examActivity := make([]storages.ExamActivityDB, 0)
 	err := r.Database.GetDB().
@@ -126,7 +112,46 @@ func (r examRepository) GetExamActivity(examID int) ([]storages.ExamActivityDB, 
 	return examActivity, err
 }
 
-// Insert exam result transaction into database
+/**
+ * Get exam overview from the database
+ *
+ * @return all exam in the application
+ * @return the error of getting exam
+ */
+func (r examRepository) GetExamOverview() ([]storages.ExamDB, error) {
+	exam := make([]storages.ExamDB, 0)
+	err := r.Database.GetDB().
+		Table(storages.TableName.Exam).
+		Select(
+			storages.TableName.Exam+".exam_id AS exam_id",
+			storages.TableName.Exam+".type AS type",
+			storages.TableName.Exam+".instruction AS instruction",
+			storages.TableName.Exam+".created_timestamp AS created_timestamp",
+			storages.TableName.ContentGroup+".content_group_id AS content_group_id",
+			storages.TableName.ContentGroup+".name AS content_group_name",
+			storages.TableName.ContentGroup+".badge_id AS badge_id",
+		).
+		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
+			storages.TableName.ContentGroup,
+			storages.TableName.ContentGroup,
+			storages.IDName.MiniExam,
+			storages.TableName.Exam,
+			storages.IDName.Exam,
+		)).
+		Find(&exam).
+		Error
+	return exam, err
+}
+
+/**
+ * Insert exam result into the database by database transaction
+ *
+ * @param 	tx  		Transaction model to do database transaction
+ * @param 	examResult  Exam result for insert into the database
+ *
+ * @return inserted exam result
+ * @return the error of inserting exam result
+ */
 func (r examRepository) InsertExamResultTransaction(tx database.ITransaction, examResult storages.ExamResultDB) (storages.ExamResultDB, error) {
 	err := tx.GetDB().
 		Table(storages.TableName.ExamResult).
@@ -135,7 +160,15 @@ func (r examRepository) InsertExamResultTransaction(tx database.ITransaction, ex
 	return examResult, err
 }
 
-// Insert activity result from database
+/**
+ * Insert activities of the exam result into the database by database transaction
+ *
+ * @param 	tx  				Transaction model to do database transaction
+ * @param 	examResultActivity  Activities of the exam result for insert into the database
+ *
+ * @return inserted activities of the exam result
+ * @return the error of inserting activities of the exam result
+ */
 func (r examRepository) InsertExamResultActivityTransaction(tx database.ITransaction, examResultActivity []storages.ExamResultActivityDB) ([]storages.ExamResultActivityDB, error) {
 	err := tx.GetDB().
 		Table(storages.TableName.ExamResultActivity).

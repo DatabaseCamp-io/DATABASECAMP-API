@@ -25,7 +25,7 @@ type IJwt interface {
 	/**
 	 * Verify request by token
 	 *
-	 * @param 	c  context of the web framework
+	 * @param 	c  Context of the web framework
 	 *
 	 * @return the error of getting exam
 	 */

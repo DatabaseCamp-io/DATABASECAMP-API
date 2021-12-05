@@ -70,7 +70,7 @@ func (j jwtMiddleware) JwtSign(id int) (string, error) {
 /**
  * Verify request by token
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return the error of getting exam
  */
@@ -153,7 +153,7 @@ func (j jwtMiddleware) getClaims(token *jwt.Token) (jwt.MapClaims, error) {
 /**
  * Set claims to the header of the request
  *
- * @param	c  			context of the web framework
+ * @param	c  			Context of the web framework
  * @param 	claims  	claims of the token to set
  */
 func (j jwtMiddleware) setClaims(c *fiber.Ctx, claims jwt.MapClaims) {
@@ -188,7 +188,7 @@ func (j jwtMiddleware) validUser(token string, id int) bool {
 /**
  * Get token from the header of the request
  *
- * @param 	c  context of the web framework
+ * @param 	c  Context of the web framework
  *
  * @return 	token from the header
  * @return 	the error of the getting token
