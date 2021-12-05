@@ -4,6 +4,7 @@ package response
 /**
  * 	This file is a part of models, used to collect response of exam result overview
  */
+
 import (
 	"DatabaseCamp/models/entities"
 	"time"

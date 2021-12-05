@@ -4,13 +4,16 @@ package response
 /**
  * 	This file is a part of models, used to collect response of user
  */
+
 import (
 	"DatabaseCamp/models/entities"
 	"DatabaseCamp/models/storages"
 	"time"
 )
 
-// Model of user item to prepare user response
+/**
+ *  This class represent user response
+ */
 type UserResponse struct {
 	ID               int       `json:"user_id"`
 	Name             string    `json:"name"`
@@ -25,7 +28,6 @@ type UserResponse struct {
  * Constructor creates a new VideoLectureResponse instance
  *
  * @param user			Entities user from database to create user response
- *
  *
  * @return 	instance of UserReponse
  */
@@ -42,7 +44,9 @@ func NewUserReponse(user entities.User) UserResponse {
 	return response
 }
 
-// Model of get profile item to prepare get profile response
+/**
+ * This class represent get profile response
+ */
 type GetProfileResponse struct {
 	ID               int              `json:"user_id"`
 	Name             string           `json:"name"`
@@ -51,12 +55,12 @@ type GetProfileResponse struct {
 	Badges           []entities.Badge `json:"badges"`
 	CreatedTimestamp time.Time        ` json:"created_timestamp"`
 }
+
 /**
  * Constructor creates a new VideoLectureResponse instance
  *
  * @param profileDB			Profile model from database to create get profile response
  * @param badges			Badge model from database to create get profile response
- *
  *
  * @return 	instance of GetProfileResponse
  */
@@ -73,14 +77,14 @@ func NewGetProfileResponse(profileDB storages.ProfileDB, badges []entities.Badge
 }
 
 /**
- * This class represent EditProfile response
+ * This class represent edit profile response
  */
 type EditProfileResponse struct {
 	UpdatedName string `json:"updated_name"`
 }
 
 /**
- * This class represent Ranking response
+ * This class represent ranking response
  */
 type RankingResponse struct {
 	UserRanking storages.RankingDB   `json:"user_ranking"`

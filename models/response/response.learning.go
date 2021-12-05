@@ -4,6 +4,7 @@ package response
 /**
  * 	This file is a part of models, used to collect response of learning
  */
+
 import "DatabaseCamp/models/entities"
 
 // Model of video lecture item to prepare video lecture response
@@ -19,7 +20,6 @@ type VideoLectureResponse struct {
  * @param contentID				Content id from database to create video lecture response
  * @param contentName			Content name from database to create video lecture response
  * @param videoLink				Video link from database to create video lecture response
- *
  *
  * @return 	instance of VideoLectureResponse
  */
@@ -44,7 +44,6 @@ type ActivityResponse struct {
  * Constructor creates a new ActivityResponse instance
  *
  * @param activity			Entities activity from database to create activity response
- *
  *
  * @return 	instance of ActivityResponse
  */
@@ -71,7 +70,6 @@ type AnswerResponse struct {
  * @param activity			Entities activity from database to create activity answer response
  * @param updatedPoint		Update point from database to create activity answer response
  * @param isCorrect			Is correct from database to create activity answer response
- *
  *
  * @return 	instance of ActivityAnswerResponse
  */

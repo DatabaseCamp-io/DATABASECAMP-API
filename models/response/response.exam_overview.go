@@ -34,6 +34,7 @@ type ExamOverviewResponse struct {
  *
  * @param examResultsDB		Exam result from database to prepare exam overview response
  * @param examsDB			Exam from database to prepare exam overview response
+ * @param canDoFinalExam	Boolean that indicate user can do the final exam
  *
  * @return 	instance of ExamOverviewResponse
  */
@@ -46,9 +47,10 @@ func NewExamOverviewResponse(examResultsDB []storages.ExamResultDB, examsDB []st
 /**
 * Prepare exam overview response
 *
-* @param examResultsDB		exam result from database to prepare exam overview response
-* @param examsDB			exam from database to prepare exam overview response
-*/
+* @param examResultsDB		Exam result from database to prepare exam overview response
+* @param examsDB			Exam from database to prepare exam overview response
+* @param canDoFinalExam		Boolean that indicate user can do the final exam
+ */
 func (o *ExamOverviewResponse) prepare(examResultsDB []storages.ExamResultDB, examsDB []storages.ExamDB, canDoFinalExam bool) {
 	examResultMap := o.createExamResultMap(examResultsDB)
 	for _, examDB := range examsDB {
@@ -84,11 +86,13 @@ func (o *ExamOverviewResponse) prepare(examResultsDB []storages.ExamResultDB, ex
 }
 
 /**
- * Create exam result map
+ * Create map of exam result
+ * [key]	exam id
+ * [value]	exam result overview
  *
- * @param examResultsDB	 exam result from database to create exam result map	
+ * @param examResultsDB	 exam result from database to create exam result map
  *
- * @return exam result map
+ * @return map of exam result
  */
 func (o *ExamOverviewResponse) createExamResultMap(examResultsDB []storages.ExamResultDB) map[int]*[]entities.ExamResultOverview {
 	examResultMap := map[int]*[]entities.ExamResultOverview{}
@@ -109,11 +113,13 @@ func (o *ExamOverviewResponse) createExamResultMap(examResultsDB []storages.Exam
 }
 
 /**
- * Calculate exam score
+ * Create map of count exam score
+ * [key]  	exam result id
+ * [value]	score of the exam result
  *
- * @param examResultsDB	 exam result from database to calculate exam score	
+ * @param examResultsDB	 exam result from database to calculate exam score
  *
- * @return exam count score
+ * @return exam score
  */
 func (o *ExamOverviewResponse) countExamScore(examResultsDB []storages.ExamResultDB) map[int]int {
 	examCountScore := map[int]int{}

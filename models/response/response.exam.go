@@ -4,6 +4,7 @@ package response
 /**
  * 	This file is a part of models, used to collect response of exam
  */
+
 import (
 	"DatabaseCamp/models/entities"
 )
@@ -32,8 +33,8 @@ func NewExamResponse(exam entities.Exam) *ExamResponse {
 /**
 * Prepare exam response
 *
- * @param exam		Entities exam for create exam response
-*/
+* @param exam		Entities exam for create exam response
+ */
 func (e *ExamResponse) prepare(exam entities.Exam) {
 	activitiesResponse := make([]ActivityResponse, 0)
 	for _, activity := range exam.GetActivities() {
