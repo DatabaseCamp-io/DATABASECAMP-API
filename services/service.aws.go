@@ -22,6 +22,7 @@ type awsService struct {
 	Sess *session.Session
 }
 
+// Instance of awsService class for singleton pattern
 var awsInstantiated *awsService = nil
 
 /**
