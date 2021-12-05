@@ -25,8 +25,10 @@ type learningOverviewLoader struct {
 
 /**
  * Constructor creates a new activityLoader instance
+ *
  * @param   learningRepo    Learning Repository for load learning overview data
  * @param   userRepo        User Repository for load learning progression of the user data
+ *
  * @return 	instance of activityLoader
  */
 func NewLearningOverviewLoader(learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) *learningOverviewLoader {
@@ -35,6 +37,7 @@ func NewLearningOverviewLoader(learningRepo repositories.ILearningRepository, us
 
 /**
  * Getter for getting overviewDB
+ *
  * @return overviewDB
  */
 func (l *learningOverviewLoader) GetOverviewDB() []storages.OverviewDB {
@@ -43,6 +46,7 @@ func (l *learningOverviewLoader) GetOverviewDB() []storages.OverviewDB {
 
 /**
  * Getter for getting learningProgressionDB
+ *
  * @return learningProgressionDB
  */
 func (l *learningOverviewLoader) GetLearningProgressionDB() []storages.LearningProgressionDB {
@@ -50,8 +54,10 @@ func (l *learningOverviewLoader) GetLearningProgressionDB() []storages.LearningP
 }
 
 /**
- * load concurrency learning overview data from the database
+ * Load concurrency learning overview data from the database
+ *
  * @param   userID     		User ID for getting learning progression of the user
+ *
  * @return the error of loading data
  */
 func (l *learningOverviewLoader) Load(userID int) error {
@@ -66,7 +72,8 @@ func (l *learningOverviewLoader) Load(userID int) error {
 }
 
 /**
- * load learning overview data from the database
+ * Load learning overview data from the database
+ *
  * @param   concurrent     	Concurrent model for doing load concurrency
  */
 func (l *learningOverviewLoader) loadOverviewAsync(concurrent *general.Concurrent) {
@@ -79,7 +86,8 @@ func (l *learningOverviewLoader) loadOverviewAsync(concurrent *general.Concurren
 }
 
 /**
- * load activity data from the database
+ * Load activity data from the database
+ *
  * @param   concurrent     	Concurrent model for doing load concurrency
  * @param   userID     		User ID for getting learning progression of the user
  */

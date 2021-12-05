@@ -18,14 +18,6 @@ type examController struct {
 	UserRepo repositories.IUserRepository
 }
 
-// Interface that show how others function call and use function in module exam controller
-type IExamController interface {
-	GetExam(examID int, userID int) (*response.ExamResponse, error)
-	GetOverview(userID int) (*response.ExamOverviewResponse, error)
-	CheckExam(userID int, request request.ExamAnswerRequest) (*response.ExamResultOverviewResponse, error)
-	GetExamResult(userID int, examResultID int) (*response.ExamResultOverviewResponse, error)
-}
-
 // Create exam controller instance
 func NewExamController(examRepo repositories.IExamRepository, userRepo repositories.IUserRepository) examController {
 	return examController{ExamRepo: examRepo, UserRepo: userRepo}

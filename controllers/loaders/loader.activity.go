@@ -26,8 +26,10 @@ type activityLoader struct {
 
 /**
  * Constructor creates a new activityLoader instance
+ *
  * @param   learningRepo    Learning Repository for load learning data
  * @param   userRepo        User Repository for load user hints
+ *
  * @return 	instance of activityLoader
  */
 func NewActivityLoader(learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) *activityLoader {
@@ -36,6 +38,7 @@ func NewActivityLoader(learningRepo repositories.ILearningRepository, userRepo r
 
 /**
  * Getter for getting activityDB
+ *
  * @return activityDB
  */
 func (l *activityLoader) GetActivityDB() *storages.ActivityDB {
@@ -44,6 +47,7 @@ func (l *activityLoader) GetActivityDB() *storages.ActivityDB {
 
 /**
  * Getter for getting activityHintsDB
+ *
  * @return activityHintsDB
  */
 func (l *activityLoader) GetActivityHintsDB() []storages.HintDB {
@@ -52,6 +56,7 @@ func (l *activityLoader) GetActivityHintsDB() []storages.HintDB {
 
 /**
  * Getter for getting userHintsDB
+ *
  * @return userHintsDB
  */
 func (l *activityLoader) GetUserHintsDB() []storages.UserHintDB {
@@ -59,9 +64,11 @@ func (l *activityLoader) GetUserHintsDB() []storages.UserHintDB {
 }
 
 /**
- * load concurrency all activity data from the database
+ * Load concurrency all activity data from the database
+ *
  * @param   userID     		User ID for getting user hints information of the activity
  * @param   activityID    	Activity ID for getting activity data
+ *
  * @return the error of loading data
  */
 func (l *activityLoader) Load(userID int, activityID int) error {
@@ -77,7 +84,8 @@ func (l *activityLoader) Load(userID int, activityID int) error {
 }
 
 /**
- * load activity data from the database
+ * Load activity data from the database
+ *
  * @param   concurrent     	Concurrent model for doing load concurrency
  * @param   activityID    	Activity ID for getting activity data
  */
@@ -91,7 +99,8 @@ func (l *activityLoader) loadActivityAsync(concurrent *general.Concurrent, activ
 }
 
 /**
- * load activity data from the database
+ * Load activity data from the database
+ *
  * @param   concurrent     	Concurrent model for doing load concurrency
  * @param   userID     		User ID for getting user hints information of the activity
  * @param   activityID    	Activity ID for getting activity data
@@ -106,7 +115,8 @@ func (l *activityLoader) loadUserHintsAsync(concurrent *general.Concurrent, user
 }
 
 /**
- * load activity data from the database
+ * Load activity data from the database
+ *
  * @param   concurrent     	Concurrent model for doing load concurrency
  * @param   activityID    	Activity ID for getting activity data
  */

@@ -14,14 +14,6 @@ type userController struct {
 	Repo repositories.IUserRepository
 }
 
-type IUserController interface {
-	Register(request request.UserRequest) (*response.UserResponse, error)
-	Login(request request.UserRequest) (*response.UserResponse, error)
-	GetProfile(userID int) (*response.GetProfileResponse, error)
-	EditProfile(userID int, request request.UserRequest) (*response.EditProfileResponse, error)
-	GetRanking(id int) (*response.RankingResponse, error)
-}
-
 func NewUserController(repo repositories.IUserRepository) userController {
 	return userController{Repo: repo}
 }

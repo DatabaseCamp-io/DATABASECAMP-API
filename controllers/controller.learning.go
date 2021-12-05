@@ -20,16 +20,6 @@ type learningController struct {
 	UserRepo     repositories.IUserRepository
 }
 
-// Interface that show how others function call and use function in module learning controller
-type ILearningController interface {
-	GetVideoLecture(id int) (*response.VideoLectureResponse, error)
-	GetOverview(userID int) (*response.ContentOverviewResponse, error)
-	GetActivity(userID int, activityID int) (*response.ActivityResponse, error)
-	UseHint(userID int, activityID int) (*storages.HintDB, error)
-	GetContentRoadmap(userID int, contentID int) (*response.ContentRoadmapResponse, error)
-	CheckAnswer(userID int, activityID int, typeID int, answer interface{}) (*response.AnswerResponse, error)
-}
-
 // Create learning controller instance
 func NewLearningController(
 	learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) learningController {

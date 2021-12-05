@@ -24,7 +24,9 @@ type checkAnswerLoader struct {
 
 /**
  * Constructor creates a new checkAnswerLoader instance
+ *
  * @param   learningRepo Learning Repository for load learning data
+ *
  * @return 	instance of checkAnswerLoader
  */
 func NewCheckAnswerLoader(learningRepo repositories.ILearningRepository) *checkAnswerLoader {
@@ -33,6 +35,7 @@ func NewCheckAnswerLoader(learningRepo repositories.ILearningRepository) *checkA
 
 /**
  * Getter for getting choicesDB
+ *
  * @return choicesDB
  */
 func (c *checkAnswerLoader) GetChoicesDB() interface{} {
@@ -41,17 +44,21 @@ func (c *checkAnswerLoader) GetChoicesDB() interface{} {
 
 /**
  * Getter for getting activityDB
- * @return activityDB
+
+ * * @return activityDB
  */
 func (c *checkAnswerLoader) GetActivityDB() *storages.ActivityDB {
 	return c.activityDB
 }
 
 /**
- * load concurrency activity answer data
+ * Load concurrency activity answer data
+ *
  * @param   activityID    		Activity ID for getting activity data
  * @param   activityTypeID    	Activity Type ID for getting choices of activity by type
  * @param   getChoicesFunc    	function for getting choices
+ *
+ * @return the error of loading data
  */
 func (c *checkAnswerLoader) Load(activityID int, activityTypeID int, getChoicesFunc func(activityID int, activityTypeID int) (interface{}, error)) error {
 	var wg sync.WaitGroup
@@ -65,7 +72,8 @@ func (c *checkAnswerLoader) Load(activityID int, activityTypeID int, getChoicesF
 }
 
 /**
- * load activity data from the database
+ * Load activity data from the database
+ *
  * @param   concurrent     	Concurrent model for doing load concurrency
  * @param   activityID    	Activity ID for getting activity data
  */
@@ -80,6 +88,7 @@ func (c *checkAnswerLoader) loadActivityAsync(concurrent *general.Concurrent, ac
 
 /**
  * call getChoicesFunc for getting activity choices
+ *
  * @param   concurrent     		Concurrent model for doing load concurrency
  * @param   activityID    		Activity ID for getting activity data
  * @param   activityTypeID    	Activity Type ID for getting choices of activity by type

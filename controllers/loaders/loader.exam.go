@@ -25,8 +25,10 @@ type examLoader struct {
 
 /**
  * Constructor creates a new examLoader instance
+ *
  * @param   examRepo    	Exam Repository for load activities of the exam
  * @param   userRepo        User Repository for load corrected badges of the user
+ *
  * @return 	instance of examLoader
  */
 func NewExamLoader(examRepo repositories.IExamRepository, userRepo repositories.IUserRepository) *examLoader {
@@ -35,6 +37,7 @@ func NewExamLoader(examRepo repositories.IExamRepository, userRepo repositories.
 
 /**
  * Getter for getting correctedBadgeDB
+ *
  * @return correctedBadgeDB
  */
 func (l *examLoader) GetCorrectedBadgeDB() []storages.CorrectedBadgeDB {
@@ -43,6 +46,7 @@ func (l *examLoader) GetCorrectedBadgeDB() []storages.CorrectedBadgeDB {
 
 /**
  * Getter for getting examActivitiesDB
+ *
  * @return examActivitiesDB
  */
 func (l *examLoader) GetExamActivitiesDB() []storages.ExamActivityDB {
@@ -50,9 +54,11 @@ func (l *examLoader) GetExamActivitiesDB() []storages.ExamActivityDB {
 }
 
 /**
- * load concurrency exam data from the database
+ * Load concurrency exam data from the database
+ *
  * @param   userID     		User ID for getting corrected badges of the user
  * @param   examID    		Exam ID for getting activities of the exam
+ *
  * @return the error of loading data
  */
 func (l *examLoader) Load(userID int, examID int) error {
@@ -67,7 +73,8 @@ func (l *examLoader) Load(userID int, examID int) error {
 }
 
 /**
- * load corrected badges of the user from the database
+ * Load corrected badges of the user from the database
+ *
  * @param   userID     		User ID for getting corrected badges of the use
  */
 func (l *examLoader) loadCorrectedBadgeAsync(concurrent *general.Concurrent, userID int) {
@@ -80,7 +87,8 @@ func (l *examLoader) loadCorrectedBadgeAsync(concurrent *general.Concurrent, use
 }
 
 /**
- * load activities of the exam from the database
+ * Load activities of the exam from the database
+ *
  * @param   concurrent     	Concurrent model for doing load concurrency
  * @param   examID    		Exam ID for getting activities of the exam
  */

@@ -26,8 +26,10 @@ type examOverviewLoader struct {
 
 /**
  * Constructor creates a new examOverviewLoader instance
+ *
  * @param   examRepo    	Exam Repository for load all exam data
  * @param   userRepo        User Repository for load corrected badges and exam results of the user
+ *
  * @return 	instance of examOverviewLoader
  */
 func NewExamOverviewLoader(examRepo repositories.IExamRepository, userRepo repositories.IUserRepository) *examOverviewLoader {
@@ -36,6 +38,7 @@ func NewExamOverviewLoader(examRepo repositories.IExamRepository, userRepo repos
 
 /**
  * Getter for getting correctedBadgeDB
+ *
  * @return correctedBadgeDB
  */
 func (l *examOverviewLoader) GetCorrectedBadgeDB() []storages.CorrectedBadgeDB {
@@ -44,6 +47,7 @@ func (l *examOverviewLoader) GetCorrectedBadgeDB() []storages.CorrectedBadgeDB {
 
 /**
  * Getter for getting examDB
+ *
  * @return examDB
  */
 func (l *examOverviewLoader) GetExamDB() []storages.ExamDB {
@@ -52,6 +56,7 @@ func (l *examOverviewLoader) GetExamDB() []storages.ExamDB {
 
 /**
  * Getter for getting examResultsDB
+ *
  * @return examResultsDB
  */
 func (l *examOverviewLoader) GetExamResultsDB() []storages.ExamResultDB {
@@ -59,8 +64,10 @@ func (l *examOverviewLoader) GetExamResultsDB() []storages.ExamResultDB {
 }
 
 /**
- * load concurrency all activity data from the database
+ * Load concurrency all activity data from the database
+ *
  * @param   userID     		User ID for getting corrected badges and exam results of the user
+ *
  * @return the error of loading data
  */
 func (l *examOverviewLoader) Load(userID int) error {
@@ -76,9 +83,11 @@ func (l *examOverviewLoader) Load(userID int) error {
 }
 
 /**
- * load exam results of the user from the database
+ * Load exam results of the user from the database
+ *
  * @param   concurrent     	Concurrent model for doing load concurrency
  * @param   userID     		User ID for getting exam results of the user
+ *
  * @return the error of loading data
  */
 func (l *examOverviewLoader) loadExamResultAsync(concurrent *general.Concurrent, userID int) {
@@ -91,7 +100,8 @@ func (l *examOverviewLoader) loadExamResultAsync(concurrent *general.Concurrent,
 }
 
 /**
- * load all exam  from the database
+ * Load all exam  from the database
+ *
  * @param   concurrent     	Concurrent model for doing load concurrency
  */
 func (l *examOverviewLoader) loadExamAsync(concurrent *general.Concurrent) {
@@ -104,7 +114,8 @@ func (l *examOverviewLoader) loadExamAsync(concurrent *general.Concurrent) {
 }
 
 /**
- * load corrected badges of the user from the database
+ * Load corrected badges of the user from the database
+ *
  * @param   concurrent     	Concurrent model for doing load concurrency
  * @param   userID     		User ID for getting corrected badges of the user
  */
