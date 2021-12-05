@@ -1,5 +1,10 @@
 package entities
 
+// entity.user.go
+/**
+ * 	This file is a part of models, used to collect model for entities of user
+ */
+
 import (
 	"DatabaseCamp/models/request"
 	"DatabaseCamp/models/storages"
@@ -11,7 +16,7 @@ import (
 // Type for changes user points mode
 type ChangePointMode string
 
-// Change mode
+// Change mode for update user point
 var Mode = struct {
 	Add    ChangePointMode
 	Reduce ChangePointMode
@@ -20,7 +25,7 @@ var Mode = struct {
 	"-",
 }
 
-// Badge data class
+// Model of badge for user entity
 type Badge struct {
 	ID          int    `json:"badge_id"`
 	ImagePath   string `json:"icon_path"`
@@ -28,7 +33,9 @@ type Badge struct {
 	IsCollected bool   `json:"is_collect"`
 }
 
-// User Class
+/**
+ * This class manage user model
+ */
 type User struct {
 	id               int
 	name             string
@@ -39,6 +46,13 @@ type User struct {
 	updatedTimestamp time.Time
 }
 
+/**
+ * Constructor creates a new user instance by user request
+ *
+ * @param   request      User request
+ *
+ * @return 	instance of user
+ */
 func NewUserByRequest(request request.UserRequest) User {
 	user := User{
 		name:     request.Name,
@@ -50,6 +64,13 @@ func NewUserByRequest(request request.UserRequest) User {
 	return user
 }
 
+/**
+ * Constructor creates a new user instance by user database model
+ *
+ * @param   request      User database model
+ *
+ * @return 	instance of user
+ */
 func NewUserByUserDB(userDB storages.UserDB) User {
 	return User{
 		id:               userDB.ID,
@@ -61,51 +82,75 @@ func NewUserByUserDB(userDB storages.UserDB) User {
 	}
 }
 
-// Get user's id
+/**
+ * Getter for getting user ID
+ *
+ * @return user ID
+ */
 func (u *User) GetID() int {
 	return u.id
 }
 
-
-// Get user's name
+/**
+ * Getter for getting user name
+ *
+ * @return user name
+ */
 func (u *User) GetName() string {
 	return u.name
 }
-// Get user's email
+
+/**
+ * Getter for getting user email
+ *
+ * @return user email
+ */
 func (u *User) GetEmail() string {
 	return u.email
 }
 
-// Get user's badges
+/**
+ * Getter for getting user badges
+ *
+ * @return user badges
+ */
 func (u *User) GetBadges() []Badge {
 	return u.badges
 }
 
-// Get user's create profile timestamp
+/**
+ * Getter for getting user created timestamp
+ *
+ * @return user created timestamp
+ */
 func (u *User) GetCreatedTimestamp() time.Time {
 	return u.createdTimestamp
 }
 
-// Get user's update profile timestamp
+/**
+ * Getter for getting user updated timestamp
+ *
+ * @return user updated timestamp
+ */
 func (u *User) GetUpdatedTimstamp() time.Time {
 	return u.updatedTimestamp
 }
 
-// Set user's id
+/**
+ * Setter user ID
+ *
+ * @param id 	User ID to set
+ */
 func (u *User) SetID(id int) {
 	u.id = id
 }
 
-func (u *User) HashPassword() {
-	u.password = utils.NewHelper().HashAndSalt(u.password)
-}
-
-func (u *User) SetTimestamp() {
-	u.createdTimestamp = time.Now().Local()
-	u.updatedTimestamp = time.Now().Local()
-}
-
-// Setter for set corrected badge
+/**
+ * Setter user ID
+ *
+ * @param 	allBadgesDB 			All badges in the application
+ * @param 	correctedBadgesDB 		Corrected badges of the user
+ */
 func (u *User) SetCorrectedBadges(allBadgesDB []storages.BadgeDB, correctedBadgesDB []storages.UserBadgeDB) {
 	for _, badgeDB := range allBadgesDB {
 		u.badges = append(u.badges, Badge{
@@ -117,7 +162,29 @@ func (u *User) SetCorrectedBadges(allBadgesDB []storages.BadgeDB, correctedBadge
 	}
 }
 
-// Private method for checking which badge is corrected
+/**
+ * Setter user timestamp to now
+ */
+func (u *User) SetTimestamp() {
+	u.createdTimestamp = time.Now().Local()
+	u.updatedTimestamp = time.Now().Local()
+}
+
+/**
+ * Hash user password
+ */
+func (u *User) HashPassword() {
+	u.password = utils.NewHelper().HashAndSalt(u.password)
+}
+
+/**
+ * Check corrected badge
+ *
+ * @param 	allBadgesDB 	All badges in the application
+ * @param 	badgeID 		Badge ID to check
+ *
+ * @return 	true if badge id is correct, false otherwise
+ */
 func (u *User) isCorrectedBadge(allBadgesDB []storages.UserBadgeDB, badgeID int) bool {
 	for _, correctedBadgeDB := range allBadgesDB {
 		if badgeID == correctedBadgeDB.BadgeID {
@@ -127,7 +194,11 @@ func (u *User) isCorrectedBadge(allBadgesDB []storages.UserBadgeDB, badgeID int)
 	return false
 }
 
-// To UserDB model
+/**
+ * To database model
+ *
+ * @return user database model
+ */
 func (u *User) ToDB() storages.UserDB {
 	tokenExpireHour := time.Hour * utils.NewType().ParseDuration(os.Getenv("TOKEN_EXPIRE_HOUR"))
 	expiredTokenTimestamp := time.Now().Local().Add(tokenExpireHour)
@@ -141,7 +212,13 @@ func (u *User) ToDB() storages.UserDB {
 	}
 }
 
-// Check password with hashpassword
+/**
+ * Check user password
+ *
+ * @param 	password 	Password to check
+ *
+ * @return 	true if input password is correct, false if not
+ */
 func (u *User) IsPasswordCorrect(password string) bool {
 	return utils.NewHelper().ComparePasswords(u.password, password)
 }

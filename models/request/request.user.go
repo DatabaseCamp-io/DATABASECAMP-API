@@ -1,18 +1,29 @@
 package request
 
+// request.user.go
+/**
+ * 	This file is a part of models, used to collect request of user
+ */
+
 import (
 	"DatabaseCamp/errs"
 	"DatabaseCamp/utils"
 )
 
-// Model for receiving request
+/**
+ * 	This class represent user request
+ */
 type UserRequest struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-// Method for validate register request
+/**
+ * Validate register request
+ *
+ * @return the error of validating request
+ */
 func (r UserRequest) ValidateRegister() error {
 	var err error
 	if r.Name == "" {
@@ -23,7 +34,11 @@ func (r UserRequest) ValidateRegister() error {
 	return err
 }
 
-// Method for validate login request
+/**
+ * Validate login request
+ *
+ * @return the error of validating request
+ */
 func (r UserRequest) ValidateLogin() error {
 	var err error
 	if r.Email == "" {
@@ -38,7 +53,11 @@ func (r UserRequest) ValidateLogin() error {
 	return err
 }
 
-// Method for validate edit request
+/**
+ * Validate edit user profile request
+ *
+ * @return the error of validating request
+ */
 func (r UserRequest) ValidateEdit() error {
 	var err error
 	if r.Name == "" {

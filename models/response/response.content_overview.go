@@ -2,7 +2,7 @@ package response
 
 // response.content_overview.go
 /**
- * 	This file is a part of models, used to correct response of content overview
+ * 	This file is a part of models, used to collect response of content overview
  */
 
 import "DatabaseCamp/models/storages"

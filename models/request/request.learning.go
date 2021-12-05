@@ -1,13 +1,25 @@
 package request
 
+// request.learning.go
+/**
+ * 	This file is a part of models, used to collect request of learning
+ */
+
 import "DatabaseCamp/errs"
 
+/**
+ * 	This class represent multiple choice answer request
+ */
 type MultipleChoiceAnswerRequest struct {
 	ActivityID *int `json:"activity_id"`
 	Answer     *int `json:"answer"`
 }
 
-// Check multiple choice answer from activity id
+/**
+ * Validate multiple choice answer request
+ *
+ * @return the error of validating request
+ */
 func (r MultipleChoiceAnswerRequest) Validate() error {
 	if r.ActivityID == nil {
 		return errs.NewBadRequestError("ไม่พบไอดีของกิจกรรมในคำร้องขอ", "Activity ID Not Found")
@@ -17,12 +29,21 @@ func (r MultipleChoiceAnswerRequest) Validate() error {
 	return nil
 }
 
+/**
+ * 	This class represent matching choice answer request
+ */
 type MatchingChoiceAnswerRequest struct {
 	ActivityID *int              `json:"activity_id"`
 	Answer     []PairItemRequest `json:"answer"`
 }
 
-// Check matching choice answer existence
+/**
+ * Validate pair item request
+ *
+ * @param 	pairItem 	PairItemRequest
+ *
+ * @return the error of validating request
+ */
 func (r MatchingChoiceAnswerRequest) validatePairItem(pairItem PairItemRequest) error {
 	if pairItem.Item1 == nil || pairItem.Item2 == nil {
 		return errs.NewBadRequestError("ไม่พบคำตอบในคำร้องขอ", "Answer Not Found")
@@ -30,7 +51,11 @@ func (r MatchingChoiceAnswerRequest) validatePairItem(pairItem PairItemRequest) 
 	return nil
 }
 
-// Check matching choice answer from activity id
+/**
+ * Validate matching choice answer request
+ *
+ * @return the error of validating request
+ */
 func (r MatchingChoiceAnswerRequest) Validate() error {
 	if r.ActivityID == nil {
 		return errs.NewBadRequestError("ไม่พบไอดีของกิจกรรมในคำร้องขอ", "Activity ID Not Found")
@@ -47,12 +72,21 @@ func (r MatchingChoiceAnswerRequest) Validate() error {
 	return nil
 }
 
+/**
+ * 	This class represent completion choice answer request
+ */
 type CompletionAnswerRequest struct {
 	ActivityID *int                 `json:"activity_id"`
 	Answer     []PairContentRequest `json:"answer"`
 }
 
-// Check completion choice answer existence
+/**
+ * Validate pair content request
+ *
+ * @param pairContent PairContent request
+ *
+ * @return the error of validating request
+ */
 func (r CompletionAnswerRequest) validatePairItem(pairContent PairContentRequest) error {
 	if pairContent.Content == nil || pairContent.ID == nil {
 		return errs.NewBadRequestError("ไม่พบคำตอบในคำร้องขอ", "Answer Not Found")
@@ -60,7 +94,11 @@ func (r CompletionAnswerRequest) validatePairItem(pairContent PairContentRequest
 	return nil
 }
 
-// Check completion choice answer from activity id
+/**
+ * Validate completion choice answer request
+ *
+ * @return the error of validating request
+ */
 func (r CompletionAnswerRequest) Validate() error {
 	if r.ActivityID == nil {
 		return errs.NewBadRequestError("ไม่พบไอดีของกิจกรรมในคำร้องขอ", "Activity ID Not Found")
@@ -77,12 +115,17 @@ func (r CompletionAnswerRequest) Validate() error {
 	return nil
 }
 
+// Model for matching choice answer request
 type PairItemRequest struct {
 	Item1 *string `json:"item1"`
 	Item2 *string `json:"item2"`
 }
 
-// Check pair item existence
+/**
+ * Validate pair item request request
+ *
+ * @return the error of validating request
+ */
 func (m PairItemRequest) Validate() error {
 	if m.Item1 == nil || m.Item2 == nil {
 		return errs.NewBadRequestError("ไม่พบเนื้อหาของคำตอบในคำร้องขอ", "Content Answer Not Found")
@@ -90,12 +133,17 @@ func (m PairItemRequest) Validate() error {
 	return nil
 }
 
+// Model for completion choice answer request
 type PairContentRequest struct {
 	ID      *int    `json:"completion_choice_id"`
 	Content *string `json:"content"`
 }
 
-// Check pair content existence
+/**
+ * Validate pair content request request
+ *
+ * @return the error of validating request
+ */
 func (m PairContentRequest) Validate() error {
 	if m.ID == nil {
 		return errs.NewBadRequestError("ไม่พบไอดีของช้อยในคำร้องขอ", "Choice ID Not Found")
