@@ -1,5 +1,10 @@
 package loaders
 
+// loader.hint.go
+/**
+ * 	This file is a part of controller, used to load concurrency hints data
+ */
+
 import (
 	"DatabaseCamp/models/general"
 	"DatabaseCamp/models/storages"
@@ -7,30 +12,58 @@ import (
 	"sync"
 )
 
+/**
+ * This class load concurrency hints data
+ */
 type hintLoader struct {
-	learningRepo    repositories.ILearningRepository
-	userRepo        repositories.IUserRepository
-	activityHintsDB []storages.HintDB
-	userHintsDB     []storages.UserHintDB
-	userDB          *storages.UserDB
+	learningRepo repositories.ILearningRepository // repository for hints data
+	userRepo     repositories.IUserRepository     // repository for load user data
+
+	activityHintsDB []storages.HintDB     // hints of the activity from the database
+	userHintsDB     []storages.UserHintDB // user hints from the database
+	userDB          *storages.UserDB      // user data from the database
 }
 
+/**
+ * Constructor creates a new hintLoader instance
+ * @param   learningRepo    Learning Repository for load hints data
+ * @param   userRepo        User Repository for load user data
+ * @return 	instance of hintLoader
+ */
 func NewHintLoader(learningRepo repositories.ILearningRepository, userRepo repositories.IUserRepository) *hintLoader {
 	return &hintLoader{learningRepo: learningRepo, userRepo: userRepo}
 }
 
+/**
+ * Getter for getting activityHintsDB
+ * @return activityHintsDB
+ */
 func (l *hintLoader) GetActivityHintsDB() []storages.HintDB {
 	return l.activityHintsDB
 }
 
+/**
+ * Getter for getting userHintsDB
+ * @return userHintsDB
+ */
 func (l *hintLoader) GetUserHintsDB() []storages.UserHintDB {
 	return l.userHintsDB
 }
 
+/**
+ * Getter for getting userDB
+ * @return userDB
+ */
 func (l *hintLoader) GetUserDB() *storages.UserDB {
 	return l.userDB
 }
 
+/**
+ * load concurrency all activity data from the database
+ * @param   userID     		User ID for getting user data
+ * @param   activityID    	Activity ID for getting hints data
+ * @return the error of loading data
+ */
 func (l *hintLoader) Load(userID int, activityID int) error {
 	var wg sync.WaitGroup
 	var err error
@@ -43,6 +76,11 @@ func (l *hintLoader) Load(userID int, activityID int) error {
 	return err
 }
 
+/**
+ * load user data from the database
+ * @param   concurrent     	Concurrent model for doing load concurrency
+ * @param   userID    		User ID for getting user data
+ */
 func (l *hintLoader) loadUser(concurrent *general.Concurrent, userID int) {
 	defer concurrent.Wg.Done()
 	var err error
@@ -52,6 +90,12 @@ func (l *hintLoader) loadUser(concurrent *general.Concurrent, userID int) {
 	}
 }
 
+/**
+ * load user hints from the database
+ * @param   concurrent     	Concurrent model for doing load concurrency
+ * @param   userID    		User ID for getting user hints of the activity data
+ * @param   activityID    	Activity ID for indicate activity
+ */
 func (l *hintLoader) loadUserHintsAsync(concurrent *general.Concurrent, userID int, activityID int) {
 	defer concurrent.Wg.Done()
 	result, e := l.userRepo.GetUserHint(userID, activityID)
@@ -61,6 +105,11 @@ func (l *hintLoader) loadUserHintsAsync(concurrent *general.Concurrent, userID i
 	l.userHintsDB = append(l.userHintsDB, result...)
 }
 
+/**
+ * load hints of the activity from the database
+ * @param   concurrent     	Concurrent model for doing load concurrency
+ * @param   activityID    	Activity ID for getting hints of the activity
+ */
 func (l *hintLoader) loadActivityHints(concurrent *general.Concurrent, activityID int) {
 	defer concurrent.Wg.Done()
 	result, e := l.learningRepo.GetActivityHints(activityID)
