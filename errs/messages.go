@@ -1,5 +1,11 @@
 package errs
 
+// messages.go
+/**
+ * 	This file used to defind all error in the application
+ */
+
+// Thai and english message about server error
 const (
 	INTERNAL_SERVER_ERROR_TH = "เกิดข้อผิดพลาด"
 	INTERNAL_SERVER_ERROR_EN = "Internal server error"
@@ -11,6 +17,7 @@ const (
 	BAD_REQUEST_ERROR_EN = "Bad request"
 )
 
+// Thai and english message about manipulation error
 const (
 	INSERT_ERROR_TH = "เกิดข้อผิดพลาดในการบันทึกข้อมูล"
 	INSERT_ERROR_EN = "Saving data error"
@@ -22,6 +29,7 @@ const (
 	UPDATE_ERROR_EN = "Update data error"
 )
 
+// Thai and english message about exam and activity error
 const (
 	EXAM_NOT_FOUND_TH = "ไม่พบข้อสอบ"
 	EXAM_NOT_FOUND_EN = "Exam not found"
@@ -48,6 +56,7 @@ const (
 	FINAL_EXAM_BAGES_NOT_ENOUGH_EN = "Not enough badges to do final exam"
 )
 
+// Thai and english message about user error
 const (
 	USER_NOT_FOUND_TH = "ไม่พบผู้ใช้"
 	USER_NOT_FOUND_EN = "User not found"
@@ -62,23 +71,27 @@ const (
 	EMAIL_OR_PASSWORD_NOT_CORRECT_EN = "Email or password not correct"
 )
 
+// Thai and english message about verification
 const (
 	UNEXPECTED_SIGNING_METHOD_TH = "วิธีการลงนามที่ไม่คาดคิด"
 	UNEXPECTED_SIGNING_METHOD_EN = "Unexpected signing method"
 )
 
+// Server error
 var (
 	ErrInternalServerError     = NewInternalServerError(INTERNAL_SERVER_ERROR_TH, INTERNAL_SERVER_ERROR_EN)
 	ErrServiceUnavailableError = NewServiceUnavailableError(SERVICE_UNAVAILABLE_ERROR_TH, SERVICE_UNAVAILABLE_ERROR_EN)
 	ErrBadRequestError         = NewBadRequestError(BAD_REQUEST_ERROR_TH, BAD_REQUEST_ERROR_EN)
 )
 
+// Manipulation error
 var (
 	ErrInsertError = NewInternalServerError(INSERT_ERROR_TH, INSERT_ERROR_EN)
 	ErrLoadError   = NewInternalServerError(LOAD_ERROR_TH, LOAD_ERROR_EN)
 	ErrUpdateError = NewInternalServerError(UPDATE_ERROR_TH, UPDATE_ERROR_EN)
 )
 
+// Exam and Activity error
 var (
 	ErrExamNotFound              = NewNotFoundError(EXAM_NOT_FOUND_TH, EXAM_NOT_FOUND_EN)
 	ErrContentNotFound           = NewNotFoundError(CONTENT_NOT_FOUND_TH, CONTENT_NOT_FOUND_EN)
@@ -90,6 +103,7 @@ var (
 	ErrFinalExamBadgesNotEnough  = NewBadRequestError(FINAL_EXAM_BAGES_NOT_ENOUGH_TH, FINAL_EXAM_BAGES_NOT_ENOUGH_EN)
 )
 
+// User error
 var (
 	ErrUserNotFound              = NewNotFoundError(USER_NOT_FOUND_TH, USER_NOT_FOUND_EN)
 	ErrLeaderBoardNotFound       = NewNotFoundError(LEADER_BOARD_NOT_FOUND_TH, LEADER_BOARD_NOT_FOUND_EN)
@@ -97,6 +111,7 @@ var (
 	ErrEmailOrPasswordNotCorrect = NewBadRequestError(EMAIL_OR_PASSWORD_NOT_CORRECT_TH, EMAIL_OR_PASSWORD_NOT_CORRECT_EN)
 )
 
+// Verification error
 var (
 	ErrUnExpectedsigningMethod = NewForbiddenError(UNEXPECTED_SIGNING_METHOD_TH, UNEXPECTED_SIGNING_METHOD_EN)
 )

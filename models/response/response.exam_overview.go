@@ -1,10 +1,16 @@
 package response
 
+// response.exam_overview.go
+/**
+ * 	This file is a part of models, used to collect response of exam overview
+ */
+
 import (
 	"DatabaseCamp/models/entities"
 	"DatabaseCamp/models/storages"
 )
 
+// Model of exam overview item to prepare exam overview response
 type examDetailOverview struct {
 	ExamID           int                            `json:"exam_id"`
 	ExamType         string                         `json:"exam_type"`
@@ -14,18 +20,37 @@ type examDetailOverview struct {
 	Results          *[]entities.ExamResultOverview `json:"results,omitempty"`
 }
 
+/**
+ * This class represent exam overview response
+ */
 type ExamOverviewResponse struct {
 	PreExam   *examDetailOverview   `json:"pre_exam"`
 	MiniExam  *[]examDetailOverview `json:"mini_exam"`
 	FinalExam *examDetailOverview   `json:"final_exam"`
 }
 
+/**
+ * Constructor creates a new ExamOverviewResponse instance
+ *
+ * @param examResultsDB		Exam result from database to prepare exam overview response
+ * @param examsDB			Exam from database to prepare exam overview response
+ * @param canDoFinalExam	Boolean that indicate user can do the final exam
+ *
+ * @return 	instance of ExamOverviewResponse
+ */
 func NewExamOverviewResponse(examResultsDB []storages.ExamResultDB, examsDB []storages.ExamDB, canDoFinalExam bool) *ExamOverviewResponse {
 	response := ExamOverviewResponse{}
 	response.prepare(examResultsDB, examsDB, canDoFinalExam)
 	return &response
 }
 
+/**
+* Prepare exam overview response
+*
+* @param examResultsDB		Exam result from database to prepare exam overview response
+* @param examsDB			Exam from database to prepare exam overview response
+* @param canDoFinalExam		Boolean that indicate user can do the final exam
+ */
 func (o *ExamOverviewResponse) prepare(examResultsDB []storages.ExamResultDB, examsDB []storages.ExamDB, canDoFinalExam bool) {
 	examResultMap := o.createExamResultMap(examResultsDB)
 	for _, examDB := range examsDB {
@@ -60,6 +85,15 @@ func (o *ExamOverviewResponse) prepare(examResultsDB []storages.ExamResultDB, ex
 	}
 }
 
+/**
+ * Create map of exam result
+ * [key]	exam id
+ * [value]	exam result overview
+ *
+ * @param examResultsDB	 exam result from database to create exam result map
+ *
+ * @return map of exam result
+ */
 func (o *ExamOverviewResponse) createExamResultMap(examResultsDB []storages.ExamResultDB) map[int]*[]entities.ExamResultOverview {
 	examResultMap := map[int]*[]entities.ExamResultOverview{}
 	examScoreCount := o.countExamScore(examResultsDB)
@@ -78,6 +112,15 @@ func (o *ExamOverviewResponse) createExamResultMap(examResultsDB []storages.Exam
 	return examResultMap
 }
 
+/**
+ * Create map of count exam score
+ * [key]  	exam result id
+ * [value]	score of the exam result
+ *
+ * @param examResultsDB	 exam result from database to calculate exam score
+ *
+ * @return exam score
+ */
 func (o *ExamOverviewResponse) countExamScore(examResultsDB []storages.ExamResultDB) map[int]int {
 	examCountScore := map[int]int{}
 	for _, examResultDB := range examResultsDB {

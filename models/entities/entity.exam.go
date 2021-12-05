@@ -1,5 +1,10 @@
 package entities
 
+// entity.exam.go
+/**
+ * 	This file is a part of models, used to collect model for entities of exam
+ */
+
 import (
 	"DatabaseCamp/models/general"
 	"DatabaseCamp/models/request"
@@ -9,6 +14,7 @@ import (
 	"time"
 )
 
+// Exam type
 var ExamType = struct {
 	Pretest  string
 	MiniExam string
@@ -19,11 +25,13 @@ var ExamType = struct {
 	"POST",
 }
 
+// Model of exam activity result for Exam entity
 type ExamActivityResult struct {
 	ActivityID int
 	Score      int
 }
 
+// Model of exam result overview for Exam entity
 type ExamResultOverview struct {
 	ExamResultID     int                  `json:"exam_result_id"`
 	TotalScore       int                  `json:"score"`
@@ -32,6 +40,7 @@ type ExamResultOverview struct {
 	CreatedTimestamp time.Time            `json:"created_timestamp"`
 }
 
+// Model of exam info for Exam entity
 type ExamInfo struct {
 	ID               int       `json:"exam_id"`
 	Type             string    `json:"exam_type"`
@@ -42,24 +51,56 @@ type ExamInfo struct {
 	BadgeID          int       `json:"badge_id"`
 }
 
+/**
+ * This class manage exam model
+ */
 type Exam struct {
 	info       ExamInfo
 	activities []Activity
 	result     *ExamResultOverview
 }
 
+/**
+ * Getter for getting exam result
+ *
+ * @return exam result
+ */
 func (e *Exam) GetResult() *ExamResultOverview {
 	return e.result
 }
 
+/**
+ * Getter for getting activities of the exam
+ *
+ * @return activities of the exam
+ */
 func (e *Exam) GetActivities() []Activity {
 	return e.activities
 }
 
+/**
+ * Getter for getting information of the exam
+ *
+ * @return information of the exam
+ */
 func (e *Exam) GetInfo() ExamInfo {
 	return e.info
 }
 
+/**
+ * Setter for set exam result ID
+ *
+ * @param  id 	Exam result id to set
+ */
+func (e *Exam) SetResultID(id int) {
+	e.result.ExamResultID = id
+}
+
+/**
+ * To exam result activities database model
+ *
+ * @return exam result activities database model
+ */
 func (e *Exam) ToExamResultActivitiesDB() []storages.ExamResultActivityDB {
 	resultActivities := make([]storages.ExamResultActivityDB, 0)
 	for _, resultActivity := range e.result.ActivitiesResult {
@@ -71,6 +112,13 @@ func (e *Exam) ToExamResultActivitiesDB() []storages.ExamResultActivityDB {
 	return resultActivities
 }
 
+/**
+ * To exam result database model
+ *
+ * @param 	userID 		User id to set exam result model
+ *
+ * @return exam result database model
+ */
 func (e *Exam) ToExamResultDB(userID int) *storages.ExamResultDB {
 	return &storages.ExamResultDB{
 		ExamID:           e.info.ID,
@@ -81,6 +129,11 @@ func (e *Exam) ToExamResultDB(userID int) *storages.ExamResultDB {
 	}
 }
 
+/**
+ * Prepare exam result
+ *
+ * @param 	examResultDB 		Exam result to prepare
+ */
 func (e *Exam) PrepareResult(examResultDB storages.ExamResultDB) {
 	e.result = &ExamResultOverview{
 		ExamResultID:     examResultDB.ID,
@@ -90,6 +143,11 @@ func (e *Exam) PrepareResult(examResultDB storages.ExamResultDB) {
 	}
 }
 
+/**
+ * Prepare exam
+ *
+ * @param 	examActivitiesDB 	Exam activities to prepare
+ */
 func (e *Exam) Prepare(examActivitiesDB []storages.ExamActivityDB) {
 	activityChoiceDBMap := map[int]interface{}{}
 	examActivityDBMap := map[int]storages.ActivityDB{}
@@ -115,6 +173,13 @@ func (e *Exam) Prepare(examActivitiesDB []storages.ExamActivityDB) {
 	}
 }
 
+/**
+ * Initail Map of activity choice
+ *
+ * @param 	activityID 			Activity ID to initialize
+ * @param 	typeID 				Activity type ID to initialize
+ * @param 	activityChoiceMap 	Map of activity choice
+ */
 func (e *Exam) initialActivityChoiceMap(activityID int, typeID int, activityChoiceMap map[int]interface{}) {
 	if typeID == 1 {
 		temp := make([]storages.MatchingChoiceDB, 0)
@@ -131,6 +196,12 @@ func (e *Exam) initialActivityChoiceMap(activityID int, typeID int, activityChoi
 	}
 }
 
+/**
+ * Append exam activity choice to map of activity choice
+ *
+ * @param 	examActivity 			exam activity to append
+ * @param 	activityChoiceMap 		Map of activity choice
+ */
 func (e *Exam) appendExamActivityChoice(examActivity storages.ExamActivityDB, activityChoiceMap map[int]interface{}) {
 	choices := activityChoiceMap[examActivity.ActivityID]
 	if examActivity.ActivityTypeID == 1 {
@@ -148,6 +219,13 @@ func (e *Exam) appendExamActivityChoice(examActivity storages.ExamActivityDB, ac
 	}
 }
 
+/**
+ * Convert exam activity model from the database to choice
+ *
+ * @param 	examActivity 			exam activity model from the database
+ *
+ * @return  choice that converted from exam activity model
+ */
 func (e *Exam) examActivityToChoice(examActivity storages.ExamActivityDB) interface{} {
 	if examActivity.ActivityTypeID == 1 {
 		choice := storages.MatchingChoiceDB{}
@@ -168,6 +246,14 @@ func (e *Exam) examActivityToChoice(examActivity storages.ExamActivityDB) interf
 	}
 }
 
+/**
+ * Check exam answers
+ *
+ * @param 	answers 	Answers of the exam
+ *
+ * @return  exam result overview
+ * @return  the error of the checking exam
+ */
 func (e *Exam) CheckAnswer(answers []request.ExamActivityAnswer) (*ExamResultOverview, error) {
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
@@ -195,12 +281,20 @@ func (e *Exam) CheckAnswer(answers []request.ExamActivityAnswer) (*ExamResultOve
 	return e.result, err
 }
 
+/**
+ * Summary exam result
+ */
 func (e *Exam) summaryResult() {
 	answerTotalScore := e.GetAnswerTotalScore()
 	activitiesTotalScore := e.GetActivitiesTotalScore()
 	e.result.IsPassed = e.isPassed(answerTotalScore, activitiesTotalScore)
 }
 
+/**
+ * Calculate total score for the answer
+ *
+ * @return score of the answers
+ */
 func (e *Exam) GetAnswerTotalScore() int {
 	sum := 0
 	for _, activityResult := range e.result.ActivitiesResult {
@@ -210,6 +304,11 @@ func (e *Exam) GetAnswerTotalScore() int {
 	return sum
 }
 
+/**
+ * Get total score of the activities
+ *
+ * @return total score of the activities
+ */
 func (e *Exam) GetActivitiesTotalScore() int {
 	sum := 0
 	for _, activity := range e.activities {
@@ -218,6 +317,14 @@ func (e *Exam) GetActivitiesTotalScore() int {
 	return sum
 }
 
+/**
+ * Check pass exam
+ *
+ * @param answerTotalScore			Total score of the Answers
+ * @param activitiesTotalScore		Total score of the activities
+ *
+ * @return true of passed the exam, false otherwise
+ */
 func (e *Exam) isPassed(answerTotalScore int, activitiesTotalScore int) bool {
 	passedRate := 0.5
 	if activitiesTotalScore == 0 {
@@ -228,6 +335,13 @@ func (e *Exam) isPassed(answerTotalScore int, activitiesTotalScore int) bool {
 
 }
 
+/**
+ * Check concurrency activity answer
+ *
+ * @param concurrent	Concurrency model for doing concurrent
+ * @param activity		Activity to check
+ * @param answer		Answer of the activity
+ */
 func (e *Exam) checkActivityAsync(concurrent *general.Concurrent, activity Activity, answer interface{}) {
 	defer concurrent.Wg.Done()
 	score := 0
