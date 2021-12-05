@@ -201,9 +201,6 @@ func (r userRepository) GetRankingLeaderBoard() ([]storages.RankingDB, error) {
 	err := r.Database.GetDB().
 		Table(storages.ViewName.Ranking).
 		Limit(20).
-		Order("ranking ASC").
-		Order("name ASC").
-		Order(storages.IDName.User + " ASC").
 		Find(&ranking).
 		Error
 	return ranking, err
