@@ -1,12 +1,19 @@
 package response
 
+// response.user.go
+/**
+ * 	This file is a part of models, used to collect response of user
+ */
+
 import (
 	"DatabaseCamp/models/entities"
 	"DatabaseCamp/models/storages"
 	"time"
 )
 
-// Model for response user
+/**
+ *  This class represent user response
+ */
 type UserResponse struct {
 	ID               int       `json:"user_id"`
 	Name             string    `json:"name"`
@@ -17,6 +24,13 @@ type UserResponse struct {
 	UpdatedTimestamp time.Time ` json:"updated_timestamp"`
 }
 
+/**
+ * Constructor creates a new VideoLectureResponse instance
+ *
+ * @param user			Entities user from database to create user response
+ *
+ * @return 	instance of UserReponse
+ */
 func NewUserReponse(user entities.User) UserResponse {
 	response := UserResponse{
 		ID:               user.GetID(),
@@ -30,7 +44,9 @@ func NewUserReponse(user entities.User) UserResponse {
 	return response
 }
 
-// Model for response get profile
+/**
+ * This class represent get profile response
+ */
 type GetProfileResponse struct {
 	ID               int              `json:"user_id"`
 	Name             string           `json:"name"`
@@ -40,6 +56,14 @@ type GetProfileResponse struct {
 	CreatedTimestamp time.Time        ` json:"created_timestamp"`
 }
 
+/**
+ * Constructor creates a new VideoLectureResponse instance
+ *
+ * @param profileDB			Profile model from database to create get profile response
+ * @param badges			Badge model from database to create get profile response
+ *
+ * @return 	instance of GetProfileResponse
+ */
 func NewGetProfileResponse(profileDB storages.ProfileDB, badges []entities.Badge) GetProfileResponse {
 	response := GetProfileResponse{
 		ID:               profileDB.ID,
@@ -52,12 +76,16 @@ func NewGetProfileResponse(profileDB storages.ProfileDB, badges []entities.Badge
 	return response
 }
 
-// Model for response edit profile
+/**
+ * This class represent edit profile response
+ */
 type EditProfileResponse struct {
 	UpdatedName string `json:"updated_name"`
 }
 
-// Model for response ranking
+/**
+ * This class represent ranking response
+ */
 type RankingResponse struct {
 	UserRanking storages.RankingDB   `json:"user_ranking"`
 	LeaderBoard []storages.RankingDB `json:"leader_board"`
