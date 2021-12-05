@@ -24,10 +24,12 @@ type IJwt interface {
 	JwtVerify(c *fiber.Ctx) error
 }
 
+// Create JFT middle ware instance
 func NewJwtMiddleware(repo repositories.IUserRepository) jwtMiddleware {
 	return jwtMiddleware{Repo: repo}
 }
 
+// Sign in JWT
 func (j jwtMiddleware) JwtSign(id int) (string, error) {
 	atClaims := jwt.MapClaims{}
 	atClaims["id"] = id
@@ -49,6 +51,7 @@ func (j jwtMiddleware) JwtSign(id int) (string, error) {
 	return token, nil
 }
 
+// Verify JWT
 func (j jwtMiddleware) JwtVerify(c *fiber.Ctx) error {
 	handleUtil := utils.NewHandle()
 	bearer, err := j.jwtFromHeader(c)
@@ -90,6 +93,7 @@ func (j jwtMiddleware) JwtVerify(c *fiber.Ctx) error {
 	return c.Next()
 }
 
+// Update token
 func (j jwtMiddleware) updateToken(id int, token string) error {
 	tokenExpireHour := time.Hour * utils.NewType().ParseDuration(os.Getenv("TOKEN_EXPIRE_HOUR"))
 	expiredTokenTimestamp := time.Now().Local().Add(tokenExpireHour)
@@ -100,6 +104,7 @@ func (j jwtMiddleware) updateToken(id int, token string) error {
 	return err
 }
 
+// Get claim
 func (j jwtMiddleware) getClaims(token *jwt.Token) (jwt.MapClaims, error) {
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
@@ -109,6 +114,7 @@ func (j jwtMiddleware) getClaims(token *jwt.Token) (jwt.MapClaims, error) {
 	}
 }
 
+// Set claim
 func (j jwtMiddleware) setClaims(c *fiber.Ctx, claims jwt.MapClaims) {
 	for k, v := range claims {
 		if k != "secret" {
@@ -117,6 +123,7 @@ func (j jwtMiddleware) setClaims(c *fiber.Ctx, claims jwt.MapClaims) {
 	}
 }
 
+// Ceeck validity's user
 func (j jwtMiddleware) validUser(token string, id int) bool {
 	userDB, err := j.Repo.GetUserByID(id)
 	if err != nil || userDB == nil {
@@ -130,6 +137,7 @@ func (j jwtMiddleware) validUser(token string, id int) bool {
 	return true
 }
 
+// From Heder JWT
 func (j jwtMiddleware) jwtFromHeader(c *fiber.Ctx) (string, error) {
 	auth := c.Get("Authorization")
 	l := len("Bearer")
