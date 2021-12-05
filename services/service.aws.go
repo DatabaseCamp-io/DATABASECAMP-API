@@ -1,5 +1,10 @@
 package services
 
+// service.aws.go
+/**
+ * 	This file is a part of services, used to connect to the Amason S3
+ */
+
 import (
 	"os"
 	"time"
@@ -10,17 +15,20 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
+/**
+ * This class manage connection to Amazon S3
+ */
 type awsService struct {
 	Sess *session.Session
 }
 
-type IAwsService interface {
-	GetFileLink(imagekey string) (string, error)
-}
-
 var awsInstantiated *awsService = nil
 
-// Get AWS service instance
+/**
+ * Constructor creates a new awsService instance
+ *
+ * @return 	instance of awsService
+ */
 func GetAwsServiceInstance() *awsService {
 	if awsInstantiated == nil {
 		sess, _ := session.NewSession(getConfig())
@@ -29,7 +37,11 @@ func GetAwsServiceInstance() *awsService {
 	return awsInstantiated
 }
 
-// Get cradentials
+/**
+ * Get credential of the amazon s3
+ *
+ * @return credential of the amazon s3
+ */
 func getCredentials() *credentials.Credentials {
 	accessKeyID := os.Getenv("AWS_ACCESS_KEY_ID")
 	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
@@ -40,7 +52,11 @@ func getCredentials() *credentials.Credentials {
 	)
 }
 
-// Get config
+/**
+ * Get config of the amazon s3
+ *
+ * @return config of the amazon s3
+ */
 func getConfig() *aws.Config {
 	region := os.Getenv("AWS_REGION")
 	return &aws.Config{
@@ -49,7 +65,13 @@ func getConfig() *aws.Config {
 	}
 }
 
-// Get object input
+/**
+ * Get object Input of the amazon s3
+ *
+ * @param 	imagekey  object key for getting file link
+ *
+ * @return object Input of the amazon s3
+ */
 func (s awsService) getObjectInput(imageKey string) *s3.GetObjectInput {
 	bucket := os.Getenv("AWS_BUCKET_NAME")
 	return &s3.GetObjectInput{
@@ -58,7 +80,14 @@ func (s awsService) getObjectInput(imageKey string) *s3.GetObjectInput {
 	}
 }
 
-// Get file link
+/**
+ * Get File link from amazon s3
+ *
+ * @param 	imagekey  object key for getting file link
+ *
+ * @return file link
+ * @return the error of getting file link
+ */
 func (s awsService) GetFileLink(imageKey string) (string, error) {
 	svc := s3.New(s.Sess)
 	req, _ := svc.GetObjectRequest(s.getObjectInput(imageKey))

@@ -18,7 +18,7 @@ import (
  * This class handle request of the learning
  */
 type learningHandler struct {
-	Controller controllers.ILearningController
+	Controller controllers.ILearningController // Learning controller for doing business logic of the learning
 }
 
 /**
