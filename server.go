@@ -69,8 +69,8 @@ func setupFiber() error {
 	// Create database
 	db := database.New()
 
-	// Create Service
-	service := services.GetAwsServiceInstance()
+	// Create Storage Service
+	service := services.GetCloudStorageServiceInstance()
 
 	// Create Repository
 	userRepo := repositories.NewUserRepository(db)

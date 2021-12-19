@@ -15,8 +15,8 @@ import (
  * 	This class manipulation learning data to other application
  */
 type learningRepository struct {
-	Database database.IDatabase   // Database to do database manipulation
-	Service  services.IAwsService // Service to do database manipulation
+	Database database.IDatabase       // Database to do database manipulation
+	Service  services.IStroageService // Service to do database manipulation
 }
 
 /**
@@ -27,7 +27,7 @@ type learningRepository struct {
  *
  * @return 	instance of learningRepository
  */
-func NewLearningRepository(db database.IDatabase, service services.IAwsService) learningRepository {
+func NewLearningRepository(db database.IDatabase, service services.IStroageService) learningRepository {
 	return learningRepository{Database: db, Service: service}
 }
 
@@ -219,13 +219,13 @@ func (r learningRepository) GetActivityHints(activityID int) ([]storages.HintDB,
 }
 
 /**
- * Get video file link from the AWS service
+ * Get video file link from the Stroage service
  *
- * @param 	imagekey  Image key of the file in amazon s3
+ * @param 	objectName  object name in the storage
  *
  * @return file link
  * @return the error of getting file link
  */
-func (r learningRepository) GetVideoFileLink(imagekey string) (string, error) {
-	return r.Service.GetFileLink(imagekey)
+func (r learningRepository) GetVideoFileLink(objectName string) (string, error) {
+	return r.Service.GetFileLink(objectName)
 }

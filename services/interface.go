@@ -6,17 +6,17 @@ package services
  */
 
 /**
- * 	 Interface to show function in aws service that others can use
+ * 	 Interface to show function in stroage service that others can use
  */
-type IAwsService interface {
+type IStroageService interface {
 
 	/**
-	 * Get File link from amazon s3
+	 * Get signed File link from stroage service
 	 *
 	 * @param 	imagekey  object key for getting file link
 	 *
 	 * @return file link
 	 * @return the error of getting file link
 	 */
-	GetFileLink(imagekey string) (string, error)
+	GetFileLink(objectName string) (string, error)
 }
