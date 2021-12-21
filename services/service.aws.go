@@ -89,9 +89,9 @@ func (s awsService) getObjectInput(imageKey string) *s3.GetObjectInput {
  * @return file link
  * @return the error of getting file link
  */
-func (s awsService) GetFileLink(imageKey string) (string, error) {
+func (s awsService) GetFileLink(objectName string) (string, error) {
 	svc := s3.New(s.Sess)
-	req, _ := svc.GetObjectRequest(s.getObjectInput(imageKey))
+	req, _ := svc.GetObjectRequest(s.getObjectInput(objectName))
 	expireTime := 60 * time.Minute
 	url, err := req.Presign(expireTime)
 	return url, err

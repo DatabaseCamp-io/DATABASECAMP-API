@@ -36,6 +36,19 @@ func New() *database {
 }
 
 /**
+ * Get a name of the database from the environment
+ *
+ * @return name of the database
+ */
+func getDBName() string {
+	if os.Getenv("MODE") == "develop" {
+		return os.Getenv("DB_NAME_DEVELOP")
+	} else {
+		return os.Getenv("DB_NAME_DEVELOP")
+	}
+}
+
+/**
  * Get a DSN of the database from the environment
  *
  * @return DSN of the database
@@ -46,7 +59,7 @@ func getDSN() string {
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
+		getDBName(),
 	)
 }
 
