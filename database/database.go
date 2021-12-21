@@ -44,7 +44,7 @@ func getDBName() string {
 	if os.Getenv("MODE") == "develop" {
 		return os.Getenv("DB_NAME_DEVELOP")
 	} else {
-		return os.Getenv("DB_NAME_DEVELOP")
+		return os.Getenv("DB_NAME_PRODUCTION")
 	}
 }
 

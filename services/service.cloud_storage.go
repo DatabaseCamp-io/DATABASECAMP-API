@@ -1,18 +1,17 @@
 package services
 
 import (
-	"context"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"time"
 
-	credentials "cloud.google.com/go/iam/credentials/apiv1"
 	"cloud.google.com/go/storage"
-
-	credentialspb "google.golang.org/genproto/googleapis/iam/credentials/v1"
+	"golang.org/x/oauth2/google"
 )
 
 type cloudStorageService struct {
-	bucketName     string
-	googleAccessID string
+	bucketName string
 }
 
 var cloudStorageInstantiated *cloudStorageService = nil
@@ -26,36 +25,30 @@ func GetCloudStorageServiceInstance() *cloudStorageService {
 
 func initGoogleCloudStorageService() *cloudStorageService {
 	return &cloudStorageService{
-		bucketName:     os.Getenv("CLOUD_BUCKET_NAME"),
-		googleAccessID: os.Getenv("CLOUD_GOOGLE_ACCESS_ID"),
+		bucketName: os.Getenv("CLOUD_BUCKET_NAME"),
 	}
-}
-
-func (c cloudStorageService) signBytes(b []byte) ([]byte, error) {
-	ctx := context.Background()
-
-	client, _ := credentials.NewIamCredentialsClient(ctx)
-
-	req := &credentialspb.SignBlobRequest{
-		Payload: b,
-		Name:    c.googleAccessID,
-	}
-
-	resp, err := client.SignBlob(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.SignedBlob, err
 }
 
 func (c cloudStorageService) GetFileLink(objectName string) (string, error) {
-	options := storage.SignedURLOptions{
-		GoogleAccessID: c.googleAccessID,
-		SignBytes:      c.signBytes,
+	jsonKey, err := ioutil.ReadFile("service_account.json")
+	if err != nil {
+		return "", err
 	}
 
-	url, err := storage.SignedURL(c.bucketName, objectName, &options)
+	conf, err := google.JWTConfigFromJSON(jsonKey)
+	if err != nil {
+		return "", err
+	}
+
+	opts := &storage.SignedURLOptions{
+		Scheme:         storage.SigningSchemeV4,
+		Method:         http.MethodGet,
+		GoogleAccessID: conf.Email,
+		PrivateKey:     conf.PrivateKey,
+		Expires:        time.Now().Add(15 * time.Minute),
+	}
+
+	url, err := storage.SignedURL(c.bucketName, objectName, opts)
 
 	return url, err
 }

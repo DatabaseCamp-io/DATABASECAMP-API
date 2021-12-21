@@ -30,6 +30,8 @@ SELECT
     ORDER BY
         `database_camp`.`User`.`point`
     DESC
+        ,
+        `database_camp`.`User`.`user_id`
 ) AS `ranking`
 FROM
     `database_camp`.`User`

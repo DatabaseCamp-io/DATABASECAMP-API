@@ -3,7 +3,6 @@ module DatabaseCamp
 go 1.16
 
 require (
-	cloud.google.com/go v0.99.0
 	cloud.google.com/go/storage v1.18.2
 	github.com/aws/aws-sdk-go v1.41.9
 	github.com/go-sql-driver/mysql v1.6.0
@@ -13,7 +12,8 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
-	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa
+	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
+	google.golang.org/api v0.63.0 // indirect
 	gorm.io/driver/mysql v1.1.2
 	gorm.io/gorm v1.21.15
 )
