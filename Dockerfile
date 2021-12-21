@@ -16,6 +16,7 @@ WORKDIR /usr/src/app
 
 COPY --from=builder /src/DatabaseCamp /usr/src/app/DatabaseCamp
 COPY --from=builder /src/.env /usr/src/app/.env
+COPY --from=builder /src/service_account.json /usr/src/app/service_account.json
 
 RUN apk add dumb-init
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
