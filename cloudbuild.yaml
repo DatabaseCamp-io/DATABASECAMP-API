@@ -1,6 +1,6 @@
 steps:
   - name: "gcr.io/cloud-builders/gsutil"
-    args: ["cp", "gs://databasecamp-private/backend-infrastructure/service_account.json", "./.service_account.json"]
+    args: ["cp", "gs://databasecamp-private/backend-infrastructure/service_account.json", "./service_account.json"]
   - name: "gcr.io/cloud-builders/gsutil"
     args: ["cp", "gs://databasecamp-private/backend-infrastructure/.env.staging", "./.env"]
   - name: 'gcr.io/cloud-builders/docker'
