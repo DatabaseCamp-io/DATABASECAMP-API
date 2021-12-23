@@ -83,6 +83,10 @@ func (r *router) setup() {
 			"build_time":   BuildTime,
 		})
 	})
+
+	r.Router.Get("/healthz", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).SendString("OK")
+	})
 }
 
 /**

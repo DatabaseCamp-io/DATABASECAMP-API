@@ -115,23 +115,38 @@ func setupFiber() error {
 	return app.Shutdown()
 }
 
+func setupLivenessProbe() error {
+	_, err := os.Create("/tmp/live")
+	if err != nil {
+		return err
+	}
+	defer os.Remove("/tmp/live")
+	return nil
+}
+
 /**
  * Main function of the application
  */
 func main() {
 
-	// Load environment variables
-	err := godotenv.Load()
+	err := setupLivenessProbe()
 	if err != nil {
 		logs.New().Error(err)
-		return
+		log.Fatal(err)
+	}
+
+	// Load environment variables
+	err = godotenv.Load()
+	if err != nil {
+		logs.New().Error(err)
+		log.Fatal(err)
 	}
 
 	// Setup time zone
 	err = setupTimeZone()
 	if err != nil {
 		logs.New().Error(err)
-		return
+		log.Fatal(err)
 	}
 
 	// Setup database
@@ -139,7 +154,7 @@ func main() {
 	err = db.OpenConnection()
 	if err != nil {
 		logs.New().Error(err)
-		return
+		log.Fatal(err)
 	}
 	defer db.CloseDB()
 
@@ -147,6 +162,6 @@ func main() {
 	err = setupFiber()
 	if err != nil {
 		logs.New().Error(err)
-		return
+		log.Fatal(err)
 	}
 }
