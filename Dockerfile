@@ -4,7 +4,7 @@ WORKDIR /src
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build -ldflags "-X router/router.buildTime=$(date "+%Y-%m-%dT%H:%M:%S%Z:00") -X router/router.buildCommit=$(git rev-parse --short HEAD)" -o DatabaseCamp .
+RUN CGO_ENABLED=0 go build -o DatabaseCamp .
 
 FROM alpine:3.13
 
