@@ -14,7 +14,13 @@ import (
 	"DatabaseCamp/repositories"
 	"DatabaseCamp/router"
 	"DatabaseCamp/services"
+	"context"
+	"fmt"
+	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -93,9 +99,20 @@ func setupFiber() error {
 	// Create router
 	router.New(app, examHandler, learningHandler, userHandler, jwt)
 
-	// Running application
-	err := app.Listen(":" + os.Getenv("PORT"))
-	return err
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		if err := app.Listen(":" + os.Getenv("PORT")); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	<-ctx.Done()
+	stop()
+	fmt.Println("Shutting down gracefully, press Ctrl+C again to force")
+
+	return app.Shutdown()
 }
 
 /**
