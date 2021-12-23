@@ -8,6 +8,7 @@ package router
 import (
 	"DatabaseCamp/handlers"
 	"DatabaseCamp/middleware"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -28,6 +29,11 @@ type router struct {
 
 // Instance of router class for singleton pattern
 var instantiated *router = nil
+
+var (
+	buildCommit = "develop"
+	buildTime   = time.Now().String()
+)
 
 /**
  * Constructor creates a new router instance or geting a router instance
@@ -65,9 +71,19 @@ func New(
  * Setup route path for each module
  */
 func (r *router) init() {
+	r.setup()
 	r.setupLearning()
 	r.setupUser()
 	r.setupExam()
+}
+
+func (r *router) setup() {
+	r.Router.Get("/x", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"build_commit": buildCommit,
+			"build_time":   buildTime,
+		})
+	})
 }
 
 /**
