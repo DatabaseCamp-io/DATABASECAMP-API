@@ -5,11 +5,13 @@ WORKDIR /src
 COPY . .
 
 RUN CGO_ENABLED=0 go build \
-    -ldflags "-X DatabaseCamp/router/router.buildTime=`date "+%Y-%m-%dT%H:%M:%S%Z:00"` \
-    -X DatabaseCamp/router/router.buildCommit=`git rev-parse --short HEAD`" \
+    -ldflags "-X 'DatabaseCamp/router.BuildTime=`date "+%Y-%m-%dT%H:%M:%S%Z:00"`'\
+    -X 'DatabaseCamp/router.BuildCommit=`git rev-parse --short HEAD`'"\
     -o DatabaseCamp .
 
 FROM alpine:3.13
+
+
 
 RUN apk add tzdata
 RUN cp /usr/share/zoneinfo/Asia/Bangkok /etc/localtime
