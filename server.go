@@ -115,21 +115,12 @@ func setupFiber() error {
 	return app.Shutdown()
 }
 
-func setupLivenessProbe() error {
-	_, err := os.Create("/tmp/live")
-	if err != nil {
-		return err
-	}
-	defer os.Remove("/tmp/live")
-	return nil
-}
-
 /**
  * Main function of the application
  */
 func main() {
 
-	err := setupLivenessProbe()
+	live, err := os.Create("tmp/live")
 	if err != nil {
 		logs.New().Error(err)
 		log.Fatal(err)
@@ -160,6 +151,18 @@ func main() {
 
 	// Setup web framework
 	err = setupFiber()
+	if err != nil {
+		logs.New().Error(err)
+		log.Fatal(err)
+	}
+
+	err = live.Close()
+	if err != nil {
+		logs.New().Error(err)
+		log.Fatal(err)
+	}
+
+	err = os.Remove("tmp/live")
 	if err != nil {
 		logs.New().Error(err)
 		log.Fatal(err)
