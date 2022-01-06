@@ -6,6 +6,7 @@ package controllers
  */
 
 import (
+	"DatabaseCamp/models/entities/activity"
 	"DatabaseCamp/models/request"
 	"DatabaseCamp/models/response"
 	"DatabaseCamp/models/storages"
@@ -94,7 +95,7 @@ type ILearningController interface {
 	 * @return response of the activity
 	 * @return error of getting activity
 	 */
-	GetActivity(userID int, activityID int) (*response.ActivityResponse, error)
+	GetActivity(userID int, activityID int) (*activity.Response, error)
 
 	/**
 	 * Use hint of the activity

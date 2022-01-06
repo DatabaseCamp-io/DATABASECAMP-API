@@ -11,6 +11,7 @@ import (
 	"DatabaseCamp/errs"
 	"DatabaseCamp/logs"
 	"DatabaseCamp/models/entities"
+	"DatabaseCamp/models/entities/activity"
 	"DatabaseCamp/models/general"
 	"DatabaseCamp/models/response"
 	"DatabaseCamp/models/storages"
@@ -106,7 +107,7 @@ func (c learningController) GetOverview(userID int) (*response.ContentOverviewRe
  * @return response of the activity
  * @return error of getting activity
  */
-func (c learningController) GetActivity(userID int, activityID int) (*response.ActivityResponse, error) {
+func (c learningController) GetActivity(userID int, activityID int) (*activity.Response, error) {
 
 	// Create activity loader
 	loader := loaders.NewActivityLoader(c.LearningRepo, c.UserRepo)
@@ -121,6 +122,10 @@ func (c learningController) GetActivity(userID int, activityID int) (*response.A
 	// Get activity data from loader
 	activityDB := loader.GetActivityDB()
 
+	userHints := loader.GetUserHintsDB()
+
+	activityHintsDB := loader.GetActivityHintsDB()
+
 	// Get choices of the activity from the database
 	choiceDB, err := c.getChoices(activityDB.ID, activityDB.TypeID)
 	if err != nil {
@@ -128,16 +133,14 @@ func (c learningController) GetActivity(userID int, activityID int) (*response.A
 		return nil, errs.ErrActivitiesNotFound
 	}
 
-	// Create and set data of the activity
-	activity := entities.Activity{}
-	activity.SetActivity(*loader.GetActivityDB())
-	activity.SetChoicesByChoiceDB(choiceDB)
-	activity.SetHint(loader.GetActivityHintsDB(), loader.GetUserHintsDB())
+	activity := activity.New(
+		activityDB,
+		userHints,
+		activityHintsDB,
+		choiceDB,
+	)
 
-	// Create activity response
-	response := response.NewActivityResponse(activity)
-
-	return response, nil
+	return activity.NewResponse()
 }
 
 /**
