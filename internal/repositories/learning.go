@@ -2,11 +2,13 @@ package repositories
 
 import (
 	"database-camp/internal/errs"
+	"database-camp/internal/infrastructure/cache"
 	"database-camp/internal/infrastructure/database"
 	"database-camp/internal/infrastructure/storage"
 	"database-camp/internal/models/entities/activity"
 	"database-camp/internal/models/entities/content"
 	"database-camp/internal/utils"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -24,25 +26,53 @@ type LearningRepository interface {
 }
 
 type learningRepository struct {
-	db database.MysqlDB
+	db    database.MysqlDB
+	cache cache.Cache
 }
 
-func NewLearningRepository(db database.MysqlDB) *learningRepository {
-	return &learningRepository{db: db}
+func NewLearningRepository(db database.MysqlDB, cache cache.Cache) *learningRepository {
+	return &learningRepository{db: db, cache: cache}
 }
 
 func (r learningRepository) GetContent(id int) (*content.Content, error) {
 	content := content.Content{}
+
+	key := "learningRepository::GetContent::" + utils.ParseString(id)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &content); err == nil {
+			return &content, nil
+		}
+	}
+
 	err := r.db.GetDB().
 		Table(TableName.Content).
 		Where(IDName.Content+" = ?", id).
 		Find(&content).
 		Error
+
+	if data, err := json.Marshal(content); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return &content, err
 }
 
 func (r learningRepository) GetOverview() ([]content.Overview, error) {
 	overview := make([]content.Overview, 0)
+
+	key := "learningRepository::GetOverview"
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &overview); err == nil {
+			return overview, nil
+		}
+	}
+
 	err := r.db.GetDB().
 		Table(TableName.ContentGroup).
 		Select("ContentGroup.content_group_id AS content_group_id",
@@ -56,11 +86,28 @@ func (r learningRepository) GetOverview() ([]content.Overview, error) {
 		Order("content_group_id ASC").
 		Find(&overview).
 		Error
+
+	if data, err := json.Marshal(overview); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return overview, err
 }
 
 func (r learningRepository) GetContentActivity(contentID int) ([]activity.Activity, error) {
 	activity := make([]activity.Activity, 0)
+
+	key := "learningRepository::GetContentActivity::" + utils.ParseString(contentID)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &activity); err == nil {
+			return activity, nil
+		}
+	}
 
 	err := r.db.GetDB().
 		Table(TableName.Activity).
@@ -68,11 +115,27 @@ func (r learningRepository) GetContentActivity(contentID int) ([]activity.Activi
 		Find(&activity).
 		Error
 
+	if data, err := json.Marshal(activity); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return activity, err
 }
 
 func (r learningRepository) GetActivity(id int) (*activity.Activity, error) {
 	activity := activity.Activity{}
+
+	key := "learningRepository::GetActivity::" + utils.ParseString(id)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &activity); err == nil {
+			return &activity, nil
+		}
+	}
 
 	err := r.db.GetDB().
 		Table(TableName.Activity).
@@ -80,11 +143,27 @@ func (r learningRepository) GetActivity(id int) (*activity.Activity, error) {
 		Find(&activity).
 		Error
 
+	if data, err := json.Marshal(activity); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return &activity, err
 }
 
 func (r learningRepository) getMatchingChoice(activityID int) (activity.MatchingChoices, error) {
 	matchingChoice := make([]activity.MatchingChoice, 0)
+
+	key := "learningRepository::getMatchingChoice::" + utils.ParseString(activityID)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &matchingChoice); err == nil {
+			return matchingChoice, nil
+		}
+	}
 
 	err := r.db.GetDB().
 		Table(TableName.MatchingChoice).
@@ -92,11 +171,27 @@ func (r learningRepository) getMatchingChoice(activityID int) (activity.Matching
 		Find(&matchingChoice).
 		Error
 
+	if data, err := json.Marshal(matchingChoice); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return matchingChoice, err
 }
 
 func (r learningRepository) getMultipleChoice(activityID int) (activity.MultipleChoices, error) {
 	multipleChoice := make([]activity.MultipleChoice, 0)
+
+	key := "learningRepository::getMultipleChoice::" + utils.ParseString(activityID)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &multipleChoice); err == nil {
+			return multipleChoice, nil
+		}
+	}
 
 	err := r.db.GetDB().
 		Table(TableName.MultipleChoice).
@@ -104,11 +199,27 @@ func (r learningRepository) getMultipleChoice(activityID int) (activity.Multiple
 		Find(&multipleChoice).
 		Error
 
+	if data, err := json.Marshal(multipleChoice); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return multipleChoice, err
 }
 
 func (r learningRepository) getCompletionChoice(activityID int) (activity.CompletionChoices, error) {
 	completionChoice := make([]activity.CompletionChoice, 0)
+
+	key := "learningRepository::getCompletionChoice::" + utils.ParseString(activityID)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &completionChoice); err == nil {
+			return completionChoice, nil
+		}
+	}
 
 	err := r.db.GetDB().
 		Table(TableName.CompletionChoice).
@@ -116,11 +227,27 @@ func (r learningRepository) getCompletionChoice(activityID int) (activity.Comple
 		Find(&completionChoice).
 		Error
 
+	if data, err := json.Marshal(completionChoice); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return completionChoice, err
 }
 
 func (r learningRepository) GetActivityHints(activityID int) ([]activity.Hint, error) {
 	hints := make([]activity.Hint, 0)
+
+	key := "learningRepository::GetActivityHints::" + utils.ParseString(activityID)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &hints); err == nil {
+			return hints, nil
+		}
+	}
 
 	err := r.db.GetDB().
 		Table(TableName.Hint).
@@ -129,12 +256,40 @@ func (r learningRepository) GetActivityHints(activityID int) ([]activity.Hint, e
 		Find(&hints).
 		Error
 
+	if data, err := json.Marshal(hints); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return hints, err
 }
 
 func (r learningRepository) GetVideoFileLink(objectName string) (string, error) {
 	storage := storage.GetCloudStorageServiceInstance()
-	return storage.GetFileLink(objectName)
+
+	var link string
+	var err error
+
+	key := "learningRepository::GetVideoFileLink::" + objectName
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		return cacheData, nil
+	}
+
+	link, err = storage.GetFileLink(objectName)
+	if err != nil {
+		return "", err
+	}
+
+	err = r.cache.Set(key, link, time.Minute*15)
+	if err != nil {
+		return "", err
+	}
+
+	return link, nil
 }
 
 func (r learningRepository) GetActivityChoices(activityID int, activityTypeID int) (activity.Choices, error) {

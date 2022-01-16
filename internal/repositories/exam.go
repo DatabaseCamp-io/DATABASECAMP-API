@@ -1,9 +1,13 @@
 package repositories
 
 import (
+	"database-camp/internal/infrastructure/cache"
 	"database-camp/internal/infrastructure/database"
 	"database-camp/internal/models/entities/exam"
+	"database-camp/internal/utils"
+	"encoding/json"
 	"fmt"
+	"time"
 )
 
 type ExamRepository interface {
@@ -17,25 +21,53 @@ type ExamRepository interface {
 }
 
 type examRepository struct {
-	db database.MysqlDB
+	db    database.MysqlDB
+	cache cache.Cache
 }
 
-func NewExamRepository(db database.MysqlDB) *examRepository {
-	return &examRepository{db: db}
+func NewExamRepository(db database.MysqlDB, cache cache.Cache) *examRepository {
+	return &examRepository{db: db, cache: cache}
 }
 
 func (r examRepository) GetExam(id int) (*exam.Exam, error) {
 	exam := exam.Exam{}
+
+	key := "examRepository::GetExam::" + utils.ParseString(id)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &exam); err == nil {
+			return &exam, nil
+		}
+	}
+
 	err := r.db.GetDB().
 		Table(ViewName.ExamInfo).
 		Where(IDName.Exam+" = ?", id).
 		Find(&exam).
 		Error
+
+	if data, err := json.Marshal(exam); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return &exam, err
 }
 
 func (r examRepository) GetExams() ([]exam.Exam, error) {
 	exam := make([]exam.Exam, 0)
+
+	key := "examRepository::GetExams"
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &exam); err == nil {
+			return exam, nil
+		}
+	}
+
 	err := r.db.GetDB().
 		Table(TableName.Exam).
 		Select(
@@ -58,11 +90,29 @@ func (r examRepository) GetExams() ([]exam.Exam, error) {
 		Order(TableName.Exam + ".created_timestamp DESC").
 		Find(&exam).
 		Error
+
+	if data, err := json.Marshal(exam); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return exam, err
 }
 
 func (r examRepository) GetExamActivities(id int) ([]exam.ExamActivity, error) {
 	var activities []exam.ExamActivity
+
+	key := "examRepository::GetExamActivities::" + utils.ParseString(id)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &activities); err == nil {
+			return activities, nil
+		}
+	}
+
 	err := r.db.GetDB().
 		Table(TableName.ContentExam).
 		Select(
@@ -80,22 +130,58 @@ func (r examRepository) GetExamActivities(id int) ([]exam.ExamActivity, error) {
 		Where(IDName.Exam+" = ?", id).
 		Find(&activities).
 		Error
+
+	if data, err := json.Marshal(activities); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return activities, err
 }
 
 func (r examRepository) GetExamResult(userID int, examResultID int) (*exam.ExamResult, error) {
 	result := exam.ExamResult{}
+
+	key := "examRepository::GetExamResult::" + utils.ParseString(userID) + "::" + utils.ParseString(examResultID)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &result); err == nil {
+			return &result, nil
+		}
+	}
+
 	err := r.db.GetDB().
 		Table(ViewName.ExamResultSummary).
 		Where(IDName.ExamResult+" = ?", examResultID).
 		Where(IDName.User+" = ?", userID).
 		Find(&result).
 		Error
+
+	if data, err := json.Marshal(result); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return &result, err
 }
 
 func (r examRepository) GetExamResults(userID int) ([]exam.ExamResult, error) {
 	examResults := make([]exam.ExamResult, 0)
+
+	key := "examRepository::GetExamResults::" + utils.ParseString(userID)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &examResults); err == nil {
+			return examResults, nil
+		}
+	}
+
 	err := r.db.GetDB().
 		Table(TableName.ExamResult).
 		Select(
@@ -117,16 +203,43 @@ func (r examRepository) GetExamResults(userID int) ([]exam.ExamResult, error) {
 		Group(TableName.ExamResult + ".exam_result_id").
 		Find(&examResults).
 		Error
+
+	if data, err := json.Marshal(examResults); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return examResults, err
 }
 
 func (r examRepository) GetActivitiesResult(examResultID int) ([]exam.ResultActivity, error) {
 	activities := make([]exam.ResultActivity, 0)
+
+	key := "examRepository::GetActivitiesResult::" + utils.ParseString(examResultID)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &activities); err == nil {
+			return activities, nil
+		}
+	}
+
 	err := r.db.GetDB().
 		Table(TableName.ExamResultActivity).
 		Where(IDName.ExamResult+" = ?", examResultID).
 		Find(&activities).
 		Error
+
+	if data, err := json.Marshal(activities); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
 	return activities, err
 }
 

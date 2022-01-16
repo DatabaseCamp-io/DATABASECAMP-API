@@ -8,6 +8,7 @@ import (
 	"database-camp/internal/logs"
 	"database-camp/internal/registry"
 	"database-camp/internal/routes"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -27,13 +28,7 @@ func setupTimeZone() error {
 
 func main() {
 
-	live, err := os.Create("tmp/live")
-	if err != nil {
-		logs.GetInstance().Error(err)
-		return
-	}
-
-	err = environment.New().Load(".env")
+	err := environment.New().Load(".env")
 	if err != nil {
 		logs.GetInstance().Error(err)
 		return
@@ -58,6 +53,14 @@ func main() {
 
 	routes.NewRouter(app, regis)
 
+	liveName := fmt.Sprintf("tmp/live%d", os.Getpid())
+
+	live, err := os.Create(liveName)
+	if err != nil {
+		logs.GetInstance().Error(err)
+		return
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -69,11 +72,6 @@ func main() {
 
 	<-ctx.Done()
 	stop()
-	err = app.Shutdown()
-	if err != nil {
-		logs.GetInstance().Error(err)
-		return
-	}
 
 	err = live.Close()
 	if err != nil {
@@ -81,7 +79,13 @@ func main() {
 		return
 	}
 
-	err = os.Remove("tmp/live")
+	err = os.Remove(liveName)
+	if err != nil {
+		logs.GetInstance().Error(err)
+		return
+	}
+
+	err = app.Shutdown()
 	if err != nil {
 		logs.GetInstance().Error(err)
 		return

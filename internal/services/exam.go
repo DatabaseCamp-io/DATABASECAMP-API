@@ -2,6 +2,7 @@ package services
 
 import (
 	"database-camp/internal/errs"
+	"database-camp/internal/infrastructure/cache"
 	"database-camp/internal/logs"
 	"database-camp/internal/models/entities/badge"
 	"database-camp/internal/models/entities/exam"
@@ -9,6 +10,9 @@ import (
 	"database-camp/internal/models/response"
 	"database-camp/internal/repositories"
 	"database-camp/internal/services/loaders"
+	"database-camp/internal/utils"
+	"encoding/json"
+	"time"
 )
 
 type ExamService interface {
@@ -22,17 +26,21 @@ type examService struct {
 	examRepo     repositories.ExamRepository
 	userRepo     repositories.UserRepository
 	learningRepo repositories.LearningRepository
+
+	cache cache.Cache
 }
 
 func NewExamService(
 	examRepo repositories.ExamRepository,
 	userRepo repositories.UserRepository,
 	learningRepo repositories.LearningRepository,
+	cache cache.Cache,
 ) *examService {
 	return &examService{
 		examRepo:     examRepo,
 		userRepo:     userRepo,
 		learningRepo: learningRepo,
+		cache:        cache,
 	}
 }
 
@@ -170,10 +178,30 @@ func (s examService) CheckExam(userID int, request request.ExamAnswerRequest) (*
 		ActivitiesResult: result.ActivitiesResult,
 	}
 
+	key := "examService::GetExamResult::" + utils.ParseString(userID) + "::" + utils.ParseString(result.ExamResult.ID)
+
+	if data, err := json.Marshal(response); err != nil {
+		return nil, err
+	} else {
+		if err = s.cache.Set(key, string(data), time.Minute*10); err != nil {
+			return nil, err
+		}
+	}
+
 	return &response, nil
 }
 
 func (s examService) GetExamResult(userID int, examResultID int) (*response.ExamResultOverviewResponse, error) {
+	var res response.ExamResultOverviewResponse
+
+	key := "examService::GetExamResult::" + utils.ParseString(userID) + "::" + utils.ParseString(examResultID)
+
+	if cacheData, err := s.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &res); err == nil {
+			return &res, nil
+		}
+	}
+
 	loader := loaders.NewExamResultLoader(s.examRepo)
 
 	err := loader.Load(userID, examResultID)
@@ -185,7 +213,7 @@ func (s examService) GetExamResult(userID int, examResultID int) (*response.Exam
 	examResult := loader.GetExamResult()
 	resultActivities := loader.GetResultActivities()
 
-	response := response.ExamResultOverviewResponse{
+	res = response.ExamResultOverviewResponse{
 		ExamResultID:     examResult.ID,
 		ExamID:           examResult.ExamID,
 		ExamType:         examResult.ExamType,
@@ -196,5 +224,13 @@ func (s examService) GetExamResult(userID int, examResultID int) (*response.Exam
 		ActivitiesResult: resultActivities,
 	}
 
-	return &response, nil
+	if data, err := json.Marshal(res); err != nil {
+		return nil, err
+	} else {
+		if err = s.cache.Set(key, string(data), time.Minute*10); err != nil {
+			return nil, err
+		}
+	}
+
+	return &res, nil
 }

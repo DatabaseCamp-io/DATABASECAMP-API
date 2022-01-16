@@ -1,13 +1,16 @@
 package repositories
 
 import (
+	"database-camp/internal/infrastructure/cache"
 	"database-camp/internal/infrastructure/database"
 	"database-camp/internal/models/entities/activity"
 	"database-camp/internal/models/entities/badge"
 	"database-camp/internal/models/entities/content"
 	"database-camp/internal/models/entities/user"
 	"database-camp/internal/utils"
+	"encoding/json"
 	"fmt"
+	"time"
 )
 
 type UserRepository interface {
@@ -28,11 +31,12 @@ type UserRepository interface {
 }
 
 type userRepository struct {
-	db database.MysqlDB
+	db    database.MysqlDB
+	cache cache.Cache
 }
 
-func NewUserRepository(db database.MysqlDB) *userRepository {
-	return &userRepository{db: db}
+func NewUserRepository(db database.MysqlDB, cache cache.Cache) *userRepository {
+	return &userRepository{db: db, cache: cache}
 }
 
 func (r userRepository) GetUserByEmail(email string) (*user.User, error) {
@@ -47,41 +51,81 @@ func (r userRepository) GetUserByEmail(email string) (*user.User, error) {
 
 func (r userRepository) GetUserByID(id int) (*user.User, error) {
 	user := user.User{}
+
+	key := "userRepository::GetUserByID::" + utils.ParseString(id)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &user); err == nil {
+			return &user, nil
+		}
+	}
+
 	err := r.db.GetDB().
 		Table(TableName.User).
 		Where(IDName.User+" = ?", id).
 		Find(&user).
 		Error
+
+	if data, err := json.Marshal(user); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*10); err != nil {
+			return nil, err
+		}
+	}
+
 	return &user, err
 }
 
 func (r userRepository) GetProfile(id int) (*user.Profile, error) {
 	profile := user.Profile{}
+
 	err := r.db.GetDB().
 		Table(ViewName.Profile).
 		Where(IDName.User+" = ?", id).
 		Find(&profile).
 		Error
+
 	return &profile, err
 }
 
 func (r userRepository) GetLearningProgression(id int) ([]content.LearningProgression, error) {
 	progresstion := make([]content.LearningProgression, 0)
+
 	err := r.db.GetDB().
 		Table(TableName.LearningProgression).
 		Where(IDName.User+" = ?", id).
 		Order("created_timestamp desc").
 		Find(&progresstion).
 		Error
+
 	return progresstion, err
 }
 
 func (r userRepository) GetAllBadge() ([]badge.Badge, error) {
 	badge := make([]badge.Badge, 0)
+
+	key := "userRepository::GetAllBadge"
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &badge); err == nil {
+			return badge, nil
+		}
+	}
+
 	err := r.db.GetDB().
 		Table(TableName.Badge).
 		Find(&badge).
 		Error
+
+	if data, err := json.Marshal(badge); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*10); err != nil {
+			return nil, err
+		}
+	}
+
 	return badge, err
 }
 
@@ -121,21 +165,57 @@ func (r userRepository) GetCollectedBadge(userID int) ([]user.CorrectedBadge, er
 
 func (r userRepository) GetPointRanking(id int) (*user.Ranking, error) {
 	ranking := user.Ranking{}
+
+	key := "userRepository::GetPointRanking::" + utils.ParseString(id)
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &ranking); err == nil {
+			return &ranking, nil
+		}
+	}
+
 	err := r.db.GetDB().
 		Table(ViewName.Ranking).
 		Where(IDName.User+" = ?", id).
 		Find(&ranking).
 		Error
+
+	if data, err := json.Marshal(ranking); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*10); err != nil {
+			return nil, err
+		}
+	}
+
 	return &ranking, err
 }
 
 func (r userRepository) GetRankingLeaderBoard() ([]user.Ranking, error) {
 	ranking := make([]user.Ranking, 0)
+
+	key := "userRepository::GetRankingLeaderBoard"
+
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &ranking); err == nil {
+			return ranking, nil
+		}
+	}
+
 	err := r.db.GetDB().
 		Table(ViewName.Ranking).
 		Limit(20).
 		Find(&ranking).
 		Error
+
+	if data, err := json.Marshal(ranking); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*10); err != nil {
+			return nil, err
+		}
+	}
+
 	return ranking, err
 }
 
@@ -188,5 +268,6 @@ func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) e
 		Where(IDName.User+" = ?", id).
 		Updates(updateData).
 		Error
+
 	return err
 }

@@ -2,6 +2,7 @@ package registry
 
 import (
 	"database-camp/internal/handler"
+	"database-camp/internal/infrastructure/cache"
 	"database-camp/internal/infrastructure/database"
 	"database-camp/internal/middleware/jwt"
 	"database-camp/internal/repositories"
@@ -32,16 +33,18 @@ func Regis() *registry {
 
 	db := database.GetMySqlDBInstance()
 
-	userRepo := repositories.NewUserRepository(db)
+	cache := cache.NewRedisClient()
+
+	userRepo := repositories.NewUserRepository(db, cache)
 	userService := services.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
 
-	learningRepo := repositories.NewLearningRepository(db)
+	learningRepo := repositories.NewLearningRepository(db, cache)
 	learningService := services.NewLearningService(learningRepo, userRepo)
 	learningHandler := handler.NewLearningHandler(learningService)
 
-	examRepo := repositories.NewExamRepository(db)
-	examService := services.NewExamService(examRepo, userRepo, learningRepo)
+	examRepo := repositories.NewExamRepository(db, cache)
+	examService := services.NewExamService(examRepo, userRepo, learningRepo, cache)
 	examHandler := handler.NewExamHandler(examService)
 
 	jwt := jwt.New(userRepo)
