@@ -1,3 +1,4 @@
 .env
 service_account.json
 /data
+/tmp

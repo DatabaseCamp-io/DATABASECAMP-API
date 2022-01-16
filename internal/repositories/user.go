@@ -52,27 +52,11 @@ func (r userRepository) GetUserByEmail(email string) (*user.User, error) {
 func (r userRepository) GetUserByID(id int) (*user.User, error) {
 	user := user.User{}
 
-	key := "userRepository::GetUserByID::" + utils.ParseString(id)
-
-	if cacheData, err := r.cache.Get(key); err == nil {
-		if err = json.Unmarshal([]byte(cacheData), &user); err == nil {
-			return &user, nil
-		}
-	}
-
 	err := r.db.GetDB().
 		Table(TableName.User).
 		Where(IDName.User+" = ?", id).
 		Find(&user).
 		Error
-
-	if data, err := json.Marshal(user); err != nil {
-		return nil, err
-	} else {
-		if err = r.cache.Set(key, string(data), time.Minute*10); err != nil {
-			return nil, err
-		}
-	}
 
 	return &user, err
 }
