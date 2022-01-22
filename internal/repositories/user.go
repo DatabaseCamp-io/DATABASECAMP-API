@@ -24,6 +24,7 @@ type UserRepository interface {
 	GetPointRanking(id int) (*user.Ranking, error)
 	GetRankingLeaderBoard() ([]user.Ranking, error)
 	GetUserHint(userID int, activityID int) ([]activity.UserHint, error)
+	GetPreExamID(userID int) (*int, error)
 	InsertUser(user user.User) (*user.User, error)
 	InsertUserHint(userHint activity.UserHint) (*activity.UserHint, error)
 	InsertBadge(userBadge badge.UserBadge) (*badge.UserBadge, error)
@@ -254,4 +255,19 @@ func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) e
 		Error
 
 	return err
+}
+
+func (r userRepository) GetPreExamID(userID int) (*int, error) {
+	data := struct {
+		UserID int `gorm:"column:user_id"`
+		ExamID int `gorm:"column:exam_id"`
+	}{}
+
+	err := r.db.GetDB().
+		Table(ViewName.UserPreTest).
+		Where(IDName.User+"=?", userID).
+		Find(&data).
+		Error
+
+	return &data.ExamID, err
 }

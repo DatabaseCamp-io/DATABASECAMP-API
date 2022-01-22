@@ -61,10 +61,12 @@ func (c learningService) GetOverview(userID int) (*response.ContentOverviewRespo
 	}
 
 	overview := loader.GetOverview()
+	preExamID := loader.GetPreExamID()
 	learningProgression := loader.GetLearningProgression()
 	lastedGroup, contentGroup := overview.GetLearningOverview(learningProgression)
 
 	response := response.ContentOverviewResponse{
+		PreExam:              preExamID,
 		LastedGroup:          lastedGroup,
 		ContentGroupOverview: contentGroup,
 	}
