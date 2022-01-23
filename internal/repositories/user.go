@@ -24,9 +24,12 @@ type UserRepository interface {
 	GetPointRanking(id int) (*user.Ranking, error)
 	GetRankingLeaderBoard() ([]user.Ranking, error)
 	GetUserHint(userID int, activityID int) ([]activity.UserHint, error)
+	GetPreExamID(userID int) (*int, error)
+	GetPreTestResults(userID int) (user.PreTestResults, error)
 	InsertUser(user user.User) (*user.User, error)
 	InsertUserHint(userHint activity.UserHint) (*activity.UserHint, error)
 	InsertBadge(userBadge badge.UserBadge) (*badge.UserBadge, error)
+	InsertLearningProgression(userID int, activityID int, point int, isCorrect bool, hasProgression bool) error
 	UpdatesByID(id int, updateData map[string]interface{}) error
 }
 
@@ -78,8 +81,9 @@ func (r userRepository) GetLearningProgression(id int) ([]content.LearningProgre
 
 	err := r.db.GetDB().
 		Table(TableName.LearningProgression).
-		Where(IDName.User+" = ?", id).
+		Where(IDName.User+" = ? AND is_correct = 1", id).
 		Order("created_timestamp desc").
+		Group(IDName.Activity).
 		Find(&progresstion).
 		Error
 
@@ -245,6 +249,42 @@ func (r userRepository) InsertBadge(userBadge badge.UserBadge) (*badge.UserBadge
 	return &userBadge, err
 }
 
+func (r userRepository) InsertLearningProgression(userID int, activityID int, point int, isCorrect bool, hasProgression bool) error {
+	tx := r.db.GetDB().Begin()
+
+	progression := content.LearningProgression{
+		UserID:           userID,
+		ActivityID:       activityID,
+		IsCorrect:        isCorrect,
+		CreatedTimestamp: time.Now().Local(),
+	}
+
+	err := tx.Table(TableName.LearningProgression).Create(&progression).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if !hasProgression && isCorrect {
+		statement := fmt.Sprintf("UPDATE %s SET point = point + %d WHERE %s = %d",
+			TableName.User,
+			point,
+			IDName.User,
+			userID,
+		)
+		temp := map[string]interface{}{}
+		err = tx.Raw(statement).Find(&temp).Error
+	}
+
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
 func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) error {
 	err := r.db.GetDB().
 		Table(TableName.User).
@@ -254,4 +294,33 @@ func (r userRepository) UpdatesByID(id int, updateData map[string]interface{}) e
 		Error
 
 	return err
+}
+
+func (r userRepository) GetPreExamID(userID int) (*int, error) {
+	data := struct {
+		UserID int `gorm:"column:user_id"`
+		ExamID int `gorm:"column:exam_id"`
+	}{}
+
+	err := r.db.GetDB().
+		Table(ViewName.UserPreTest).
+		Where(IDName.User+"=?", userID).
+		Find(&data).
+		Error
+
+	return &data.ExamID, err
+}
+
+func (r userRepository) GetPreTestResults(userID int) (user.PreTestResults, error) {
+	var results user.PreTestResults
+
+	err := r.db.GetDB().
+		Table(ViewName.UserPreTestResult).
+		Where(IDName.User+"=?", userID).
+		Order("created_timestamp ASC").
+		Limit(1).
+		Find(&results).
+		Error
+
+	return results, err
 }

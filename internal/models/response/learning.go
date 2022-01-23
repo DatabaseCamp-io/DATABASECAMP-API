@@ -6,6 +6,7 @@ import (
 )
 
 type ContentOverviewResponse struct {
+	PreExam              *int                           `json:"pre_exam_id"`
 	LastedGroup          *content.LastedGroupOverview   `json:"lasted_group"`
 	ContentGroupOverview []content.ContentGroupOverview `json:"content_group_overview"`
 }

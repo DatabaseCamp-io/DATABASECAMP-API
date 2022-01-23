@@ -79,6 +79,7 @@ func (r *router) setupLearning() {
 		learningRoute.Get("/video/:id", handler.GetVideo)
 		learningRoute.Get("/overview", handler.GetOverview)
 		learningRoute.Get("/content/roadmap/:id", handler.GetContentRoadmap)
+		learningRoute.Get("/recommend", handler.GetRecommend)
 	}
 
 	{

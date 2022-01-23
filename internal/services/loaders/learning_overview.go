@@ -12,6 +12,7 @@ type learningOverviewLoader struct {
 
 	overview            []content.Overview
 	learningProgression []content.LearningProgression
+	preExamID           *int
 }
 
 func NewLearningOverviewLoader(learningRepo repositories.LearningRepository, userRepo repositories.UserRepository) *learningOverviewLoader {
@@ -26,12 +27,17 @@ func (l *learningOverviewLoader) GetLearningProgression() content.LearningProgre
 	return l.learningProgression
 }
 
+func (l *learningOverviewLoader) GetPreExamID() *int {
+	return l.preExamID
+}
+
 func (l *learningOverviewLoader) Load(userID int) error {
 	var wg sync.WaitGroup
 	var err error
 	concurrent := Concurrent{Wg: &wg, Err: &err}
-	wg.Add(2)
+	wg.Add(3)
 	go l.loadOverviewAsync(&concurrent)
+	go l.loadPreExamIDAsync(&concurrent, userID)
 	go l.loadLearningProgressionAsync(&concurrent, userID)
 	wg.Wait()
 	return err
@@ -53,4 +59,14 @@ func (l *learningOverviewLoader) loadLearningProgressionAsync(concurrent *Concur
 		*concurrent.Err = err
 	}
 	l.learningProgression = append(l.learningProgression, result...)
+}
+
+func (l *learningOverviewLoader) loadPreExamIDAsync(concurrent *Concurrent, id int) {
+	defer concurrent.Wg.Done()
+	result, err := l.userRepo.GetPreExamID(id)
+	if err != nil {
+		*concurrent.Err = err
+	}
+
+	l.preExamID = result
 }

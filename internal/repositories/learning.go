@@ -21,8 +21,9 @@ type LearningRepository interface {
 	GetContentActivity(contentID int) ([]activity.Activity, error)
 	GetVideoFileLink(imagekey string) (string, error)
 	GetActivityChoices(activityID int, activityTypeID int) (activity.Choices, error)
+	GetContentGroups() (groups content.ContentGroups, err error)
+	GetCorrectProgression(activityID int) (progression *content.LearningProgression, err error)
 	UseHint(userID int, reducePoint int, hintID int) error
-	InsertActivityResult(userID int, activityID int, point int) error
 }
 
 type learningRepository struct {
@@ -305,6 +306,23 @@ func (r learningRepository) GetActivityChoices(activityID int, activityTypeID in
 	}
 }
 
+func (r learningRepository) GetContentGroups() (groups content.ContentGroups, err error) {
+	err = r.db.GetDB().
+		Table(TableName.ContentGroup).
+		Find(&groups).
+		Error
+	return
+}
+
+func (r learningRepository) GetCorrectProgression(activityID int) (progression *content.LearningProgression, err error) {
+	err = r.db.GetDB().
+		Table(TableName.LearningProgression).
+		Where("is_correct = 1").
+		Find(&progression).
+		Error
+	return
+}
+
 func (r learningRepository) UseHint(userID int, reducePoint int, hintID int) error {
 	routine := 0
 	errs := make(chan error, 2)
@@ -340,41 +358,6 @@ func (r learningRepository) UseHint(userID int, reducePoint int, hintID int) err
 		if routine == 2 {
 			close(errs)
 		}
-	}
-
-	tx.Commit()
-	return nil
-}
-
-func (r learningRepository) InsertActivityResult(userID int, activityID int, point int) error {
-	tx := r.db.GetDB().Begin()
-
-	progression := content.LearningProgression{
-		UserID:           userID,
-		ActivityID:       activityID,
-		CreatedTimestamp: time.Now().Local(),
-	}
-
-	err := tx.Table(TableName.LearningProgression).Create(&progression).Error
-	if err != nil && !utils.IsSqlDuplicateError(err) {
-		tx.Rollback()
-		return err
-	}
-
-	if !utils.IsSqlDuplicateError(err) {
-		statement := fmt.Sprintf("UPDATE %s SET point = point + %d WHERE %s = %d",
-			TableName.User,
-			point,
-			IDName.User,
-			userID,
-		)
-		temp := map[string]interface{}{}
-		err = tx.Raw(statement).Find(&temp).Error
-	}
-
-	if err != nil {
-		tx.Rollback()
-		return err
 	}
 
 	tx.Commit()

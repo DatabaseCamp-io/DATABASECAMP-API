@@ -65,9 +65,13 @@ var ViewName = struct {
 	Ranking           string
 	ExamInfo          string
 	ExamResultSummary string
+	UserPreTest       string
+	UserPreTestResult string
 }{
 	"Profile",
 	"Ranking",
 	"ExamInfo",
 	"ExamResultSummary",
+	"UserPreTest",
+	"UserPreTestResult",
 }
