@@ -4,6 +4,7 @@ import (
 	"database-camp/internal/errs"
 	"database-camp/internal/logs"
 	"database-camp/internal/models/entities/activity"
+	"database-camp/internal/models/entities/content"
 	"database-camp/internal/models/request"
 	"database-camp/internal/models/response"
 	"database-camp/internal/repositories"
@@ -189,6 +190,7 @@ func (c learningService) CheckAnswer(userID int, request request.CheckAnswerRequ
 
 	_activity := loader.GetActivity()
 	choices := loader.GetChoices()
+	progression := loader.GetProgression()
 
 	if _activity == nil {
 		return nil, errs.ErrLoadError
@@ -209,7 +211,9 @@ func (c learningService) CheckAnswer(userID int, request request.CheckAnswerRequ
 		return nil, err
 	}
 
-	err = c.userRepo.InsertLearningProgression(userID, _activity.ID, _activity.Point, isCorrect)
+	hasProgression := *progression != (content.LearningProgression{})
+
+	err = c.userRepo.InsertLearningProgression(userID, _activity.ID, _activity.Point, isCorrect, hasProgression)
 	if err != nil {
 		logs.GetInstance().Error(err)
 		return nil, errs.ErrInsertError

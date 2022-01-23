@@ -22,6 +22,7 @@ type LearningRepository interface {
 	GetVideoFileLink(imagekey string) (string, error)
 	GetActivityChoices(activityID int, activityTypeID int) (activity.Choices, error)
 	GetContentGroups() (groups content.ContentGroups, err error)
+	GetCorrectProgression(activityID int) (progression *content.LearningProgression, err error)
 	UseHint(userID int, reducePoint int, hintID int) error
 }
 
@@ -309,6 +310,15 @@ func (r learningRepository) GetContentGroups() (groups content.ContentGroups, er
 	err = r.db.GetDB().
 		Table(TableName.ContentGroup).
 		Find(&groups).
+		Error
+	return
+}
+
+func (r learningRepository) GetCorrectProgression(activityID int) (progression *content.LearningProgression, err error) {
+	err = r.db.GetDB().
+		Table(TableName.LearningProgression).
+		Where("is_correct = 1").
+		Find(&progression).
 		Error
 	return
 }

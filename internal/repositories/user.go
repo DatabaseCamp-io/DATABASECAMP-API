@@ -29,7 +29,7 @@ type UserRepository interface {
 	InsertUser(user user.User) (*user.User, error)
 	InsertUserHint(userHint activity.UserHint) (*activity.UserHint, error)
 	InsertBadge(userBadge badge.UserBadge) (*badge.UserBadge, error)
-	InsertLearningProgression(userID int, activityID int, point int, isCorrect bool) error
+	InsertLearningProgression(userID int, activityID int, point int, isCorrect bool, hasProgression bool) error
 	UpdatesByID(id int, updateData map[string]interface{}) error
 }
 
@@ -249,7 +249,7 @@ func (r userRepository) InsertBadge(userBadge badge.UserBadge) (*badge.UserBadge
 	return &userBadge, err
 }
 
-func (r userRepository) InsertLearningProgression(userID int, activityID int, point int, isCorrect bool) error {
+func (r userRepository) InsertLearningProgression(userID int, activityID int, point int, isCorrect bool, hasProgression bool) error {
 	tx := r.db.GetDB().Begin()
 
 	progression := content.LearningProgression{
@@ -265,7 +265,7 @@ func (r userRepository) InsertLearningProgression(userID int, activityID int, po
 		return err
 	}
 
-	if isCorrect {
+	if !hasProgression && isCorrect {
 		statement := fmt.Sprintf("UPDATE %s SET point = point + %d WHERE %s = %d",
 			TableName.User,
 			point,
