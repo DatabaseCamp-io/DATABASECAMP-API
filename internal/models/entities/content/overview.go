@@ -29,12 +29,11 @@ type LastedGroupOverview struct {
 }
 
 type ContentGroupOverview struct {
-	GroupID     int               `json:"group_id"`
-	IsRecommend bool              `json:"is_recommend"`
-	IsLasted    bool              `json:"is_lasted"`
-	GroupName   string            `json:"group_name"`
-	Progress    int               `json:"progress"`
-	Contents    []contentOverview `json:"contents"`
+	GroupID   int               `json:"group_id"`
+	IsLasted  bool              `json:"is_lasted"`
+	GroupName string            `json:"group_name"`
+	Progress  int               `json:"progress"`
+	Contents  []contentOverview `json:"contents"`
 }
 
 type Overview struct {
@@ -98,12 +97,11 @@ func (l OverviewList) GetLearningOverview(progressionList LearningProgressionLis
 		}
 		groupProgress := calculateProgress(groupUserActivityCount, groupActivityCount)
 		contentGroupOverview = append(contentGroupOverview, ContentGroupOverview{
-			GroupID:     group.id,
-			IsRecommend: false,
-			IsLasted:    isGroupLasted,
-			GroupName:   group.name,
-			Progress:    groupProgress,
-			Contents:    contents,
+			GroupID:   group.id,
+			IsLasted:  isGroupLasted,
+			GroupName: group.name,
+			Progress:  groupProgress,
+			Contents:  contents,
 		})
 	}
 

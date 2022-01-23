@@ -13,6 +13,7 @@ type LearningHandler interface {
 	GetVideo(c application.Context)
 	GetOverview(c application.Context)
 	GetActivity(c application.Context)
+	GetRecommend(c application.Context)
 	UseHint(c application.Context)
 	CheckAnswer(c application.Context)
 }
@@ -67,6 +68,18 @@ func (h learningHandler) GetActivity(c application.Context) {
 	activityID := utils.ParseInt(c.Params("id"))
 
 	response, err := h.service.GetActivity(userID, activityID)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func (h learningHandler) GetRecommend(c application.Context) {
+	userID := utils.ParseInt(c.Locals("id"))
+
+	response, err := h.service.GetRecommend(userID)
 	if err != nil {
 		c.Error(err)
 		return

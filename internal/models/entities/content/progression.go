@@ -6,6 +6,7 @@ type LearningProgression struct {
 	ID               int       `gorm:"primaryKey;column:learning_progression_id" json:"learning_progression_id"`
 	UserID           int       `gorm:"column:user_id" json:"user_id"`
 	ActivityID       int       `gorm:"column:activity_id" json:"activity_id"`
+	IsCorrect        bool      `gorm:"column:is_correct" json:"is_correct"`
 	CreatedTimestamp time.Time `gorm:"column:created_timestamp" json:"created_timestamp"`
 }
 

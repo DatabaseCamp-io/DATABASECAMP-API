@@ -33,3 +33,7 @@ type RankingResponse struct {
 	UserRanking user.Ranking   `json:"user_ranking"`
 	LeaderBoard []user.Ranking `json:"leader_board"`
 }
+
+type RecommendResponse struct {
+	Recommend []user.RecommendGroup `json:"recommend_group"`
+}

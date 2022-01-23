@@ -8,13 +8,13 @@ import (
 	"database-camp/internal/models/response"
 	"database-camp/internal/repositories"
 	"database-camp/internal/services/loaders"
-	"database-camp/internal/utils"
 )
 
 type LearningService interface {
 	GetVideoLecture(id int) (*response.VideoLectureResponse, error)
 	GetOverview(userID int) (*response.ContentOverviewResponse, error)
 	GetActivity(userID int, activityID int) (*response.ActivityResponse, error)
+	GetRecommend(userID int) (*response.RecommendResponse, error)
 	UseHint(userID int, activityID int) (*response.UsedHintResponse, error)
 	GetContentRoadmap(userID int, contentID int) (*response.ContentRoadmapResponse, error)
 	CheckAnswer(userID int, request request.CheckAnswerRequest) (*response.AnswerResponse, error)
@@ -209,12 +209,10 @@ func (c learningService) CheckAnswer(userID int, request request.CheckAnswerRequ
 		return nil, err
 	}
 
-	if isCorrect {
-		err = c.learningRepo.InsertActivityResult(userID, _activity.ID, _activity.Point)
-		if err != nil && !utils.IsSqlDuplicateError(err) {
-			logs.GetInstance().Error(err)
-			return nil, errs.ErrInsertError
-		}
+	err = c.userRepo.InsertLearningProgression(userID, _activity.ID, _activity.Point, isCorrect)
+	if err != nil {
+		logs.GetInstance().Error(err)
+		return nil, errs.ErrInsertError
 	}
 
 	user, err := c.userRepo.GetUserByID(userID)
@@ -230,4 +228,25 @@ func (c learningService) CheckAnswer(userID int, request request.CheckAnswerRequ
 	}
 
 	return &response, nil
+}
+
+func (c learningService) GetRecommend(userID int) (*response.RecommendResponse, error) {
+	loader := loaders.NewRecommendLoader(c.learningRepo, c.userRepo)
+
+	err := loader.Load(userID)
+	if err != nil {
+		logs.GetInstance().Error(err)
+		return nil, errs.ErrLoadError
+	}
+
+	contentGroups := loader.GetContentGroups()
+	preTestResults := loader.GetPreTestResults()
+
+	recommend := preTestResults.GetRecommend(contentGroups)
+
+	response := response.RecommendResponse{
+		Recommend: recommend,
+	}
+
+	return &response, err
 }

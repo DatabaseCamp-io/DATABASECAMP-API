@@ -7,3 +7,9 @@ type Content struct {
 	VideoPath string `gorm:"column:video_path" json:"video_path"`
 	SlidePath string `gorm:"column:slide_path" json:"slide"`
 }
+
+type ContentGroup struct {
+	ContentGroupID int `gorm:"column:content_group_id"`
+}
+
+type ContentGroups []ContentGroup
