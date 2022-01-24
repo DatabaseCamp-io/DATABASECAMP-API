@@ -64,8 +64,19 @@ func (answer MultipleChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
 	}
 
 	for _, v := range answer {
+		hasChoice := false
+
 		for _, choice := range multipleChoices {
-			if choice.ID == v && !choice.IsCorrect {
+			if choice.ID == v {
+				hasChoice = true
+
+				if !choice.IsCorrect {
+					return false, nil
+				}
+
+			}
+
+			if !hasChoice {
 				return false, nil
 			}
 		}
