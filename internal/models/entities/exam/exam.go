@@ -54,11 +54,12 @@ func (exams Exams) GetMiniExam(examResults ExamResults) *[]DetailOverview {
 		if exam.Type == string(MINI) {
 			found = true
 			results := examResults.GetResultOverview(exam.ID)
+			_exam := exam
 			details = append(details, DetailOverview{
-				ExamID:           exam.ID,
-				ExamType:         exam.Type,
-				ContentGroupID:   &exam.ContentGroupID,
-				ContentGroupName: &exam.ContentGroupName,
+				ExamID:           _exam.ID,
+				ExamType:         _exam.Type,
+				ContentGroupID:   &_exam.ContentGroupID,
+				ContentGroupName: &_exam.ContentGroupName,
 				Results:          &results,
 			})
 		}

@@ -110,7 +110,6 @@ func (s examService) GetOverview(userID int) (*response.ExamOverviewResponse, er
 	canDo := correctedBadges.CanDoFianlExam()
 
 	response := response.ExamOverviewResponse{
-		PreExam:   exams.GetPreExam(examResults),
 		MiniExam:  exams.GetMiniExam(examResults),
 		FinalExam: exams.GetFinalExam(examResults, canDo),
 	}
