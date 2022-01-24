@@ -1,3 +1,42 @@
+<<<<<<< HEAD
+*2
+$6
+SELECT
+$1
+0
+*5
+$3
+SET
+$27
+userRepository::GetAllBadge
+$1037
+[{"ID":1,"ImagePath":"-","Name":"ผู้ตระหนักรู้ Relational Database","IsCollected":false},{"ID":2,"ImagePath":"https://storage.googleapis.com/databasecamp-public/badge-icons/god_of_model.png","Name":"เทพแห่ง ER-Model","IsCollected":false},{"ID":3,"ImagePath":"https://storage.googleapis.com/databasecamp-public/badge-icons/database_design.png","Name":"นักออกแบบ Database","IsCollected":false},{"ID":4,"ImagePath":"-","Name":"ผู้จัดทำเอกสาร","IsCollected":false},{"ID":5,"ImagePath":"-","Name":"ผู้หยั่งรู้ปัญหา","IsCollected":false},{"ID":6,"ImagePath":"-","Name":"นักวิเคราะห์ Dependency","IsCollected":false},{"ID":7,"ImagePath":"-","Name":"ผู้เชี่ยวชาญ Normalization","IsCollected":false},{"ID":8,"ImagePath":"https://storage.googleapis.com/databasecamp-public/badge-icons/database_camp_conquere.png","Name":"ผู้พิชิต DatabaseCamp","IsCollected":false}]
+$4
+PXAT
+$13
+1642924448095
+*5
+$3
+SET
+$31
+learningRepository::GetOverview
+$2781
+[{"group_id":1,"content_id":1,"activity_id":1,"group_name":"Relational database","content_name":"Database system"},{"group_id":1,"content_id":2,"activity_id":null,"group_name":"Relational database","content_name":"Terminology"},{"group_id":1,"content_id":3,"activity_id":null,"group_name":"Relational database","content_name":"Relational database"},{"group_id":2,"content_id":4,"activity_id":7,"group_name":"ER-Model","content_name":"Database entities"},{"group_id":2,"content_id":5,"activity_id":null,"group_name":"ER-Model","content_name":"Database relationship"},{"group_id":2,"content_id":6,"activity_id":null,"group_name":"ER-Model","content_name":"Database attributes"},{"group_id":2,"content_id":7,"activity_id":null,"group_name":"ER-Model","content_name":"Relational keys"},{"group_id":2,"content_id":8,"activity_id":null,"group_name":"ER-Model","content_name":"ER-Diagram"},{"group_id":3,"content_id":9,"activity_id":null,"group_name":"Database design","content_name":"Top-down database design"},{"group_id":3,"content_id":10,"activity_id":6,"group_name":"Database design","content_name":"Bottom-up database design"},{"group_id":3,"content_id":11,"activity_id":null,"group_name":"Database design","content_name":"Inside-out database design"},{"group_id":4,"content_id":12,"activity_id":5,"group_name":"Documentation","content_name":"Entity data dictionary"},{"group_id":4,"content_id":13,"activity_id":null,"group_name":"Documentation","content_name":"Relationship data dictionary"},{"group_id":4,"content_id":14,"activity_id":null,"group_name":"Documentation","content_name":"Attribute data dictionary"},{"group_id":5,"content_id":15,"activity_id":4,"group_name":"Database Design Problem","content_name":"Data redundency"},{"group_id":5,"content_id":16,"activity_id":null,"group_name":"Database Design Problem","content_name":"Update anomalies"},{"group_id":6,"content_id":17,"activity_id":null,"group_name":"Dependency","content_name":"Functional dependency"},{"group_id":6,"content_id":18,"activity_id":3,"group_name":"Dependency","content_name":"Full functional dependency"},{"group_id":6,"content_id":19,"activity_id":null,"group_name":"Dependency","content_name":"Transitive dependency"},{"group_id":7,"content_id":20,"activity_id":null,"group_name":"Normalization","content_name":"Introduction to normalization"},{"group_id":7,"content_id":21,"activity_id":null,"group_name":"Normalization","content_name":"Unnormalized form"},{"group_id":7,"content_id":22,"activity_id":null,"group_name":"Normalization","content_name":"First nomal form"},{"group_id":7,"content_id":23,"activity_id":2,"group_name":"Normalization","content_name":"Second nomal form"},{"group_id":7,"content_id":24,"activity_id":null,"group_name":"Normalization","content_name":"Third normal form"}]
+$4
+PXAT
+$13
+1642924448375
+*2
+$3
+DEL
+$27
+userRepository::GetAllBadge
+*2
+$3
+DEL
+$31
+learningRepository::GetOverview
+=======
 *2
 $6
 SELECT
@@ -243,6 +282,7 @@ $3
 DEL
 $31
 learningRepository::GetOverview
+<<<<<<< HEAD
 *2
 $6
 SELECT
@@ -664,3 +704,6 @@ $3
 DEL
 $34
 learningRepository::GetActivity::1
+=======
+>>>>>>> 17c106b97e0517499f025931708cd23c896c579c
+>>>>>>> 57a2925e21be9ec12eba8869f65e8052046876c8
