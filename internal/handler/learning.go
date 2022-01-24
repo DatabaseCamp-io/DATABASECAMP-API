@@ -14,6 +14,7 @@ type LearningHandler interface {
 	GetOverview(c application.Context)
 	GetActivity(c application.Context)
 	GetRecommend(c application.Context)
+	GetSpiderData(c application.Context)
 	UseHint(c application.Context)
 	CheckAnswer(c application.Context)
 }
@@ -80,6 +81,18 @@ func (h learningHandler) GetRecommend(c application.Context) {
 	userID := utils.ParseInt(c.Locals("id"))
 
 	response, err := h.service.GetRecommend(userID)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func (h learningHandler) GetSpiderData(c application.Context) {
+	userID := utils.ParseInt(c.Locals("id"))
+
+	response, err := h.service.GetSpiderData(userID)
 	if err != nil {
 		c.Error(err)
 		return

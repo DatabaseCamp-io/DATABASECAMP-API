@@ -3,6 +3,7 @@ package response
 import (
 	"database-camp/internal/models/entities/activity"
 	"database-camp/internal/models/entities/content"
+	"database-camp/internal/models/entities/user"
 )
 
 type ContentOverviewResponse struct {
@@ -37,4 +38,8 @@ type AnswerResponse struct {
 
 type UsedHintResponse struct {
 	HintDB activity.Hint `json:"hint"`
+}
+
+type SpiderDataResponse struct {
+	user.SpiderDataset `json:"data"`
 }

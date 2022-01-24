@@ -49,8 +49,8 @@ func (results PreTestResults) GetRecommend(contentGroups content.ContentGroups) 
 	recommend := make([]RecommendGroup, 0, len(contentGroups))
 	for _, group := range contentGroups {
 		recommend = append(recommend, RecommendGroup{
-			ContentGroupID: group.ContentGroupID,
-			IsRecommend:    resultsMap.IsRecommend(group.ContentGroupID),
+			ContentGroupID: group.ID,
+			IsRecommend:    resultsMap.IsRecommend(group.ID),
 		})
 	}
 

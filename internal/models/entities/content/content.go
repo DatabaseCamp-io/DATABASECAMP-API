@@ -9,7 +9,8 @@ type Content struct {
 }
 
 type ContentGroup struct {
-	ContentGroupID int `gorm:"column:content_group_id"`
+	ID   int    `gorm:"column:content_group_id"`
+	Name string `gorm:"column:name"`
 }
 
 type ContentGroups []ContentGroup

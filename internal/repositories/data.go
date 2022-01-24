@@ -67,6 +67,7 @@ var ViewName = struct {
 	ExamResultSummary string
 	UserPreTest       string
 	UserPreTestResult string
+	SpiderData        string
 }{
 	"Profile",
 	"Ranking",
@@ -74,4 +75,5 @@ var ViewName = struct {
 	"ExamResultSummary",
 	"UserPreTest",
 	"UserPreTestResult",
+	"SpiderData",
 }

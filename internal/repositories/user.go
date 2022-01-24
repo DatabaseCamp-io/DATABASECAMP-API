@@ -26,6 +26,7 @@ type UserRepository interface {
 	GetUserHint(userID int, activityID int) ([]activity.UserHint, error)
 	GetPreExamID(userID int) (*int, error)
 	GetPreTestResults(userID int) (user.PreTestResults, error)
+	GetSpiderDataset(userID int) (dataset user.SpiderDataset, err error)
 	InsertUser(user user.User) (*user.User, error)
 	InsertUserHint(userHint activity.UserHint) (*activity.UserHint, error)
 	InsertBadge(userBadge badge.UserBadge) (*badge.UserBadge, error)
@@ -223,6 +224,16 @@ func (r userRepository) GetUserHint(userID int, activityID int) ([]activity.User
 		Error
 
 	return userhint, err
+}
+
+func (r userRepository) GetSpiderDataset(userID int) (dataset user.SpiderDataset, err error) {
+	err = r.db.GetDB().
+		Table(ViewName.SpiderData).
+		Where(IDName.User+" = ?", userID).
+		Find(&dataset).
+		Error
+
+	return
 }
 
 func (r userRepository) InsertUser(user user.User) (*user.User, error) {
