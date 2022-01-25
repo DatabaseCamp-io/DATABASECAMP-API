@@ -15,7 +15,7 @@ services:
     image: ganinw13120/dbc-backend:1.0.19
     container_name: backend
     ports:
-      - 8080:8080
+      - 80:80
     networks:
       - cache-net
 
