@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"database-camp/internal/infrastructure/application"
 	"database-camp/internal/infrastructure/database"
 	"database-camp/internal/infrastructure/environment"
@@ -66,22 +65,7 @@ func main() {
 	defer stop()
 
 	go func() {
-
-		dir, _ := os.Getwd()
-
-		// Create tls certificate
-		cer, err := tls.LoadX509KeyPair(dir+"/backend.crt", dir+"/backend.key")
-		if err != nil {
-			log.Fatal(err)
-		}
-		config := &tls.Config{Certificates: []tls.Certificate{cer}}
-
-		ln, err := tls.Listen("tcp", ":443", config)
-		if err != nil {
-			panic(err)
-		}
-
-		if err := app.Listener(ln); err != nil && err != http.ErrServerClosed {
+		if err := app.Listen(":" + os.Getenv("PORT")); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %s\n", err)
 		}
 	}()
