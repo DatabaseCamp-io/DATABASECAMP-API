@@ -18,7 +18,6 @@ type LearningService interface {
 	GetRecommend(userID int) (*response.RecommendResponse, error)
 	UseHint(userID int, activityID int) (*response.UsedHintResponse, error)
 	GetContentRoadmap(userID int, contentID int) (*response.ContentRoadmapResponse, error)
-	GetSpiderData(userID int) (*response.SpiderDataResponse, error)
 	CheckAnswer(userID int, request request.CheckAnswerRequest) (*response.AnswerResponse, error)
 }
 
@@ -175,25 +174,6 @@ func (c learningService) GetContentRoadmap(userID int, contentID int) (*response
 		ContentName: content.Name,
 		Items:       roadmapItems,
 	}
-
-	return &response, nil
-}
-
-func (c learningService) GetSpiderData(userID int) (*response.SpiderDataResponse, error) {
-	loader := loaders.NewSpiderDataLoader(c.learningRepo, c.userRepo)
-
-	err := loader.Load(userID)
-	if err != nil {
-		logs.GetInstance().Error(err)
-		return nil, errs.ErrContentNotFound
-	}
-
-	spiderDataset := loader.GetSpiderDataset()
-	contentGroups := loader.GetContentGroups()
-
-	spiderDataset.FillContentGroups(contentGroups)
-
-	response := response.SpiderDataResponse{SpiderDataset: spiderDataset}
 
 	return &response, nil
 }

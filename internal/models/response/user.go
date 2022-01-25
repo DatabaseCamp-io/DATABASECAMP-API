@@ -17,12 +17,13 @@ type UserResponse struct {
 }
 
 type GetProfileResponse struct {
-	ID               int           `json:"user_id"`
-	Name             string        `json:"name"`
-	Point            int           `json:"point"`
-	ActivityCount    int           `json:"activity_count"`
-	Badges           []badge.Badge `json:"badges"`
-	CreatedTimestamp time.Time     ` json:"created_timestamp"`
+	ID               int                `json:"user_id"`
+	Name             string             `json:"name"`
+	Point            int                `json:"point"`
+	ActivityCount    int                `json:"activity_count"`
+	Badges           []badge.Badge      `json:"badges"`
+	SpiderDataset    user.SpiderDataset `json:"spider"`
+	CreatedTimestamp time.Time          ` json:"created_timestamp"`
 }
 
 type EditProfileResponse struct {

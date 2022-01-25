@@ -80,7 +80,6 @@ func (r *router) setupLearning() {
 		learningRoute.Get("/overview", handler.GetOverview)
 		learningRoute.Get("/content/roadmap/:id", handler.GetContentRoadmap)
 		learningRoute.Get("/recommend", handler.GetRecommend)
-		learningRoute.Get("/spider", handler.GetSpiderData)
 
 	}
 

@@ -36,15 +36,15 @@ func Regis() *registry {
 	cache := cache.NewRedisClient()
 
 	userRepo := repositories.NewUserRepository(db, cache)
-	userService := services.NewUserService(userRepo)
-	userHandler := handler.NewUserHandler(userService)
-
 	learningRepo := repositories.NewLearningRepository(db, cache)
-	learningService := services.NewLearningService(learningRepo, userRepo)
-	learningHandler := handler.NewLearningHandler(learningService)
-
 	examRepo := repositories.NewExamRepository(db, cache)
+
+	userService := services.NewUserService(userRepo, learningRepo)
+	learningService := services.NewLearningService(learningRepo, userRepo)
 	examService := services.NewExamService(examRepo, userRepo, learningRepo, cache)
+
+	userHandler := handler.NewUserHandler(userService)
+	learningHandler := handler.NewLearningHandler(learningService)
 	examHandler := handler.NewExamHandler(examService)
 
 	jwt := jwt.New(userRepo)

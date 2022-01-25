@@ -9,6 +9,7 @@ import (
 	"database-camp/internal/models/request"
 	"database-camp/internal/models/response"
 	"database-camp/internal/repositories"
+	"database-camp/internal/services/loaders"
 	"database-camp/internal/utils"
 	"time"
 )
@@ -22,15 +23,16 @@ type UserService interface {
 }
 
 type userService struct {
-	repo repositories.UserRepository
+	userRepo     repositories.UserRepository
+	learningRepo repositories.LearningRepository
 }
 
-func NewUserService(repo repositories.UserRepository) *userService {
-	return &userService{repo: repo}
+func NewUserService(userRepo repositories.UserRepository, learningRepo repositories.LearningRepository) *userService {
+	return &userService{userRepo: userRepo, learningRepo: learningRepo}
 }
 
 func (s userService) Register(request request.UserRequest) (*response.UserResponse, error) {
-	user, err := s.repo.InsertUser(user.User{
+	user, err := s.userRepo.InsertUser(user.User{
 		Name:             request.Name,
 		Email:            request.Email,
 		Password:         utils.HashAndSalt(request.Password),
@@ -49,7 +51,7 @@ func (s userService) Register(request request.UserRequest) (*response.UserRespon
 		}
 	}
 
-	jwt := jwt.New(s.repo)
+	jwt := jwt.New(s.userRepo)
 
 	token, err := jwt.Sign(user.ID)
 	if err != nil {
@@ -71,7 +73,7 @@ func (s userService) Register(request request.UserRequest) (*response.UserRespon
 }
 
 func (s userService) Login(request request.UserRequest) (*response.UserResponse, error) {
-	user, err := s.repo.GetUserByEmail(request.Email)
+	user, err := s.userRepo.GetUserByEmail(request.Email)
 
 	correctPassword := utils.ComparePasswords(user.Password, request.Password)
 
@@ -80,7 +82,7 @@ func (s userService) Login(request request.UserRequest) (*response.UserResponse,
 		return nil, errs.ErrEmailOrPasswordNotCorrect
 	}
 
-	jwt := jwt.New(s.repo)
+	jwt := jwt.New(s.userRepo)
 
 	token, err := jwt.Sign(user.ID)
 	if err != nil {
@@ -102,32 +104,32 @@ func (s userService) Login(request request.UserRequest) (*response.UserResponse,
 }
 
 func (s userService) GetProfile(id int) (*response.GetProfileResponse, error) {
-	profile, err := s.repo.GetProfile(id)
-	if err != nil || profile == nil {
-		logs.GetInstance().Error(err)
-		return nil, errs.ErrUserNotFound
-	}
 
-	allBadgeDB, err := s.repo.GetAllBadge()
+	loader := loaders.NewProfileLoader(s.learningRepo, s.userRepo)
+
+	err := loader.Load(id)
 	if err != nil {
 		logs.GetInstance().Error(err)
-		return nil, errs.ErrLoadError
+		return nil, errs.ErrContentNotFound
 	}
 
-	userBadgeDB, err := s.repo.GetUserBadge(id)
-	if err != nil {
-		logs.GetInstance().Error(err)
-		return nil, errs.ErrLoadError
-	}
+	spiderDataset := loader.GetSpiderDataset()
+	contentGroups := loader.GetContentGroups()
+	badges := loader.GetBadges()
+	profile := loader.GetProfile()
+	userBadges := loader.GetUserBadges()
 
-	badges := badge.NewBadges(allBadgeDB, userBadgeDB)
+	spiderDataset.FillContentGroups(contentGroups)
+
+	_badges := badge.NewBadges(badges, userBadges)
 
 	response := response.GetProfileResponse{
 		ID:               profile.ID,
 		Name:             profile.Name,
 		Point:            profile.Point,
 		ActivityCount:    profile.ActivityCount,
-		Badges:           badges,
+		Badges:           _badges,
+		SpiderDataset:    spiderDataset,
 		CreatedTimestamp: profile.CreatedTimestamp,
 	}
 
@@ -135,7 +137,7 @@ func (s userService) GetProfile(id int) (*response.GetProfileResponse, error) {
 }
 
 func (s userService) EditProfile(userID int, request request.UserRequest) (*response.EditProfileResponse, error) {
-	err := s.repo.UpdatesByID(userID, map[string]interface{}{"name": request.Name})
+	err := s.userRepo.UpdatesByID(userID, map[string]interface{}{"name": request.Name})
 	if err != nil {
 		logs.GetInstance().Error(err)
 		return nil, errs.ErrUpdateError
@@ -147,13 +149,13 @@ func (s userService) EditProfile(userID int, request request.UserRequest) (*resp
 }
 
 func (s userService) GetRanking(userID int) (*response.RankingResponse, error) {
-	userRankingDB, err := s.repo.GetPointRanking(userID)
+	userRankingDB, err := s.userRepo.GetPointRanking(userID)
 	if err != nil || userRankingDB == nil {
 		logs.GetInstance().Error(err)
 		return nil, errs.ErrUserNotFound
 	}
 
-	leaderBoardDB, err := s.repo.GetRankingLeaderBoard()
+	leaderBoardDB, err := s.userRepo.GetRankingLeaderBoard()
 	if err != nil || leaderBoardDB == nil {
 		logs.GetInstance().Error(err)
 		return nil, errs.ErrLeaderBoardNotFound

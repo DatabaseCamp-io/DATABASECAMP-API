@@ -22,19 +22,19 @@ func (b *Badge) setIsCollected(correctedBadgesDB []UserBadge) {
 	b.IsCollected = false
 }
 
-func NewBadges(allBadgesDB []Badge, correctedBadgesDB []UserBadge) []Badge {
-	badges := make([]Badge, 0, len(allBadgesDB))
+func NewBadges(allBadges []Badge, collectedBadges []UserBadge) []Badge {
+	badges := make([]Badge, 0, len(allBadges))
 
-	for _, badgeDB := range allBadgesDB {
+	for _, badgeDB := range allBadges {
 		badge := Badge{
 			ID:        badgeDB.ID,
 			ImagePath: badgeDB.ImagePath,
 			Name:      badgeDB.Name,
 		}
 
-		badge.setIsCollected(correctedBadgesDB)
+		badge.setIsCollected(collectedBadges)
 
-		badges = append(badges)
+		badges = append(badges, badge)
 	}
 
 	return badges
