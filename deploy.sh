@@ -1,5 +1,5 @@
 TAG=$1
-docker build -t ganinw13120/dbc-backend:$TAG .
+docker build --no-cache -t ganinw13120/dbc-backend:$TAG .
 docker tag ganinw13120/dbc-backend:$TAG ganinw13120/dbc-backend:$TAG
 docker push ganinw13120/dbc-backend:$TAG
 
