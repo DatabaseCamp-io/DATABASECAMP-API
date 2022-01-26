@@ -53,7 +53,15 @@ type ResultActivity struct {
 type ResultActivities []ResultActivity
 
 func (activities *ResultActivities) SetExamResultID(id int) {
+	newActivities := make(ResultActivities, 0)
+
 	for _, activity := range *activities {
-		activity.ExamResultID = id
+		newActivities = append(newActivities, ResultActivity{
+			ExamResultID: id,
+			ActivityID:   activity.ActivityID,
+			Score:        activity.Score,
+		})
 	}
+
+	*activities = newActivities
 }
