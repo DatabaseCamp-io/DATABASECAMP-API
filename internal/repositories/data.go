@@ -18,6 +18,11 @@ var TableName = struct {
 	Hint                string
 	UserHint            string
 	ExamResultActivity  string
+	VocabGroupChoice    string
+	VocabGroup          string
+	DependencyChoice    string
+	Dependency          string
+	Determinant         string
 }{
 	"User",
 	"Content",
@@ -36,6 +41,11 @@ var TableName = struct {
 	"Hint",
 	"UserHint",
 	"ExamResultActivity",
+	"VocabGroupChoice",
+	"VocabGroup",
+	"DependencyChoice",
+	"Dependency",
+	"Determinant",
 }
 
 var IDName = struct {
@@ -48,6 +58,7 @@ var IDName = struct {
 	MiniExam     string
 	Badge        string
 	ExamResult   string
+	VocabGroup   string
 }{
 	"user_id",
 	"activity_id",
@@ -58,6 +69,7 @@ var IDName = struct {
 	"mini_exam_id",
 	"badge_id",
 	"exam_result_id",
+	"vocab_group_id",
 }
 
 var ViewName = struct {

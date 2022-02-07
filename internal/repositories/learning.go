@@ -239,6 +239,70 @@ func (r learningRepository) getCompletionChoice(activityID int) (activity.Comple
 	return completionChoice, err
 }
 
+func (r learningRepository) getVocabGroupChoice(activityID int) (activity.VocalGroupChoices, error) {
+	vocalGroupChoices := make([]activity.VocalGroupChoice, 0)
+
+	key := "learningRepository::getVocabGroupChoice::" + utils.ParseString(activityID)
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &vocalGroupChoices); err == nil {
+			return vocalGroupChoices, nil
+		}
+	}
+
+	err := r.db.GetDB().
+		Select("vocab_group_name", "vocab").
+		Table(TableName.VocabGroupChoice).
+		Joins("INNER JOIN %s ON %s.%s = %s.%s",
+			TableName.VocabGroup,
+			TableName.VocabGroup,
+			IDName.VocabGroup,
+			TableName.VocabGroupChoice,
+			IDName.VocabGroup,
+		).
+		Where(IDName.Activity+" = ?", activityID).
+		Find(&vocalGroupChoices).
+		Error
+
+	if data, err := json.Marshal(vocalGroupChoices); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
+	return vocalGroupChoices, err
+}
+
+func (r learningRepository) getDependencyChoice(activityID int) (*activity.DependencyChoice, error) {
+	choice := activity.DependencyChoice{}
+
+	key := "learningRepository::getDependencyChoice::" + utils.ParseString(activityID)
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &choice); err == nil {
+			return &choice, nil
+		}
+	}
+
+	err := r.db.GetDB().
+		Preload(TableName.Dependency).
+		Preload(TableName.Determinant).
+		Table(TableName.DependencyChoice).
+		Where(IDName.Activity+" = ?", activityID).
+		Find(&choice).
+		Error
+
+	if data, err := json.Marshal(choice); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
+	return &choice, err
+}
+
 func (r learningRepository) GetActivityHints(activityID int) ([]activity.Hint, error) {
 	hints := make([]activity.Hint, 0)
 
@@ -301,6 +365,10 @@ func (r learningRepository) GetActivityChoices(activityID int, activityTypeID in
 		return r.getMultipleChoice(activityID)
 	case 3:
 		return r.getCompletionChoice(activityID)
+	case 4:
+		return r.getVocabGroupChoice(activityID)
+	case 5:
+		return r.getDependencyChoice(activityID)
 	default:
 		return nil, errs.ErrActivityTypeInvalid
 	}

@@ -15,17 +15,29 @@ type MultipleChoice struct {
 type MultipleChoices []MultipleChoice
 
 func (choices MultipleChoices) CreatePropositionChoices() interface{} {
+	countCorrect := 0
 	preparedChoices := make([]map[string]interface{}, 0)
 
 	utils.Shuffle(choices)
 
 	for _, v := range choices {
+		if v.IsCorrect {
+			countCorrect++
+		}
+
 		preparedChoice, _ := utils.StructToMap(v)
 		delete(preparedChoice, "is_correct")
 		preparedChoices = append(preparedChoices, preparedChoice)
 	}
 
-	return preparedChoices
+	isMultipleAnswers := countCorrect > 1
+
+	result := map[string]interface{}{
+		"is_multiple_answers": isMultipleAnswers,
+		"choices":             preparedChoices,
+	}
+
+	return result
 }
 
 type CompletionChoice struct {
@@ -87,4 +99,93 @@ func (choices MatchingChoices) CreatePropositionChoices() interface{} {
 	}
 
 	return prepared
+}
+
+type VocalGroupChoice struct {
+	GroupName string `gorm:"column:vocab_group_name" json:"vocab_group_name"`
+	Vocab     string `gorm:"column:vocab" json:"vocab"`
+}
+
+type VocalGroupChoices []VocalGroupChoice
+
+func (choices VocalGroupChoices) CreatePropositionChoices() interface{} {
+	groups := make([]string, 0)
+	vocabs := make([]string, 0)
+
+	utils.Shuffle(choices)
+
+	for _, v := range choices {
+		groups = append(groups, v.GroupName)
+		vocabs = append(vocabs, v.Vocab)
+	}
+
+	preparedChoices := map[string]interface{}{
+		"groups": groups,
+		"vocabs": vocabs,
+	}
+
+	return preparedChoices
+}
+
+type Determinant struct {
+	Value string `gorm:"column:value" json:"value"`
+	Fixed bool   `gorm:"column:fixed" json:"-"`
+}
+
+type Dependency struct {
+	Dependent    string        `gorm:"column:dependent" json:"dependent"`
+	Fixed        bool          `gorm:"column:fixed" json:"-"`
+	Determinants []Determinant `gorm:"foreignKey:determinant_id" json:"determinants"`
+}
+
+type DependencyChoice struct {
+	ID           int          `gorm:"column:dependency_choice_id"`
+	Dependencies []Dependency `gorm:"foreignKey:dependency_id"`
+}
+
+func (choice DependencyChoice) CreatePropositionChoices() interface{} {
+
+	type dependency struct {
+		Dependent         *string  `json:"dependent"`
+		DeterminantsCount int      `json:"determinants_count"`
+		Determinants      []string `json:"determinants"`
+	}
+
+	type result struct {
+		Vocabs       []string     `json:"vocabs"`
+		Dependencies []dependency `json:"dependencies"`
+	}
+
+	propositionChoices := result{
+		Vocabs:       make([]string, 0),
+		Dependencies: make([]dependency, 0),
+	}
+
+	for _, v := range choice.Dependencies {
+		dependencyResult := dependency{
+			DeterminantsCount: len(v.Determinants),
+			Determinants:      make([]string, 0),
+		}
+
+		if v.Fixed {
+			dependencyResult.Dependent = &v.Dependent
+		} else {
+			propositionChoices.Vocabs = append(propositionChoices.Vocabs, v.Dependent)
+		}
+
+		for _, d := range v.Determinants {
+			if d.Fixed {
+				dependencyResult.Determinants = append(dependencyResult.Determinants, d.Value)
+			} else {
+				propositionChoices.Vocabs = append(propositionChoices.Vocabs, d.Value)
+			}
+		}
+
+		propositionChoices.Dependencies = append(propositionChoices.Dependencies, dependencyResult)
+	}
+
+	utils.Shuffle(propositionChoices.Vocabs)
+	utils.Shuffle(propositionChoices.Dependencies)
+
+	return propositionChoices
 }

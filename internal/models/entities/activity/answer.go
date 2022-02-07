@@ -108,3 +108,76 @@ func (answer CompletionChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
 
 	return true, nil
 }
+
+type VocabGroup struct {
+	GroupName string   `json:"group_name"`
+	Vocabs    []string `json:"vocabs"`
+}
+
+type VocabGroupChoiceAnswer struct {
+	Groups []VocabGroup `json:"groups"`
+}
+
+func (answer VocabGroupChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
+	vocabGroups, ok := choices.(VocalGroupChoices)
+	if !ok {
+		return false, errs.ErrAnswerInvalid
+	}
+
+	solution := make(map[string]map[string]bool, 0)
+	for _, choice := range vocabGroups {
+		if _, ok := solution[choice.GroupName]; !ok {
+			solution[choice.GroupName] = make(map[string]bool, 0)
+		}
+
+		solution[choice.GroupName][choice.Vocab] = true
+	}
+
+	for _, group := range answer.Groups {
+		for _, vocab := range group.Vocabs {
+			if _, ok := solution[group.GroupName]; !ok {
+				return false, nil
+			}
+
+			if !solution[group.GroupName][vocab] {
+				return false, nil
+			}
+		}
+	}
+
+	return true, nil
+}
+
+type DependencyChoiceAnswer []Dependency
+
+func (answer DependencyChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
+	choice, ok := choices.(DependencyChoice)
+	if !ok {
+		return false, errs.ErrAnswerInvalid
+	}
+
+	solution := make(map[string]map[string]bool, 0)
+	for _, dependency := range choice.Dependencies {
+		for _, determinant := range dependency.Determinants {
+			if _, ok := solution[dependency.Dependent]; !ok {
+				solution[dependency.Dependent] = make(map[string]bool, 0)
+			}
+
+			solution[dependency.Dependent][determinant.Value] = true
+		}
+	}
+
+	for _, dependency := range answer {
+		for _, determinant := range dependency.Determinants {
+			if _, ok := solution[dependency.Dependent]; !ok {
+				return false, nil
+			}
+
+			if !solution[dependency.Dependent][determinant.Value] {
+				return false, nil
+			}
+		}
+	}
+
+	return true, nil
+}
