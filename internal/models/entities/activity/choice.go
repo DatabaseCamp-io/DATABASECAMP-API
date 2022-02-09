@@ -227,7 +227,7 @@ func (choice ERChoice) CreatePropositionChoices() interface{} {
 
 	type TableChoice struct {
 		Title           *string    `json:"title"`
-		AttributesCount int        `json:"attributes_count"`
+		AttributesCount *int       `json:"attributes_count"`
 		Attributes      Attributes `json:"attributes"`
 	}
 
@@ -235,8 +235,11 @@ func (choice ERChoice) CreatePropositionChoices() interface{} {
 
 	for _, v := range choice.Tables {
 		tableChoice := TableChoice{
-			AttributesCount: len(v.Attributes),
-			Attributes:      make(Attributes, 0),
+			Attributes: make(Attributes, 0),
+		}
+
+		if choice.Type == ER_CHOICE_FILL_TABLE {
+			*tableChoice.AttributesCount = len(v.Attributes)
 		}
 
 		tableChoice.Attributes = make(Attributes, 0)
@@ -287,5 +290,18 @@ func (choice ERChoice) CreatePropositionChoices() interface{} {
 	}{
 		"tables":        tablesChoice,
 		"relationships": relationships,
+	}
+}
+
+type ERAnswer struct {
+	Tables        Tables        `json:"tables"`
+	Relationships Relationships `json:"relationships"`
+}
+
+func (choice ERAnswer) CreatePropositionChoices() interface{} {
+	return map[string]interface{}{
+		"tables":        choice.Tables,
+		"relationships": choice.Relationships,
+		"problems":      PeerProblems,
 	}
 }

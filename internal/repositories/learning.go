@@ -480,6 +480,63 @@ func (r learningRepository) getERChoice(activityID int) (*activity.ERChoice, err
 	return choice, nil
 }
 
+func (r learningRepository) getPeerChoice() (*activity.ERAnswer, error) {
+	answer := &activity.ERAnswer{}
+
+	rows, err := r.db.GetDB().
+		Select(IDName.Table, "title", IDName.Attribute, "value", "attribute_key").
+		Table(ViewName.RandomERAnswer).
+		Rows()
+
+	if err != nil {
+		return nil, err
+	}
+
+	tablesMap := make(map[int]*activity.Table, 0)
+
+	for rows.Next() {
+		table := activity.Table{}
+
+		attribute := activity.Attribute{}
+
+		err = rows.Scan(&table.ID, &table.Title, &attribute.ID, &attribute.Value, &attribute.Key)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, ok := tablesMap[table.ID]; !ok {
+			tablesMap[table.ID] = &table
+			tablesMap[table.ID].Attributes = make(activity.Attributes, 0)
+		}
+
+		tablesMap[table.ID].Attributes = append(tablesMap[table.ID].Attributes, attribute)
+	}
+
+	tableIDs := make([]interface{}, 0)
+
+	for _, v := range tablesMap {
+		answer.Tables = append(answer.Tables, *v)
+		tableIDs = append(tableIDs, v.ID)
+	}
+
+	relationships := make(activity.Relationships, 0)
+
+	err = r.db.GetDB().
+		Table(TableName.Relationship).
+		Where("table1_id IN (" + utils.ToStrings(tableIDs) + ") OR table2_id IN (" + utils.ToStrings(tableIDs) + ")").
+		Find(&relationships).
+		Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	answer.Relationships = append(answer.Relationships, relationships...)
+
+	return answer, err
+
+}
+
 func (r learningRepository) GetActivityHints(activityID int) ([]activity.Hint, error) {
 	hints := make([]activity.Hint, 0)
 
@@ -548,6 +605,8 @@ func (r learningRepository) GetActivityChoices(activityID int, activityTypeID in
 		return r.getDependencyChoice(activityID)
 	case 6:
 		return r.getERChoice(activityID)
+	case 7:
+		return r.getPeerChoice()
 	default:
 		return nil, errs.ErrActivityTypeInvalid
 	}
