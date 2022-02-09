@@ -217,8 +217,10 @@ func (c learningService) CheckAnswer(userID int, request request.CheckAnswerRequ
 			logs.GetInstance().Error(err)
 			return nil, errs.ErrInternalServerError
 		}
+		var message string
+		isCorrect, message = erChoiceAnswer.IsCorrect(choice)
+		errMessage = &message
 
-		isCorrect, *errMessage = erChoiceAnswer.IsCorrect(choice)
 	} else {
 		formatedAnswer, err := activity.FormatAnswer(request.Answer, *request.ActivityTypeID)
 		if err != nil {

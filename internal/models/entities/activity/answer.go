@@ -71,23 +71,31 @@ func (answer MultipleChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
 		return false, errs.ErrAnswerInvalid
 	}
 
-	for _, v := range answer {
-		hasChoice := false
+	countCorrect := 0
 
-		for _, choice := range multipleChoices {
-			if choice.ID == v {
-				hasChoice = true
+	solution := map[int]bool{}
+	for _, choice := range multipleChoices {
+		solution[choice.ID] = choice.IsCorrect
 
-				if !choice.IsCorrect {
-					return false, nil
-				}
-
-			}
-
-			if !hasChoice {
-				return false, nil
-			}
+		if choice.IsCorrect {
+			countCorrect++
 		}
+	}
+
+	if countCorrect != len(answer) {
+		return false, nil
+	}
+
+	for _, v := range answer {
+
+		if _, ok := solution[v]; !ok {
+			return false, nil
+		}
+
+		if !solution[v] {
+			return false, nil
+		}
+
 	}
 
 	return true, nil
@@ -128,6 +136,10 @@ func (answer VocabGroupChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
 		return false, errs.ErrAnswerInvalid
 	}
 
+	if len(answer.Groups) != len(vocabGroupChoice.Groups) {
+		return false, nil
+	}
+
 	solution := map[string]map[string]bool{}
 	for _, choice := range vocabGroupChoice.Groups {
 		if _, ok := solution[choice.GroupName]; !ok {
@@ -140,6 +152,11 @@ func (answer VocabGroupChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
 	}
 
 	for _, group := range answer.Groups {
+
+		if len(solution[group.GroupName]) != len(group.Vocabs) {
+			return false, nil
+		}
+
 		for _, vocab := range group.Vocabs {
 			if _, ok := solution[group.GroupName]; !ok {
 				return false, nil
@@ -204,7 +221,7 @@ func (answer ERChoiceAnswer) IsCorrect(choice ERChoice) (bool, string) {
 	}
 
 	if len(answer.Relationships) != len(choice.Relationships) {
-		return false, RelationSuggestions[SUGGESTION_INCORRECT_NUMBER_RELATIONSHIP]
+		return false, RelationshipSuggestions[SUGGESTION_INCORRECT_NUMBER_RELATIONSHIP]
 	}
 
 	tableSolutionMap := map[string]map[string]Attribute{}
@@ -247,7 +264,7 @@ func (answer ERChoiceAnswer) IsCorrect(choice ERChoice) (bool, string) {
 					return false, AttributeSuggestions[SUGGESTION_INCORRECT_ATTRIBUTE]
 				} else {
 
-					if tableSolutionMap[table.Title][attribute.Value].Key != attribute.Key {
+					if tableSolutionMap[table.Title][attribute.Value].Key != nil && *tableSolutionMap[table.Title][attribute.Value].Key != *attribute.Key {
 						return false, AttributeSuggestions[SUGGESTION_INCORRECT_KEY_ATTRIBUTE]
 					}
 
@@ -267,7 +284,7 @@ func (answer ERChoiceAnswer) IsCorrect(choice ERChoice) (bool, string) {
 	}
 
 	for _, a := range answer.Relationships {
-		if !relationshipMap[idMap[a.Table1ID]][a.Table2ID] {
+		if !relationshipMap[idMap[a.Table1ID]][idMap[a.Table2ID]] {
 			return false, RelationshipSuggestions[SUGGESTION_INCORRECT_RELATIONSHIP]
 		}
 	}
