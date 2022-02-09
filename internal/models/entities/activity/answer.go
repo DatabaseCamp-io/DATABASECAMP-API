@@ -178,3 +178,111 @@ func (answer DependencyChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
 
 	return true, nil
 }
+
+type ERChoiceAnswer struct {
+	Tables        Tables        `json:"tables"`
+	Relationships Relationships `json:"relationships"`
+}
+
+func (answer ERChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
+	_, ok := choices.(ERChoice)
+	if !ok {
+		return false, errs.ErrAnswerInvalid
+	}
+
+	// if choice.Type == ER_CHOICE_FILL_TABLE {
+	// 	return answer.isCorrectFillTable(choice)
+	// } else if choice.Type == ER_CHOICE_DRAW {
+	// 	return answer.isCorrectDraw(choice)
+	// } else {
+	// 	return false, errs.ErrAnswerInvalid
+	// }
+
+	return true, nil
+}
+
+type SuggestionGroup struct {
+	Name        string
+	Suggestions []string
+}
+
+var SuggestionGroups = []SuggestionGroup{
+	{
+		Name: "ด้าน Relation",
+	},
+}
+
+func (answer ERChoiceAnswer) isCorrectFillDraw(choice ERChoice) (bool, string) {
+	if len(answer.Tables) < len(choice.Tables) {
+		return false, "จำนวนของ Relation น้อยเกินไป"
+	}
+
+	if len(answer.Tables) > len(choice.Tables) {
+		return false, "จำนวนของ Relation มากเกินไป"
+	}
+
+	if len(answer.Relationships) != len(choice.Relationships) {
+		return false, "จำนวนของ Relationship ไม่ถูกต้อง"
+	}
+
+	tableSolutionMap := map[string]map[string]Attribute{}
+	for _, table := range choice.Tables {
+		tableSolutionMap[table.Title] = map[string]Attribute{}
+		for _, attribute := range table.Attributes {
+			tableSolutionMap[table.Title][attribute.Value] = attribute
+		}
+	}
+
+	relationshipMap := map[int]map[int]bool{}
+	for _, r := range choice.Relationships {
+		if _, ok := relationshipMap[r.Table1ID]; !ok {
+			relationshipMap[r.Table1ID] = map[int]bool{}
+		}
+
+		relationshipMap[r.Table1ID][r.Table2ID] = true
+	}
+
+	for _, a := range answer.Relationships {
+		if !relationshipMap[a.Table1ID][a.Table2ID] {
+			return false, "Relationship ระหว่าง Relation ไม่ถูกต้อง"
+		}
+	}
+
+	for _, s := range choice.Relationships {
+		for _, a := range answer.Relationships {
+			if s.Table1ID == a.Table1ID && s.Table2ID == a.Table2ID {
+				return false, "ประเภทของ Relationship ไม่ถูกต้อง"
+			}
+		}
+	}
+
+	for _, table := range answer.Tables {
+		if _, ok := tableSolutionMap[table.Title]; !ok {
+			return false, "Relation ไม่สอดคล้องกับความต้องการของระบบ"
+		} else {
+
+			if len(table.Attributes) < len(tableSolutionMap[table.Title]) {
+				return false, "จำนวนของ Attribute น้อยเกินไป"
+			}
+
+			if len(table.Attributes) > len(tableSolutionMap[table.Title]) {
+				return false, "จำนวนของ Attribute มากเกินไป"
+			}
+
+			for _, attribute := range table.Attributes {
+				if _, ok := tableSolutionMap[table.Title][attribute.Value]; !ok {
+					return false, "Attribute ไม่สอดคล้องกับความต้องการของระบบ"
+				} else {
+
+					if tableSolutionMap[table.Title][attribute.Value].Key != attribute.Key {
+						return false, "Key ของ Attribute ไม่ถูกต้อง"
+					}
+
+				}
+			}
+		}
+
+	}
+	return true, ""
+
+}
