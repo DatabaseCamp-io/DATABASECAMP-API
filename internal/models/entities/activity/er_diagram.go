@@ -6,24 +6,21 @@ const (
 )
 
 type Table struct {
-	ID         string     `gorm:"table_id" json:"table_id"`
+	ID         string     `gorm:"column:table_id" json:"table_id"`
 	Title      string     `gorm:"column:title" json:"title"`
 	Fixed      bool       `gorm:"column:fixed" json:"-"`
-	Attributes Attributes `json:"attributes"`
+	Attributes Attributes `gorm:"-" json:"attributes"`
 }
-
-func (Table) TableName() string { return "Tables" }
 
 type Tables []Table
 
 type Attribute struct {
-	ID    int     `gorm:"attribute_id" json:"attribute_id"`
-	Key   *string `gorm:"column:key" json:"key"`
-	Value string  `gorm:"column:value" json:"value"`
-	Fixed bool    `gorm:"column:fixed" json:"-"`
+	ID      int     `gorm:"column:attribute_id" json:"attribute_id"`
+	TableID string  `gorm:"column:table_id" json:"-"`
+	Key     *string `gorm:"column:key" json:"key"`
+	Value   string  `gorm:"column:value" json:"value"`
+	Fixed   bool    `gorm:"column:fixed" json:"-"`
 }
-
-func (Attribute) TableName() string { return "Attributes" }
 
 type Attributes []Attribute
 
@@ -40,7 +37,5 @@ type Relationship struct {
 	Table2ID         string `gorm:"column:table2_id" json:"table2_id"`
 	Fixed            bool   `gorm:"column:fixed" json:"-"`
 }
-
-func (Relationship) TableName() string { return "Relationship" }
 
 type Relationships []Relationship

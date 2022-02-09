@@ -203,14 +203,16 @@ func (c learningService) CheckAnswer(userID int, request request.CheckAnswerRequ
 
 	var isCorrect bool
 	var errMessage *string
+	var erChoiceAnswer activity.ERChoiceAnswer
+	var choice activity.ERChoice
 
 	if *request.ActivityTypeID == 6 {
-		choice, ok := choices.(activity.ERChoice)
+		var ok bool
+		choice, ok = choices.(activity.ERChoice)
 		if !ok {
 			return nil, errs.ErrAnswerInvalid
 		}
 
-		var erChoiceAnswer activity.ERChoiceAnswer
 		err := utils.StructToStruct(request.Answer, &erChoiceAnswer)
 
 		if err != nil {
@@ -246,6 +248,20 @@ func (c learningService) CheckAnswer(userID int, request request.CheckAnswerRequ
 	if err != nil || user == nil {
 		logs.GetInstance().Error(err)
 		return nil, errs.ErrUserNotFound
+	}
+
+	if *request.ActivityTypeID == 6 && choice.Type == activity.ER_CHOICE_DRAW {
+		erAnswer := activity.ERAnswer{
+			UserID:        userID,
+			Tables:        erChoiceAnswer.Tables,
+			Relationships: erChoiceAnswer.Relationships,
+		}
+
+		err = c.learningRepo.InsertERAnswer(erAnswer)
+		if err != nil && !utils.IsSqlDuplicateError(err) {
+			logs.GetInstance().Error(err)
+			return nil, errs.ErrInsertError
+		}
 	}
 
 	response := response.AnswerResponse{

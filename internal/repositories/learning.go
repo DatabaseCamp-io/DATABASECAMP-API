@@ -10,6 +10,7 @@ import (
 	"database-camp/internal/utils"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -24,6 +25,7 @@ type LearningRepository interface {
 	GetContentGroups() (groups content.ContentGroups, err error)
 	GetCorrectProgression(activityID int) (progression *content.LearningProgression, err error)
 	UseHint(userID int, reducePoint int, hintID int) error
+	InsertERAnswer(answer activity.ERAnswer) error
 }
 
 type learningRepository struct {
@@ -381,13 +383,6 @@ func (r learningRepository) getDependencyChoice(activityID int) (activity.Depend
 func (r learningRepository) getERChoice(activityID int) (activity.ERChoice, error) {
 	choice := activity.ERChoice{}
 
-	key := "learningRepository::getERChoice::" + utils.ParseString(activityID)
-	if cacheData, err := r.cache.Get(key); err == nil {
-		if err = json.Unmarshal([]byte(cacheData), &choice); err == nil {
-			return choice, nil
-		}
-	}
-
 	rows, err := r.db.GetDB().
 		Select(
 			TableName.ERChoice+".type",
@@ -472,14 +467,6 @@ func (r learningRepository) getERChoice(activityID int) (activity.ERChoice, erro
 	}
 
 	choice.Relationships = append(choice.Relationships, relationships...)
-
-	if data, err := json.Marshal(choice); err != nil {
-		return choice, err
-	} else {
-		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
-			return choice, err
-		}
-	}
 
 	return choice, nil
 }
@@ -668,6 +655,96 @@ func (r learningRepository) UseHint(userID int, reducePoint int, hintID int) err
 		if routine == 2 {
 			close(errs)
 		}
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (r learningRepository) InsertERAnswer(answer activity.ERAnswer) error {
+	var wg sync.WaitGroup
+	var err error
+
+	tx := r.db.GetDB().Begin()
+
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		e := tx.Table(TableName.Tables).Create(&answer.Tables).Error
+		if e != nil {
+			err = e
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		e := tx.Table(TableName.ERAnswer).Create(&answer).Error
+		if e != nil {
+			err = e
+		}
+	}()
+
+	wg.Wait()
+
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+		e := tx.Table(TableName.Relationship).Create(&answer.Relationships).Error
+		if e != nil {
+			err = e
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		attributes := make([]activity.Attribute, 0)
+
+		for i, v := range answer.Tables {
+
+			for j := range v.Attributes {
+				answer.Tables[i].Attributes[j].TableID = v.ID
+			}
+
+			attributes = append(attributes, v.Attributes...)
+		}
+
+		e := tx.Table(TableName.Attributes).Create(&attributes).Error
+		if e != nil {
+			err = e
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		erAnswerTables := make([]activity.ERAnswerTables, 0)
+		for _, v := range answer.Tables {
+			erAnswerTables = append(erAnswerTables, activity.ERAnswerTables{
+				ERAnswerID: answer.ID,
+				TableID:    v.ID,
+			})
+
+		}
+
+		e := tx.Table(TableName.ERAnswerTables).Create(&erAnswerTables).Error
+		if e != nil {
+			err = e
+		}
+	}()
+
+	wg.Wait()
+
+	if err != nil {
+		tx.Rollback()
+		return err
 	}
 
 	tx.Commit()

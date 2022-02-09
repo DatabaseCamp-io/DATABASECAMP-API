@@ -294,15 +294,22 @@ func (choice ERChoice) CreatePropositionChoices() interface{} {
 	}
 }
 
+type ERAnswerTables struct {
+	ERAnswerID int    `gorm:"column:er_answer_id" json:"-"`
+	TableID    string `gorm:"column:table_id" json:"-"`
+}
+
 type ERAnswer struct {
-	Tables        Tables        `json:"tables"`
-	Relationships Relationships `json:"relationships"`
+	ID            int           `gorm:"column:er_answer_id" json:"-"`
+	UserID        int           `gorm:"column:user_id" json:"-"`
+	Tables        Tables        `gorm:"-" json:"tables"`
+	Relationships Relationships `gorm:"-" json:"relationships"`
 }
 
 func (choice ERAnswer) CreatePropositionChoices() interface{} {
 	return map[string]interface{}{
 		"tables":        choice.Tables,
 		"relationships": choice.Relationships,
-		// "problems":      PeerProblems,
+		"problems":      GetPeerProblem(),
 	}
 }

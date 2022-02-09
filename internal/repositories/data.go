@@ -28,6 +28,8 @@ var TableName = struct {
 	Tables              string
 	Attributes          string
 	Relationship        string
+	ERAnswer            string
+	ERAnswerTables      string
 }{
 	"User",
 	"Content",
@@ -56,6 +58,8 @@ var TableName = struct {
 	"Tables",
 	"Attributes",
 	"Relationship",
+	"ERAnswer",
+	"ERAnswerTables",
 }
 
 var IDName = struct {
