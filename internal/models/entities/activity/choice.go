@@ -1,6 +1,8 @@
 package activity
 
-import "database-camp/internal/utils"
+import (
+	"database-camp/internal/utils"
+)
 
 type Choices interface {
 	CreatePropositionChoices() interface{}
@@ -101,22 +103,23 @@ func (choices MatchingChoices) CreatePropositionChoices() interface{} {
 	return prepared
 }
 
-type VocalGroupChoice struct {
-	GroupName string `gorm:"column:vocab_group_name" json:"vocab_group_name"`
-	Vocab     string `gorm:"column:vocab" json:"vocab"`
+type VocabGroup struct {
+	GroupName string   `json:"group_name"`
+	Vocabs    []string `json:"vocabs"`
 }
 
-type VocalGroupChoices []VocalGroupChoice
+type VocabGroupChoice struct {
+	Groups []VocabGroup `json:"groups"`
+}
 
-func (choices VocalGroupChoices) CreatePropositionChoices() interface{} {
+func (choice VocabGroupChoice) CreatePropositionChoices() interface{} {
 	groups := make([]string, 0)
 	vocabs := make([]string, 0)
 
-	utils.Shuffle(choices)
-
-	for _, v := range choices {
+	for _, v := range choice.Groups {
 		groups = append(groups, v.GroupName)
-		vocabs = append(vocabs, v.Vocab)
+		vocabs = append(vocabs, v.Vocabs...)
+
 	}
 
 	preparedChoices := map[string]interface{}{
@@ -132,15 +135,27 @@ type Determinant struct {
 	Fixed bool   `gorm:"column:fixed" json:"-"`
 }
 
+func (Determinant) TableName() string {
+	return "Determinant"
+}
+
 type Dependency struct {
 	Dependent    string        `gorm:"column:dependent" json:"dependent"`
 	Fixed        bool          `gorm:"column:fixed" json:"-"`
 	Determinants []Determinant `gorm:"foreignKey:determinant_id" json:"determinants"`
 }
 
+func (Dependency) TableName() string {
+	return "Dependency"
+}
+
 type DependencyChoice struct {
 	ID           int          `gorm:"column:dependency_choice_id"`
 	Dependencies []Dependency `gorm:"foreignKey:dependency_id"`
+}
+
+func (DependencyChoice) TableName() string {
+	return "DependencyChoice"
 }
 
 func (choice DependencyChoice) CreatePropositionChoices() interface{} {
@@ -156,10 +171,8 @@ func (choice DependencyChoice) CreatePropositionChoices() interface{} {
 		Dependencies []dependency `json:"dependencies"`
 	}
 
-	propositionChoices := result{
-		Vocabs:       make([]string, 0),
-		Dependencies: make([]dependency, 0),
-	}
+	vocabs := make([]string, 0)
+	dependencies := make([]dependency, 0)
 
 	for _, v := range choice.Dependencies {
 		dependencyResult := dependency{
@@ -168,24 +181,111 @@ func (choice DependencyChoice) CreatePropositionChoices() interface{} {
 		}
 
 		if v.Fixed {
-			dependencyResult.Dependent = &v.Dependent
+			ch := v.Dependent
+			dependencyResult.Dependent = &ch
 		} else {
-			propositionChoices.Vocabs = append(propositionChoices.Vocabs, v.Dependent)
+			vocabs = append(vocabs, v.Dependent)
 		}
 
 		for _, d := range v.Determinants {
 			if d.Fixed {
 				dependencyResult.Determinants = append(dependencyResult.Determinants, d.Value)
 			} else {
-				propositionChoices.Vocabs = append(propositionChoices.Vocabs, d.Value)
+				vocabs = append(vocabs, d.Value)
 			}
 		}
 
-		propositionChoices.Dependencies = append(propositionChoices.Dependencies, dependencyResult)
+		dependencies = append(dependencies, dependencyResult)
 	}
 
-	utils.Shuffle(propositionChoices.Vocabs)
-	utils.Shuffle(propositionChoices.Dependencies)
+	utils.Shuffle(vocabs)
+	utils.Shuffle(dependencies)
+
+	propositionChoices := result{
+		Vocabs:       vocabs,
+		Dependencies: dependencies,
+	}
 
 	return propositionChoices
+}
+
+const (
+	ER_CHOICE_FILL_TABLE = "FILL_TABLE"
+	ER_CHOICE_DRAW       = "DRAW"
+)
+
+type ERChoice struct {
+	Type          string        `gorm:"column:type" json:"-"`
+	Tables        Tables        `json:"tables"`
+	Relationships Relationships `json:"relationships"`
+}
+
+func (ERChoice) TableName() string { return "ERChoice" }
+
+func (choice ERChoice) CreatePropositionChoices() interface{} {
+	vocabs := make([]string, 0)
+
+	type TableChoice struct {
+		Title           *string    `json:"title"`
+		AttributesCount int        `json:"attributes_count"`
+		Attributes      Attributes `json:"attributes"`
+	}
+
+	tablesChoice := make([]TableChoice, 0)
+
+	for _, v := range choice.Tables {
+		tableChoice := TableChoice{
+			AttributesCount: len(v.Attributes),
+			Attributes:      make(Attributes, 0),
+		}
+
+		tableChoice.Attributes = make(Attributes, 0)
+
+		if v.Fixed {
+			tableChoice.Title = &v.Title
+		} else {
+			vocabs = append(vocabs, v.Title)
+		}
+
+		for _, a := range v.Attributes {
+			if a.Fixed {
+				tableChoice.Attributes = append(tableChoice.Attributes, a)
+			} else {
+				vocabs = append(vocabs, a.Value)
+			}
+		}
+
+		utils.Shuffle(tableChoice.Attributes)
+
+		tablesChoice = append(tablesChoice, tableChoice)
+	}
+
+	if choice.Type == ER_CHOICE_FILL_TABLE {
+
+		utils.Shuffle(vocabs)
+		utils.Shuffle(tablesChoice)
+
+		return map[string]interface {
+		}{
+			"vocabs": vocabs,
+			"tables": tablesChoice,
+		}
+
+	}
+
+	relationships := choice.Relationships
+
+	for i, v := range choice.Relationships {
+		if !v.Fixed {
+			relationships = append(relationships[:i], relationships[i+1:]...)
+		}
+	}
+
+	utils.Shuffle(relationships)
+
+	return map[string]interface {
+	}{
+		"tables":        tablesChoice,
+		"relationships": relationships,
+	}
 }

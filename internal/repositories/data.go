@@ -23,6 +23,11 @@ var TableName = struct {
 	DependencyChoice    string
 	Dependency          string
 	Determinant         string
+	ERChoice            string
+	ERChoiceTables      string
+	Tables              string
+	Attributes          string
+	Relationship        string
 }{
 	"User",
 	"Content",
@@ -46,19 +51,31 @@ var TableName = struct {
 	"DependencyChoice",
 	"Dependency",
 	"Determinant",
+	"ERChoice",
+	"ERChoiceTables",
+	"Tables",
+	"Attributes",
+	"Relationship",
 }
 
 var IDName = struct {
-	User         string
-	Activity     string
-	Hint         string
-	Content      string
-	ContentGroup string
-	Exam         string
-	MiniExam     string
-	Badge        string
-	ExamResult   string
-	VocabGroup   string
+	User             string
+	Activity         string
+	Hint             string
+	Content          string
+	ContentGroup     string
+	Exam             string
+	MiniExam         string
+	Badge            string
+	ExamResult       string
+	VocabGroup       string
+	Dependency       string
+	Determinant      string
+	DependencyChoice string
+	ERChoice         string
+	Table            string
+	Attribute        string
+	Relationship     string
 }{
 	"user_id",
 	"activity_id",
@@ -70,6 +87,13 @@ var IDName = struct {
 	"badge_id",
 	"exam_result_id",
 	"vocab_group_id",
+	"dependency_id",
+	"determinant_id",
+	"dependency_choice_id",
+	"er_choice_id",
+	"table_id",
+	"attribute_id",
+	"relationship_id",
 }
 
 var ViewName = struct {

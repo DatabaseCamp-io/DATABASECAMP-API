@@ -109,28 +109,25 @@ func (answer CompletionChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
 	return true, nil
 }
 
-type VocabGroup struct {
-	GroupName string   `json:"group_name"`
-	Vocabs    []string `json:"vocabs"`
-}
-
 type VocabGroupChoiceAnswer struct {
 	Groups []VocabGroup `json:"groups"`
 }
 
 func (answer VocabGroupChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
-	vocabGroups, ok := choices.(VocalGroupChoices)
+	vocabGroupChoice, ok := choices.(VocabGroupChoice)
 	if !ok {
 		return false, errs.ErrAnswerInvalid
 	}
 
 	solution := make(map[string]map[string]bool, 0)
-	for _, choice := range vocabGroups {
+	for _, choice := range vocabGroupChoice.Groups {
 		if _, ok := solution[choice.GroupName]; !ok {
 			solution[choice.GroupName] = make(map[string]bool, 0)
 		}
 
-		solution[choice.GroupName][choice.Vocab] = true
+		for _, vocab := range choice.Vocabs {
+			solution[choice.GroupName][vocab] = true
+		}
 	}
 
 	for _, group := range answer.Groups {

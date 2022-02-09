@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"math/rand"
 	"net/mail"
 	"reflect"
@@ -50,4 +51,14 @@ func Shuffle(slice interface{}) {
 		j := rand.Intn(i + 1)
 		swap(i, j)
 	}
+}
+
+func ToStrings(strs []interface{}) string {
+	result := ""
+
+	for _, str := range strs {
+		result += fmt.Sprintf("%v,", str)
+	}
+
+	return result[:len(result)-1]
 }

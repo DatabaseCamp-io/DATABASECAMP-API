@@ -10,15 +10,15 @@ services:
       - ./config/redis.conf:/redis.conf
     command: redis-server /redis.conf
 
-    networks:
-      - cache-net
-  backend:
-    image: ganinw13120/dbc-backend:1.0.22
-    container_name: backend
-    ports:
-      - 80:80
-    networks:
-      - cache-net
+#     networks:
+#       - cache-net
+#   backend:
+#     image: ganinw13120/dbc-backend:1.0.22
+#     container_name: backend
+#     ports:
+#       - 80:80
+#     networks:
+#       - cache-net
 
-networks:
-  cache-net:
+# networks:
+#   cache-net:

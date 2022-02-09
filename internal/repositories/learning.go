@@ -239,31 +239,55 @@ func (r learningRepository) getCompletionChoice(activityID int) (activity.Comple
 	return completionChoice, err
 }
 
-func (r learningRepository) getVocabGroupChoice(activityID int) (activity.VocalGroupChoices, error) {
-	vocalGroupChoices := make([]activity.VocalGroupChoice, 0)
+func (r learningRepository) getVocabGroupChoice(activityID int) (*activity.VocabGroupChoice, error) {
+	vocalGroupChoice := activity.VocabGroupChoice{}
 
 	key := "learningRepository::getVocabGroupChoice::" + utils.ParseString(activityID)
 	if cacheData, err := r.cache.Get(key); err == nil {
-		if err = json.Unmarshal([]byte(cacheData), &vocalGroupChoices); err == nil {
-			return vocalGroupChoices, nil
+		if err = json.Unmarshal([]byte(cacheData), &vocalGroupChoice); err == nil {
+			return &vocalGroupChoice, nil
 		}
 	}
 
-	err := r.db.GetDB().
-		Select("vocab_group_name", "vocab").
+	rows, err := r.db.GetDB().
+		Select("name", "vocab").
 		Table(TableName.VocabGroupChoice).
-		Joins("INNER JOIN %s ON %s.%s = %s.%s",
+		Joins(fmt.Sprintf("INNER JOIN %s ON %s.%s = %s.%s",
 			TableName.VocabGroup,
 			TableName.VocabGroup,
 			IDName.VocabGroup,
 			TableName.VocabGroupChoice,
 			IDName.VocabGroup,
-		).
+		)).
 		Where(IDName.Activity+" = ?", activityID).
-		Find(&vocalGroupChoices).
-		Error
+		Rows()
 
-	if data, err := json.Marshal(vocalGroupChoices); err != nil {
+	groupMap := make(map[string]*activity.VocabGroup, 0)
+
+	for rows.Next() {
+		var name string
+		var vocab string
+
+		err = rows.Scan(&name, &vocab)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, ok := groupMap[name]; !ok {
+			groupMap[name] = &activity.VocabGroup{
+				GroupName: name,
+				Vocabs:    []string{vocab},
+			}
+		} else {
+			groupMap[name].Vocabs = append(groupMap[name].Vocabs, vocab)
+		}
+	}
+
+	for _, v := range groupMap {
+		vocalGroupChoice.Groups = append(vocalGroupChoice.Groups, *v)
+	}
+
+	if data, err := json.Marshal(vocalGroupChoice); err != nil {
 		return nil, err
 	} else {
 		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
@@ -271,7 +295,7 @@ func (r learningRepository) getVocabGroupChoice(activityID int) (activity.VocalG
 		}
 	}
 
-	return vocalGroupChoices, err
+	return &vocalGroupChoice, err
 }
 
 func (r learningRepository) getDependencyChoice(activityID int) (*activity.DependencyChoice, error) {
@@ -284,13 +308,64 @@ func (r learningRepository) getDependencyChoice(activityID int) (*activity.Depen
 		}
 	}
 
-	err := r.db.GetDB().
-		Preload(TableName.Dependency).
-		Preload(TableName.Determinant).
+	rows, err := r.db.GetDB().
 		Table(TableName.DependencyChoice).
+		Select(
+			TableName.DependencyChoice+"."+IDName.DependencyChoice,
+			TableName.Dependency+"."+IDName.Dependency,
+			TableName.Dependency+".dependent",
+			TableName.Dependency+".fixed",
+			TableName.Determinant+".value",
+			TableName.Determinant+".fixed",
+		).
+		Joins(fmt.Sprintf("INNER JOIN %s ON %s.%s = %s.%s",
+			TableName.Dependency,
+			TableName.Dependency,
+			IDName.DependencyChoice,
+			TableName.DependencyChoice,
+			IDName.DependencyChoice,
+		)).
+		Joins(fmt.Sprintf("INNER JOIN %s ON %s.%s = %s.%s",
+			TableName.Determinant,
+			TableName.Determinant,
+			IDName.Dependency,
+			TableName.Dependency,
+			IDName.Dependency,
+		)).
 		Where(IDName.Activity+" = ?", activityID).
-		Find(&choice).
-		Error
+		Rows()
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	choice.Dependencies = make([]activity.Dependency, 0)
+
+	dependencyMap := make(map[int]*activity.Dependency, 0)
+
+	for rows.Next() {
+		var id int
+		dependency := activity.Dependency{}
+		determinant := activity.Determinant{}
+
+		err = rows.Scan(&choice.ID, &id, &dependency.Dependent, &dependency.Fixed, &determinant.Value, &determinant.Fixed)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, ok := dependencyMap[id]; !ok {
+			dependencyMap[id] = &dependency
+			dependencyMap[id].Determinants = make([]activity.Determinant, 0)
+		}
+
+		dependencyMap[id].Determinants = append(dependencyMap[id].Determinants, determinant)
+	}
+
+	for _, v := range dependencyMap {
+		choice.Dependencies = append(choice.Dependencies, *v)
+	}
 
 	if data, err := json.Marshal(choice); err != nil {
 		return nil, err
@@ -301,6 +376,108 @@ func (r learningRepository) getDependencyChoice(activityID int) (*activity.Depen
 	}
 
 	return &choice, err
+}
+
+func (r learningRepository) getERChoice(activityID int) (*activity.ERChoice, error) {
+	choice := &activity.ERChoice{}
+
+	key := "learningRepository::getERChoice::" + utils.ParseString(activityID)
+	if cacheData, err := r.cache.Get(key); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), choice); err == nil {
+			return choice, nil
+		}
+	}
+
+	rows, err := r.db.GetDB().
+		Select(
+			TableName.ERChoice+".type",
+			TableName.Tables+"."+IDName.Table,
+			TableName.Tables+".title",
+			TableName.Tables+".fixed",
+			TableName.Attributes+"."+IDName.Attribute,
+			TableName.Attributes+".value",
+			TableName.Attributes+".key",
+			TableName.Attributes+".fixed",
+		).
+		Table(TableName.ERChoiceTables).
+		Joins(fmt.Sprintf("INNER JOIN %s ON %s.%s = %s.%s",
+			TableName.ERChoice,
+			TableName.ERChoice,
+			IDName.ERChoice,
+			TableName.ERChoiceTables,
+			IDName.ERChoice,
+		)).
+		Joins(fmt.Sprintf("INNER JOIN %s ON %s.%s = %s.%s",
+			TableName.Tables,
+			TableName.Tables,
+			IDName.Table,
+			TableName.ERChoiceTables,
+			IDName.Table,
+		)).
+		Joins(fmt.Sprintf("INNER JOIN %s ON %s.%s = %s.%s",
+			TableName.Attributes,
+			TableName.Attributes,
+			IDName.Table,
+			TableName.Tables,
+			IDName.Table,
+		)).
+		Where(IDName.Activity+" = ?", activityID).
+		Rows()
+
+	if err != nil {
+		return nil, err
+	}
+
+	tablesMap := make(map[int]*activity.Table, 0)
+
+	for rows.Next() {
+		table := activity.Table{}
+
+		attribute := activity.Attribute{}
+
+		err = rows.Scan(&choice.Type, &table.ID, &table.Title, &table.Fixed, &attribute.ID, &attribute.Value, &attribute.Key, &attribute.Fixed)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, ok := tablesMap[table.ID]; !ok {
+			tablesMap[table.ID] = &table
+			tablesMap[table.ID].Attributes = make(activity.Attributes, 0)
+		}
+
+		tablesMap[table.ID].Attributes = append(tablesMap[table.ID].Attributes, attribute)
+	}
+
+	tableIDs := make([]interface{}, 0)
+
+	for _, v := range tablesMap {
+		choice.Tables = append(choice.Tables, *v)
+		tableIDs = append(tableIDs, v.ID)
+	}
+
+	relationships := make(activity.Relationships, 0)
+
+	err = r.db.GetDB().
+		Table(TableName.Relationship).
+		Where("table1_id IN (" + utils.ToStrings(tableIDs) + ") OR table2_id IN (" + utils.ToStrings(tableIDs) + ")").
+		Find(&relationships).
+		Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	choice.Relationships = append(choice.Relationships, relationships...)
+
+	if data, err := json.Marshal(choice); err != nil {
+		return nil, err
+	} else {
+		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
+			return nil, err
+		}
+	}
+
+	return choice, nil
 }
 
 func (r learningRepository) GetActivityHints(activityID int) ([]activity.Hint, error) {
@@ -369,6 +546,8 @@ func (r learningRepository) GetActivityChoices(activityID int, activityTypeID in
 		return r.getVocabGroupChoice(activityID)
 	case 5:
 		return r.getDependencyChoice(activityID)
+	case 6:
+		return r.getERChoice(activityID)
 	default:
 		return nil, errs.ErrActivityTypeInvalid
 	}
