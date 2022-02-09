@@ -30,9 +30,10 @@ type ActivityResponse struct {
 }
 
 type AnswerResponse struct {
-	ActivityID   int  `json:"activity_id"`
-	IsCorrect    bool `json:"is_correct"`
-	UpdatedPoint int  `json:"updated_point"`
+	ActivityID   int     `json:"activity_id"`
+	IsCorrect    bool    `json:"is_correct"`
+	UpdatedPoint int     `json:"updated_point"`
+	ErrMessage   *string `json:"err_message"`
 }
 
 type UsedHintResponse struct {

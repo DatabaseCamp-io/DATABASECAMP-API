@@ -6,7 +6,7 @@ const (
 )
 
 type Table struct {
-	ID         int        `gorm:"table_id" json:"table_id"`
+	ID         string     `gorm:"table_id" json:"table_id"`
 	Title      string     `gorm:"column:title" json:"title"`
 	Fixed      bool       `gorm:"column:fixed" json:"-"`
 	Attributes Attributes `json:"attributes"`
@@ -36,8 +36,8 @@ const (
 type Relationship struct {
 	ID               int    `gorm:"column:relationship_id" json:"relationship_id"`
 	RelationshipType string `gorm:"column:relationship_type" json:"relationship_type"`
-	Table1ID         int    `gorm:"column:table1_id" json:"table1_id"`
-	Table2ID         int    `gorm:"column:table2_id" json:"table2_id"`
+	Table1ID         string `gorm:"column:table1_id" json:"table1_id"`
+	Table2ID         string `gorm:"column:table2_id" json:"table2_id"`
 	Fixed            bool   `gorm:"column:fixed" json:"-"`
 }
 

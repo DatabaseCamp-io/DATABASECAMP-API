@@ -9,6 +9,7 @@ import (
 	"database-camp/internal/models/response"
 	"database-camp/internal/repositories"
 	"database-camp/internal/services/loaders"
+	"database-camp/internal/utils"
 )
 
 type LearningService interface {
@@ -200,15 +201,35 @@ func (c learningService) CheckAnswer(userID int, request request.CheckAnswerRequ
 		return nil, errs.ErrActivityTypeInvalid
 	}
 
-	formatedAnswer, err := activity.FormatAnswer(request.Answer, *request.ActivityTypeID)
-	if err != nil {
-		logs.GetInstance().Error(err)
-		return nil, err
-	}
+	var isCorrect bool
+	var errMessage *string
 
-	isCorrect, err := formatedAnswer.IsCorrect(choices)
-	if err != nil {
-		return nil, err
+	if *request.ActivityTypeID == 6 {
+		choice, ok := choices.(activity.ERChoice)
+		if !ok {
+			return nil, errs.ErrAnswerInvalid
+		}
+
+		var erChoiceAnswer activity.ERChoiceAnswer
+		err := utils.StructToStruct(request.Answer, &erChoiceAnswer)
+
+		if err != nil {
+			logs.GetInstance().Error(err)
+			return nil, errs.ErrInternalServerError
+		}
+
+		isCorrect, *errMessage = erChoiceAnswer.IsCorrect(choice)
+	} else {
+		formatedAnswer, err := activity.FormatAnswer(request.Answer, *request.ActivityTypeID)
+		if err != nil {
+			logs.GetInstance().Error(err)
+			return nil, err
+		}
+
+		isCorrect, err = formatedAnswer.IsCorrect(choices)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	hasProgression := *progression != (content.LearningProgression{})
@@ -229,6 +250,7 @@ func (c learningService) CheckAnswer(userID int, request request.CheckAnswerRequ
 		ActivityID:   _activity.ID,
 		IsCorrect:    isCorrect,
 		UpdatedPoint: user.Point,
+		ErrMessage:   errMessage,
 	}
 
 	return &response, nil

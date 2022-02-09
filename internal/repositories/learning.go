@@ -239,13 +239,13 @@ func (r learningRepository) getCompletionChoice(activityID int) (activity.Comple
 	return completionChoice, err
 }
 
-func (r learningRepository) getVocabGroupChoice(activityID int) (*activity.VocabGroupChoice, error) {
+func (r learningRepository) getVocabGroupChoice(activityID int) (activity.VocabGroupChoice, error) {
 	vocalGroupChoice := activity.VocabGroupChoice{}
 
 	key := "learningRepository::getVocabGroupChoice::" + utils.ParseString(activityID)
 	if cacheData, err := r.cache.Get(key); err == nil {
 		if err = json.Unmarshal([]byte(cacheData), &vocalGroupChoice); err == nil {
-			return &vocalGroupChoice, nil
+			return vocalGroupChoice, nil
 		}
 	}
 
@@ -262,7 +262,7 @@ func (r learningRepository) getVocabGroupChoice(activityID int) (*activity.Vocab
 		Where(IDName.Activity+" = ?", activityID).
 		Rows()
 
-	groupMap := make(map[string]*activity.VocabGroup, 0)
+	groupMap := map[string]*activity.VocabGroup{}
 
 	for rows.Next() {
 		var name string
@@ -270,7 +270,7 @@ func (r learningRepository) getVocabGroupChoice(activityID int) (*activity.Vocab
 
 		err = rows.Scan(&name, &vocab)
 		if err != nil {
-			return nil, err
+			return vocalGroupChoice, err
 		}
 
 		if _, ok := groupMap[name]; !ok {
@@ -288,23 +288,23 @@ func (r learningRepository) getVocabGroupChoice(activityID int) (*activity.Vocab
 	}
 
 	if data, err := json.Marshal(vocalGroupChoice); err != nil {
-		return nil, err
+		return vocalGroupChoice, err
 	} else {
 		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
-			return nil, err
+			return vocalGroupChoice, err
 		}
 	}
 
-	return &vocalGroupChoice, err
+	return vocalGroupChoice, err
 }
 
-func (r learningRepository) getDependencyChoice(activityID int) (*activity.DependencyChoice, error) {
+func (r learningRepository) getDependencyChoice(activityID int) (activity.DependencyChoice, error) {
 	choice := activity.DependencyChoice{}
 
 	key := "learningRepository::getDependencyChoice::" + utils.ParseString(activityID)
 	if cacheData, err := r.cache.Get(key); err == nil {
 		if err = json.Unmarshal([]byte(cacheData), &choice); err == nil {
-			return &choice, nil
+			return choice, nil
 		}
 	}
 
@@ -336,14 +336,14 @@ func (r learningRepository) getDependencyChoice(activityID int) (*activity.Depen
 		Rows()
 
 	if err != nil {
-		return nil, err
+		return choice, err
 	}
 
 	defer rows.Close()
 
 	choice.Dependencies = make([]activity.Dependency, 0)
 
-	dependencyMap := make(map[int]*activity.Dependency, 0)
+	dependencyMap := map[int]*activity.Dependency{}
 
 	for rows.Next() {
 		var id int
@@ -352,7 +352,7 @@ func (r learningRepository) getDependencyChoice(activityID int) (*activity.Depen
 
 		err = rows.Scan(&choice.ID, &id, &dependency.Dependent, &dependency.Fixed, &determinant.Value, &determinant.Fixed)
 		if err != nil {
-			return nil, err
+			return choice, err
 		}
 
 		if _, ok := dependencyMap[id]; !ok {
@@ -368,22 +368,22 @@ func (r learningRepository) getDependencyChoice(activityID int) (*activity.Depen
 	}
 
 	if data, err := json.Marshal(choice); err != nil {
-		return nil, err
+		return choice, err
 	} else {
 		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
-			return nil, err
+			return choice, err
 		}
 	}
 
-	return &choice, err
+	return choice, err
 }
 
-func (r learningRepository) getERChoice(activityID int) (*activity.ERChoice, error) {
-	choice := &activity.ERChoice{}
+func (r learningRepository) getERChoice(activityID int) (activity.ERChoice, error) {
+	choice := activity.ERChoice{}
 
 	key := "learningRepository::getERChoice::" + utils.ParseString(activityID)
 	if cacheData, err := r.cache.Get(key); err == nil {
-		if err = json.Unmarshal([]byte(cacheData), choice); err == nil {
+		if err = json.Unmarshal([]byte(cacheData), &choice); err == nil {
 			return choice, nil
 		}
 	}
@@ -425,19 +425,20 @@ func (r learningRepository) getERChoice(activityID int) (*activity.ERChoice, err
 		Rows()
 
 	if err != nil {
-		return nil, err
+		return choice, err
 	}
 
-	tablesMap := make(map[int]*activity.Table, 0)
+	tablesMap := map[string]*activity.Table{}
 
 	for rows.Next() {
+
 		table := activity.Table{}
 
 		attribute := activity.Attribute{}
 
 		err = rows.Scan(&choice.Type, &table.ID, &table.Title, &table.Fixed, &attribute.ID, &attribute.Value, &attribute.Key, &attribute.Fixed)
 		if err != nil {
-			return nil, err
+			return choice, err
 		}
 
 		if _, ok := tablesMap[table.ID]; !ok {
@@ -446,6 +447,7 @@ func (r learningRepository) getERChoice(activityID int) (*activity.ERChoice, err
 		}
 
 		tablesMap[table.ID].Attributes = append(tablesMap[table.ID].Attributes, attribute)
+
 	}
 
 	tableIDs := make([]interface{}, 0)
@@ -457,31 +459,33 @@ func (r learningRepository) getERChoice(activityID int) (*activity.ERChoice, err
 
 	relationships := make(activity.Relationships, 0)
 
-	err = r.db.GetDB().
-		Table(TableName.Relationship).
-		Where("table1_id IN (" + utils.ToStrings(tableIDs) + ") OR table2_id IN (" + utils.ToStrings(tableIDs) + ")").
-		Find(&relationships).
-		Error
+	if len(tableIDs) > 0 {
+		err = r.db.GetDB().
+			Table(TableName.Relationship).
+			Where("table1_id IN (" + utils.ToStrings(tableIDs) + ") OR table2_id IN (" + utils.ToStrings(tableIDs) + ")").
+			Find(&relationships).
+			Error
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return choice, err
+		}
 	}
 
 	choice.Relationships = append(choice.Relationships, relationships...)
 
 	if data, err := json.Marshal(choice); err != nil {
-		return nil, err
+		return choice, err
 	} else {
 		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
-			return nil, err
+			return choice, err
 		}
 	}
 
 	return choice, nil
 }
 
-func (r learningRepository) getPeerChoice() (*activity.ERAnswer, error) {
-	answer := &activity.ERAnswer{}
+func (r learningRepository) getPeerChoice() (activity.ERAnswer, error) {
+	answer := activity.ERAnswer{}
 
 	rows, err := r.db.GetDB().
 		Select(IDName.Table, "title", IDName.Attribute, "value", "attribute_key").
@@ -489,10 +493,10 @@ func (r learningRepository) getPeerChoice() (*activity.ERAnswer, error) {
 		Rows()
 
 	if err != nil {
-		return nil, err
+		return answer, err
 	}
 
-	tablesMap := make(map[int]*activity.Table, 0)
+	tablesMap := map[string]*activity.Table{}
 
 	for rows.Next() {
 		table := activity.Table{}
@@ -501,7 +505,7 @@ func (r learningRepository) getPeerChoice() (*activity.ERAnswer, error) {
 
 		err = rows.Scan(&table.ID, &table.Title, &attribute.ID, &attribute.Value, &attribute.Key)
 		if err != nil {
-			return nil, err
+			return answer, err
 		}
 
 		if _, ok := tablesMap[table.ID]; !ok {
@@ -528,7 +532,7 @@ func (r learningRepository) getPeerChoice() (*activity.ERAnswer, error) {
 		Error
 
 	if err != nil {
-		return nil, err
+		return answer, err
 	}
 
 	answer.Relationships = append(answer.Relationships, relationships...)

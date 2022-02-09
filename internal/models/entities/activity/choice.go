@@ -239,7 +239,8 @@ func (choice ERChoice) CreatePropositionChoices() interface{} {
 		}
 
 		if choice.Type == ER_CHOICE_FILL_TABLE {
-			*tableChoice.AttributesCount = len(v.Attributes)
+			count := len(v.Attributes)
+			tableChoice.AttributesCount = &count
 		}
 
 		tableChoice.Attributes = make(Attributes, 0)

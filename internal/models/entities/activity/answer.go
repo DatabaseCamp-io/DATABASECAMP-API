@@ -19,6 +19,14 @@ func FormatAnswer(answer interface{}, activityTypeID int) (Answer, error) {
 		var completionChoiceAnswer CompletionChoiceAnswer
 		err := utils.StructToStruct(answer, &completionChoiceAnswer)
 		return completionChoiceAnswer, err
+	case 4:
+		var vocabGroupChoiceAnswer VocabGroupChoiceAnswer
+		err := utils.StructToStruct(answer, &vocabGroupChoiceAnswer)
+		return vocabGroupChoiceAnswer, err
+	case 5:
+		var dependencyChoiceAnswer DependencyChoiceAnswer
+		err := utils.StructToStruct(answer, &dependencyChoiceAnswer)
+		return dependencyChoiceAnswer, err
 	default:
 		return nil, errs.ErrActivityTypeInvalid
 	}
@@ -114,6 +122,7 @@ type VocabGroupChoiceAnswer struct {
 }
 
 func (answer VocabGroupChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
+
 	vocabGroupChoice, ok := choices.(VocabGroupChoice)
 	if !ok {
 		return false, errs.ErrAnswerInvalid
@@ -184,24 +193,8 @@ type ERChoiceAnswer struct {
 	Relationships Relationships `json:"relationships"`
 }
 
-func (answer ERChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
-	_, ok := choices.(ERChoice)
-	if !ok {
-		return false, errs.ErrAnswerInvalid
-	}
+func (answer ERChoiceAnswer) IsCorrect(choice ERChoice) (bool, string) {
 
-	// if choice.Type == ER_CHOICE_FILL_TABLE {
-	// 	return answer.isCorrectFillTable(choice)
-	// } else if choice.Type == ER_CHOICE_DRAW {
-	// 	return answer.isCorrectDraw(choice)
-	// } else {
-	// 	return false, errs.ErrAnswerInvalid
-	// }
-
-	return true, nil
-}
-
-func (answer ERChoiceAnswer) isCorrectFillDraw(choice ERChoice) (bool, string) {
 	if len(answer.Tables) < len(choice.Tables) {
 		return false, RelationSuggestions[SUGGESTION_LESS_RELATION]
 	}
@@ -220,29 +213,20 @@ func (answer ERChoiceAnswer) isCorrectFillDraw(choice ERChoice) (bool, string) {
 		for _, attribute := range table.Attributes {
 			tableSolutionMap[table.Title][attribute.Value] = attribute
 		}
+
 	}
 
-	relationshipMap := map[int]map[int]bool{}
-	for _, r := range choice.Relationships {
-		if _, ok := relationshipMap[r.Table1ID]; !ok {
-			relationshipMap[r.Table1ID] = map[int]bool{}
-		}
-
-		relationshipMap[r.Table1ID][r.Table2ID] = true
-	}
-
-	for _, a := range answer.Relationships {
-		if !relationshipMap[a.Table1ID][a.Table2ID] {
-			return false, RelationshipSuggestions[SUGGESTION_INCORRECT_RELATIONSHIP]
-		}
-	}
-
-	for _, s := range choice.Relationships {
-		for _, a := range answer.Relationships {
-			if s.Table1ID == a.Table1ID && s.Table2ID == a.Table2ID {
-				return false, RelationshipSuggestions[SUGGESTION_INVALID_TYPE_RELATIONSHIP]
+	idMap := map[string]string{}
+	for _, a := range answer.Tables {
+		for _, s := range choice.Tables {
+			if a.Title == s.Title {
+				idMap[a.ID] = s.ID
 			}
 		}
+	}
+
+	if len(idMap) != len(answer.Tables) {
+		return false, RelationSuggestions[SUGGESTION_DUPLICATION_RELATION]
 	}
 
 	for _, table := range answer.Tables {
@@ -269,9 +253,32 @@ func (answer ERChoiceAnswer) isCorrectFillDraw(choice ERChoice) (bool, string) {
 
 				}
 			}
+
+		}
+	}
+
+	relationshipMap := map[string]map[string]bool{}
+	for _, r := range choice.Relationships {
+		if _, ok := relationshipMap[r.Table1ID]; !ok {
+			relationshipMap[r.Table1ID] = map[string]bool{}
 		}
 
+		relationshipMap[r.Table1ID][r.Table2ID] = true
 	}
-	return true, ""
 
+	for _, a := range answer.Relationships {
+		if !relationshipMap[idMap[a.Table1ID]][a.Table2ID] {
+			return false, RelationshipSuggestions[SUGGESTION_INCORRECT_RELATIONSHIP]
+		}
+	}
+
+	for _, s := range choice.Relationships {
+		for _, a := range answer.Relationships {
+			if s.Table1ID == idMap[a.Table1ID] && s.Table2ID == idMap[a.Table1ID] {
+				return false, RelationshipSuggestions[SUGGESTION_INVALID_TYPE_RELATIONSHIP]
+			}
+		}
+	}
+
+	return true, ""
 }

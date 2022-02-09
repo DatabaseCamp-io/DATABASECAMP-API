@@ -3,6 +3,7 @@ package activity
 const (
 	SUGGESTION_LESS_RELATION = iota
 	SUGGESTION_MORE_RELATION
+	SUGGESTION_DUPLICATION_RELATION
 	SUGGESTION_INCORRECT_RELATION
 	SUGGESTION_INCORRECT_NUMBER_RELATIONSHIP
 	SUGGESTION_INCORRECT_RELATIONSHIP
@@ -34,9 +35,10 @@ var SuggestionGroups = []SuggestionGroup{
 }
 
 var RelationSuggestions map[int]string = map[int]string{
-	SUGGESTION_LESS_RELATION:      "จำนวนของ Relation น้อยเกินไป",
-	SUGGESTION_MORE_RELATION:      "จำนวนของ Relation มากเกินไป",
-	SUGGESTION_INCORRECT_RELATION: "Relation ไม่สอดคล้องกับความต้องการของระบบ",
+	SUGGESTION_LESS_RELATION:        "จำนวนของ Relation น้อยเกินไป",
+	SUGGESTION_MORE_RELATION:        "จำนวนของ Relation มากเกินไป",
+	SUGGESTION_INCORRECT_RELATION:   "Relation ไม่สอดคล้องกับความต้องการของระบบ",
+	SUGGESTION_DUPLICATION_RELATION: "มี Relation ซ้ำกัน",
 }
 
 var RelationshipSuggestions map[int]string = map[int]string{
