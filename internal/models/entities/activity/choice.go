@@ -302,6 +302,6 @@ func (choice ERAnswer) CreatePropositionChoices() interface{} {
 	return map[string]interface{}{
 		"tables":        choice.Tables,
 		"relationships": choice.Relationships,
-		"problems":      PeerProblems,
+		// "problems":      PeerProblems,
 	}
 }

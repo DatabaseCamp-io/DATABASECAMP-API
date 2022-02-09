@@ -119,10 +119,10 @@ func (answer VocabGroupChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
 		return false, errs.ErrAnswerInvalid
 	}
 
-	solution := make(map[string]map[string]bool, 0)
+	solution := map[string]map[string]bool{}
 	for _, choice := range vocabGroupChoice.Groups {
 		if _, ok := solution[choice.GroupName]; !ok {
-			solution[choice.GroupName] = make(map[string]bool, 0)
+			solution[choice.GroupName] = map[string]bool{}
 		}
 
 		for _, vocab := range choice.Vocabs {
@@ -153,11 +153,11 @@ func (answer DependencyChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
 		return false, errs.ErrAnswerInvalid
 	}
 
-	solution := make(map[string]map[string]bool, 0)
+	solution := map[string]map[string]bool{}
 	for _, dependency := range choice.Dependencies {
 		for _, determinant := range dependency.Determinants {
 			if _, ok := solution[dependency.Dependent]; !ok {
-				solution[dependency.Dependent] = make(map[string]bool, 0)
+				solution[dependency.Dependent] = map[string]bool{}
 			}
 
 			solution[dependency.Dependent][determinant.Value] = true
@@ -201,28 +201,17 @@ func (answer ERChoiceAnswer) IsCorrect(choices Choices) (bool, error) {
 	return true, nil
 }
 
-type SuggestionGroup struct {
-	Name        string
-	Suggestions []string
-}
-
-var SuggestionGroups = []SuggestionGroup{
-	{
-		Name: "ด้าน Relation",
-	},
-}
-
 func (answer ERChoiceAnswer) isCorrectFillDraw(choice ERChoice) (bool, string) {
 	if len(answer.Tables) < len(choice.Tables) {
-		return false, "จำนวนของ Relation น้อยเกินไป"
+		return false, RelationSuggestions[SUGGESTION_LESS_RELATION]
 	}
 
 	if len(answer.Tables) > len(choice.Tables) {
-		return false, "จำนวนของ Relation มากเกินไป"
+		return false, RelationSuggestions[SUGGESTION_MORE_RELATION]
 	}
 
 	if len(answer.Relationships) != len(choice.Relationships) {
-		return false, "จำนวนของ Relationship ไม่ถูกต้อง"
+		return false, RelationSuggestions[SUGGESTION_INCORRECT_NUMBER_RELATIONSHIP]
 	}
 
 	tableSolutionMap := map[string]map[string]Attribute{}
@@ -244,38 +233,38 @@ func (answer ERChoiceAnswer) isCorrectFillDraw(choice ERChoice) (bool, string) {
 
 	for _, a := range answer.Relationships {
 		if !relationshipMap[a.Table1ID][a.Table2ID] {
-			return false, "Relationship ระหว่าง Relation ไม่ถูกต้อง"
+			return false, RelationshipSuggestions[SUGGESTION_INCORRECT_RELATIONSHIP]
 		}
 	}
 
 	for _, s := range choice.Relationships {
 		for _, a := range answer.Relationships {
 			if s.Table1ID == a.Table1ID && s.Table2ID == a.Table2ID {
-				return false, "ประเภทของ Relationship ไม่ถูกต้อง"
+				return false, RelationshipSuggestions[SUGGESTION_INVALID_TYPE_RELATIONSHIP]
 			}
 		}
 	}
 
 	for _, table := range answer.Tables {
 		if _, ok := tableSolutionMap[table.Title]; !ok {
-			return false, "Relation ไม่สอดคล้องกับความต้องการของระบบ"
+			return false, RelationSuggestions[SUGGESTION_INCORRECT_RELATION]
 		} else {
 
 			if len(table.Attributes) < len(tableSolutionMap[table.Title]) {
-				return false, "จำนวนของ Attribute น้อยเกินไป"
+				return false, AttributeSuggestions[SUGGESTION_LESS_ATTRIBUTE]
 			}
 
 			if len(table.Attributes) > len(tableSolutionMap[table.Title]) {
-				return false, "จำนวนของ Attribute มากเกินไป"
+				return false, AttributeSuggestions[SUGGESTION_MORE_ATTRIBUTE]
 			}
 
 			for _, attribute := range table.Attributes {
 				if _, ok := tableSolutionMap[table.Title][attribute.Value]; !ok {
-					return false, "Attribute ไม่สอดคล้องกับความต้องการของระบบ"
+					return false, AttributeSuggestions[SUGGESTION_INCORRECT_ATTRIBUTE]
 				} else {
 
 					if tableSolutionMap[table.Title][attribute.Value].Key != attribute.Key {
-						return false, "Key ของ Attribute ไม่ถูกต้อง"
+						return false, AttributeSuggestions[SUGGESTION_INCORRECT_KEY_ATTRIBUTE]
 					}
 
 				}
