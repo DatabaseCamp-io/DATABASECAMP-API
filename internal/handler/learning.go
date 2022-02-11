@@ -16,6 +16,7 @@ type LearningHandler interface {
 	GetRecommend(c application.Context)
 	UseHint(c application.Context)
 	CheckAnswer(c application.Context)
+	PeerReview(c application.Context)
 }
 
 type learningHandler struct {
@@ -118,6 +119,31 @@ func (h learningHandler) CheckAnswer(c application.Context) {
 	}
 
 	response, err := h.service.CheckAnswer(userID, request)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func (h learningHandler) PeerReview(c application.Context) {
+	userID := utils.ParseInt(c.Locals("id"))
+	request := request.PeerReviewRequest{}
+
+	err := c.Bind(&request)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	err = request.Validate()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response, err := h.service.CheckPeerReview(userID, request)
 	if err != nil {
 		c.Error(err)
 		return

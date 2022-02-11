@@ -56,6 +56,10 @@ func Shuffle(slice interface{}) {
 func ToStrings(strs []interface{}) string {
 	result := ""
 
+	if len(strs) == 0 {
+		return result
+	}
+
 	for _, str := range strs {
 		result += fmt.Sprintf("%v,", str)
 	}

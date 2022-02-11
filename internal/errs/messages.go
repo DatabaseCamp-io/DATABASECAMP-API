@@ -27,6 +27,9 @@ const (
 
 	UPDATE_ERROR_TH = "เกิดข้อผิดพลาดในการอัพเดตข้อมูล"
 	UPDATE_ERROR_EN = "Update data error"
+
+	NOT_FOUD_DATA_TH = "ไม่พบข้อมูล"
+	NOT_FOUD_DATA_EN = "Not found data"
 )
 
 // Thai and english message about exam and activity error
@@ -66,6 +69,9 @@ const (
 
 	ANSWER_NOT_FOUND_TH = "ไม่พบคำตอบในคำร้องขอ"
 	ANSWER_NOT_FOUND_EN = "Answer not found"
+
+	ER_ANSWER_ID_NOT_FOUND_TH = "ไม่พบรหัสของคำตอบในคำร้องขอ"
+	ER_ANSWER_ID_NOT_FOUND_EN = "ER answer ID not found"
 )
 
 // Thai and english message about user error
@@ -98,9 +104,10 @@ var (
 
 // Manipulation error
 var (
-	ErrInsertError = NewInternalServerError(INSERT_ERROR_TH, INSERT_ERROR_EN)
-	ErrLoadError   = NewInternalServerError(LOAD_ERROR_TH, LOAD_ERROR_EN)
-	ErrUpdateError = NewInternalServerError(UPDATE_ERROR_TH, UPDATE_ERROR_EN)
+	ErrInsertError   = NewInternalServerError(INSERT_ERROR_TH, INSERT_ERROR_EN)
+	ErrLoadError     = NewInternalServerError(LOAD_ERROR_TH, LOAD_ERROR_EN)
+	ErrUpdateError   = NewInternalServerError(UPDATE_ERROR_TH, UPDATE_ERROR_EN)
+	ErrNotFoundError = NewInternalServerError(NOT_FOUD_DATA_TH, NOT_FOUD_DATA_EN)
 )
 
 // Exam and Activity error
@@ -117,6 +124,7 @@ var (
 	ErrAnswerInvalid             = NewBadRequestError(ANSWER_INVALID_TH, ANSWER_INVALID_EN)
 	ErrAnswerNotFound            = NewBadRequestError(ANSWER_NOT_FOUND_TH, ANSWER_NOT_FOUND_EN)
 	ErrFinalExamBadgesNotEnough  = NewBadRequestError(FINAL_EXAM_BAGES_NOT_ENOUGH_TH, FINAL_EXAM_BAGES_NOT_ENOUGH_EN)
+	ErrERAnswerIDNotFound        = NewBadRequestError(ER_ANSWER_ID_NOT_FOUND_TH, ER_ANSWER_ID_NOT_FOUND_EN)
 )
 
 // User error

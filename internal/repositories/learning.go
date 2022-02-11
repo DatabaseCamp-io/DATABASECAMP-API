@@ -24,8 +24,10 @@ type LearningRepository interface {
 	GetActivityChoices(activityID int, activityTypeID int) (activity.Choices, error)
 	GetContentGroups() (groups content.ContentGroups, err error)
 	GetCorrectProgression(activityID int) (progression *content.LearningProgression, err error)
+	GetPeerChoice(erAnswerID *int) (activity.ERAnswer, error)
+	GetERChoice(activityID int) (activity.ERChoice, error)
 	UseHint(userID int, reducePoint int, hintID int) error
-	InsertERAnswer(answer activity.ERAnswer) error
+	InsertERAnswer(answer activity.ERAnswer, userID int) error
 }
 
 type learningRepository struct {
@@ -380,7 +382,7 @@ func (r learningRepository) getDependencyChoice(activityID int) (activity.Depend
 	return choice, err
 }
 
-func (r learningRepository) getERChoice(activityID int) (activity.ERChoice, error) {
+func (r learningRepository) GetERChoice(activityID int) (activity.ERChoice, error) {
 	choice := activity.ERChoice{}
 
 	rows, err := r.db.GetDB().
@@ -471,13 +473,20 @@ func (r learningRepository) getERChoice(activityID int) (activity.ERChoice, erro
 	return choice, nil
 }
 
-func (r learningRepository) getPeerChoice() (activity.ERAnswer, error) {
+func (r learningRepository) GetPeerChoice(erAnswerID *int) (activity.ERAnswer, error) {
 	answer := activity.ERAnswer{}
 
-	rows, err := r.db.GetDB().
+	query := r.db.GetDB().
 		Select(IDName.Table, "title", IDName.Attribute, "value", "attribute_key").
-		Table(ViewName.RandomERAnswer).
-		Rows()
+		Table(ViewName.RandomERAnswer)
+
+	if erAnswerID != nil {
+		query = query.Table(ViewName.AllERAnswer).Where(IDName.ERAnswer+" = ?", *erAnswerID)
+	} else {
+		query = query.Table(ViewName.RandomERAnswer)
+	}
+
+	rows, err := query.Rows()
 
 	if err != nil {
 		return answer, err
@@ -508,6 +517,10 @@ func (r learningRepository) getPeerChoice() (activity.ERAnswer, error) {
 	for _, v := range tablesMap {
 		answer.Tables = append(answer.Tables, *v)
 		tableIDs = append(tableIDs, v.ID)
+	}
+
+	if len(tableIDs) == 0 {
+		return answer, errs.ErrNotFoundError
 	}
 
 	relationships := make(activity.Relationships, 0)
@@ -595,9 +608,9 @@ func (r learningRepository) GetActivityChoices(activityID int, activityTypeID in
 	case 5:
 		return r.getDependencyChoice(activityID)
 	case 6:
-		return r.getERChoice(activityID)
+		return r.GetERChoice(activityID)
 	case 7:
-		return r.getPeerChoice()
+		return r.GetPeerChoice(nil)
 	default:
 		return nil, errs.ErrActivityTypeInvalid
 	}
@@ -661,13 +674,23 @@ func (r learningRepository) UseHint(userID int, reducePoint int, hintID int) err
 	return nil
 }
 
-func (r learningRepository) InsertERAnswer(answer activity.ERAnswer) error {
+func (r learningRepository) InsertERAnswer(answer activity.ERAnswer, userID int) error {
 	var wg sync.WaitGroup
 	var err error
 
-	tx := r.db.GetDB().Begin()
+	a := activity.ERAnswer{}
 
-	wg.Add(2)
+	tx := r.db.GetDB().Debug().Begin()
+
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+		e := r.db.GetDB().Table(TableName.ERAnswer).Where(IDName.User+" = ?", userID).Find(&a).Error
+		if e != nil {
+			err = e
+		}
+	}()
 
 	go func() {
 		defer wg.Done()
@@ -686,6 +709,11 @@ func (r learningRepository) InsertERAnswer(answer activity.ERAnswer) error {
 	}()
 
 	wg.Wait()
+
+	if a.UserID == userID {
+		tx.Rollback()
+		return nil
+	}
 
 	if err != nil {
 		tx.Rollback()

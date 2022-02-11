@@ -87,6 +87,7 @@ func (r *router) setupLearning() {
 		activityRoute.Get("/:id", handler.GetActivity)
 		activityRoute.Post("/hint/:id", handler.UseHint)
 		activityRoute.Post("/check-answer", handler.CheckAnswer)
+		activityRoute.Post("/peer", handler.PeerReview)
 	}
 }
 

@@ -220,7 +220,134 @@ type ERChoice struct {
 	Relationships Relationships `json:"relationships"`
 }
 
-func (ERChoice) TableName() string { return "ERChoice" }
+type ProblemGroups []ProblemGroup
+
+func (g ProblemGroups) Compare(list []string) bool {
+
+	solution := map[string]bool{}
+	for _, p := range g {
+		for _, c := range p.Choices {
+			solution[c] = true
+		}
+	}
+
+	if len(solution) != len(list) {
+		return false
+	}
+
+	for _, c := range list {
+		if !solution[c] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (choice ERChoice) GetSuggestionsList(answer ERChoiceAnswer) ProblemGroups {
+	problemMap := map[string][]string{
+		SUGGESTION_RELATION_GROUP:     make([]string, 0),
+		SUGGESTION_RELATIONSHIP_GROUP: make([]string, 0),
+		SUGGESTION_ATTRIBUTE_GROUP:    make([]string, 0),
+	}
+
+	if len(answer.Tables) < len(choice.Tables) {
+		problemMap[SUGGESTION_RELATION_GROUP] = append(problemMap[SUGGESTION_RELATION_GROUP], RelationSuggestions[SUGGESTION_LESS_RELATION])
+	}
+
+	if len(answer.Tables) > len(choice.Tables) {
+		problemMap[SUGGESTION_RELATION_GROUP] = append(problemMap[SUGGESTION_RELATION_GROUP], RelationSuggestions[SUGGESTION_MORE_RELATION])
+	}
+
+	if len(answer.Relationships) != len(choice.Relationships) {
+		problemMap[SUGGESTION_RELATIONSHIP_GROUP] = append(problemMap[SUGGESTION_RELATIONSHIP_GROUP], RelationshipSuggestions[SUGGESTION_INCORRECT_NUMBER_RELATIONSHIP])
+	}
+
+	tableSolutionMap := map[string]map[string]Attribute{}
+	for _, table := range choice.Tables {
+		tableSolutionMap[table.Title] = map[string]Attribute{}
+		for _, attribute := range table.Attributes {
+			tableSolutionMap[table.Title][attribute.Value] = attribute
+		}
+
+	}
+
+	idMap := map[string]string{}
+	for _, a := range answer.Tables {
+		for _, s := range choice.Tables {
+			if a.Title == s.Title {
+				idMap[a.ID] = s.ID
+			}
+		}
+	}
+
+	if len(idMap) != len(answer.Tables) {
+		problemMap[SUGGESTION_RELATION_GROUP] = append(problemMap[SUGGESTION_RELATION_GROUP], RelationSuggestions[SUGGESTION_INCORRECT_RELATION])
+	}
+
+	for _, table := range answer.Tables {
+		if _, ok := tableSolutionMap[table.Title]; !ok {
+			problemMap[SUGGESTION_RELATION_GROUP] = append(problemMap[SUGGESTION_RELATION_GROUP], RelationSuggestions[SUGGESTION_INCORRECT_RELATION])
+		} else {
+
+			if len(table.Attributes) < len(tableSolutionMap[table.Title]) {
+				problemMap[SUGGESTION_ATTRIBUTE_GROUP] = append(problemMap[SUGGESTION_ATTRIBUTE_GROUP], AttributeSuggestions[SUGGESTION_LESS_ATTRIBUTE])
+			}
+
+			if len(table.Attributes) > len(tableSolutionMap[table.Title]) {
+				problemMap[SUGGESTION_ATTRIBUTE_GROUP] = append(problemMap[SUGGESTION_ATTRIBUTE_GROUP], AttributeSuggestions[SUGGESTION_MORE_ATTRIBUTE])
+			}
+
+			for _, attribute := range table.Attributes {
+				if _, ok := tableSolutionMap[table.Title][attribute.Value]; !ok {
+					problemMap[SUGGESTION_ATTRIBUTE_GROUP] = append(problemMap[SUGGESTION_ATTRIBUTE_GROUP], AttributeSuggestions[SUGGESTION_INCORRECT_ATTRIBUTE])
+				} else {
+
+					if tableSolutionMap[table.Title][attribute.Value].Key != nil && *tableSolutionMap[table.Title][attribute.Value].Key != *attribute.Key {
+						problemMap[SUGGESTION_ATTRIBUTE_GROUP] = append(problemMap[SUGGESTION_ATTRIBUTE_GROUP], AttributeSuggestions[SUGGESTION_INCORRECT_KEY_ATTRIBUTE])
+					}
+
+				}
+			}
+
+		}
+	}
+
+	relationshipMap := map[string]map[string]bool{}
+	for _, r := range choice.Relationships {
+		if _, ok := relationshipMap[r.Table1ID]; !ok {
+			relationshipMap[r.Table1ID] = map[string]bool{}
+		}
+
+		relationshipMap[r.Table1ID][r.Table2ID] = true
+	}
+
+	for _, a := range answer.Relationships {
+		if !relationshipMap[idMap[a.Table1ID]][idMap[a.Table2ID]] {
+			problemMap[SUGGESTION_RELATIONSHIP_GROUP] = append(problemMap[SUGGESTION_RELATIONSHIP_GROUP], RelationshipSuggestions[SUGGESTION_INCORRECT_RELATIONSHIP])
+		}
+	}
+
+	for _, s := range choice.Relationships {
+		for _, a := range answer.Relationships {
+			if s.Table1ID == idMap[a.Table1ID] && s.Table2ID == idMap[a.Table1ID] {
+				problemMap[SUGGESTION_RELATIONSHIP_GROUP] = append(problemMap[SUGGESTION_RELATIONSHIP_GROUP], RelationshipSuggestions[SUGGESTION_INVALID_TYPE_RELATIONSHIP])
+			}
+		}
+	}
+
+	problemGroup := make([]ProblemGroup, 0)
+
+	for i, v := range problemMap {
+		problemGroup = append(problemGroup, ProblemGroup{
+			Name:    i,
+			Choices: v,
+		})
+	}
+
+	return problemGroup
+
+}
 
 func (choice ERChoice) CreatePropositionChoices() interface{} {
 	vocabs := make([]string, 0)

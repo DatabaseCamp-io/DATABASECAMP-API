@@ -20,6 +20,7 @@ type LearningService interface {
 	UseHint(userID int, activityID int) (*response.UsedHintResponse, error)
 	GetContentRoadmap(userID int, contentID int) (*response.ContentRoadmapResponse, error)
 	CheckAnswer(userID int, request request.CheckAnswerRequest) (*response.AnswerResponse, error)
+	CheckPeerReview(userID int, request request.PeerReviewRequest) (*response.AnswerResponse, error)
 }
 
 type learningService struct {
@@ -31,14 +32,14 @@ func NewLearningService(learningRepo repositories.LearningRepository, userRepo r
 	return &learningService{learningRepo: learningRepo, userRepo: userRepo}
 }
 
-func (c learningService) GetVideoLecture(id int) (*response.VideoLectureResponse, error) {
-	contentDB, err := c.learningRepo.GetContent(id)
+func (s learningService) GetVideoLecture(id int) (*response.VideoLectureResponse, error) {
+	contentDB, err := s.learningRepo.GetContent(id)
 	if err != nil || contentDB == nil {
 		logs.GetInstance().Error(err)
 		return nil, errs.ErrContentNotFound
 	}
 
-	videoLink, err := c.learningRepo.GetVideoFileLink(contentDB.VideoPath)
+	videoLink, err := s.learningRepo.GetVideoFileLink(contentDB.VideoPath)
 	if err != nil {
 		logs.GetInstance().Error(err)
 		return nil, errs.ErrServiceUnavailableError
@@ -53,8 +54,8 @@ func (c learningService) GetVideoLecture(id int) (*response.VideoLectureResponse
 	return &response, nil
 }
 
-func (c learningService) GetOverview(userID int) (*response.ContentOverviewResponse, error) {
-	loader := loaders.NewLearningOverviewLoader(c.learningRepo, c.userRepo)
+func (s learningService) GetOverview(userID int) (*response.ContentOverviewResponse, error) {
+	loader := loaders.NewLearningOverviewLoader(s.learningRepo, s.userRepo)
 
 	err := loader.Load(userID)
 	if err != nil {
@@ -76,8 +77,8 @@ func (c learningService) GetOverview(userID int) (*response.ContentOverviewRespo
 	return &response, nil
 }
 
-func (c learningService) GetActivity(userID int, activityID int) (*response.ActivityResponse, error) {
-	loader := loaders.NewActivityLoader(c.learningRepo, c.userRepo)
+func (s learningService) GetActivity(userID int, activityID int) (*response.ActivityResponse, error) {
+	loader := loaders.NewActivityLoader(s.learningRepo, s.userRepo)
 
 	err := loader.Load(userID, activityID)
 	if err != nil {
@@ -93,7 +94,7 @@ func (c learningService) GetActivity(userID int, activityID int) (*response.Acti
 		return nil, errs.ErrActivitiesNotFound
 	}
 
-	choices, err := c.learningRepo.GetActivityChoices(_activity.ID, _activity.TypeID)
+	choices, err := s.learningRepo.GetActivityChoices(_activity.ID, _activity.TypeID)
 	if err != nil {
 		logs.GetInstance().Error(err)
 		return nil, errs.ErrActivitiesNotFound
@@ -112,8 +113,8 @@ func (c learningService) GetActivity(userID int, activityID int) (*response.Acti
 	return &response, nil
 }
 
-func (c learningService) UseHint(userID int, activityID int) (*response.UsedHintResponse, error) {
-	loader := loaders.NewHintLoader(c.learningRepo, c.userRepo)
+func (s learningService) UseHint(userID int, activityID int) (*response.UsedHintResponse, error) {
+	loader := loaders.NewHintLoader(s.learningRepo, s.userRepo)
 
 	err := loader.Load(userID, activityID)
 	if err != nil {
@@ -138,7 +139,7 @@ func (c learningService) UseHint(userID int, activityID int) (*response.UsedHint
 		return nil, errs.ErrHintPointsNotEnough
 	}
 
-	err = c.learningRepo.UseHint(userID, nextLevelHint.PointReduce, nextLevelHint.ID)
+	err = s.learningRepo.UseHint(userID, nextLevelHint.PointReduce, nextLevelHint.ID)
 	if err != nil {
 		logs.GetInstance().Error(err)
 		return nil, errs.ErrInsertError
@@ -151,8 +152,8 @@ func (c learningService) UseHint(userID int, activityID int) (*response.UsedHint
 	return &response, nil
 }
 
-func (c learningService) GetContentRoadmap(userID int, contentID int) (*response.ContentRoadmapResponse, error) {
-	loader := loaders.NewContentRoadmapLoader(c.learningRepo, c.userRepo)
+func (s learningService) GetContentRoadmap(userID int, contentID int) (*response.ContentRoadmapResponse, error) {
+	loader := loaders.NewContentRoadmapLoader(s.learningRepo, s.userRepo)
 
 	err := loader.Load(userID, contentID)
 	if err != nil {
@@ -179,9 +180,34 @@ func (c learningService) GetContentRoadmap(userID int, contentID int) (*response
 	return &response, nil
 }
 
-func (c learningService) CheckAnswer(userID int, request request.CheckAnswerRequest) (*response.AnswerResponse, error) {
+func (s learningService) finishActivityAnswer(
+	progression *content.LearningProgression,
+	activityID int,
+	activityTypeID int,
+	activityPoint int,
+	isCorrect bool,
+	userID int,
+) (int, error) {
+	hasProgression := *progression != (content.LearningProgression{})
 
-	loader := loaders.NewCheckAnswerLoader(c.learningRepo)
+	err := s.userRepo.InsertLearningProgression(userID, activityID, activityPoint, isCorrect, hasProgression)
+	if err != nil {
+		logs.GetInstance().Error(err)
+		return 0, errs.ErrInsertError
+	}
+
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil || user == nil {
+		logs.GetInstance().Error(err)
+		return 0, errs.ErrUserNotFound
+	}
+
+	return user.Point, nil
+}
+
+func (s learningService) CheckAnswer(userID int, request request.CheckAnswerRequest) (*response.AnswerResponse, error) {
+
+	loader := loaders.NewCheckAnswerLoader(s.learningRepo)
 
 	err := loader.Load(*request.ActivityID, *request.ActivityTypeID)
 	if err != nil {
@@ -236,28 +262,28 @@ func (c learningService) CheckAnswer(userID int, request request.CheckAnswerRequ
 		}
 	}
 
-	hasProgression := *progression != (content.LearningProgression{})
+	updatedPoint, err := s.finishActivityAnswer(
+		progression,
+		*request.ActivityID,
+		*request.ActivityTypeID,
+		_activity.Point,
+		isCorrect,
+		userID,
+	)
 
-	err = c.userRepo.InsertLearningProgression(userID, _activity.ID, _activity.Point, isCorrect, hasProgression)
 	if err != nil {
-		logs.GetInstance().Error(err)
-		return nil, errs.ErrInsertError
+		return nil, err
 	}
 
-	user, err := c.userRepo.GetUserByID(userID)
-	if err != nil || user == nil {
-		logs.GetInstance().Error(err)
-		return nil, errs.ErrUserNotFound
-	}
+	if *request.ActivityTypeID == activity.PEER_ACTIVITY_TYPE_ID && *request.ActivityID == activity.PEER_ACTIVITY_ID && choice.Type == activity.ER_CHOICE_DRAW {
 
-	if *request.ActivityTypeID == 6 && choice.Type == activity.ER_CHOICE_DRAW {
 		erAnswer := activity.ERAnswer{
 			UserID:        userID,
 			Tables:        erChoiceAnswer.Tables,
 			Relationships: erChoiceAnswer.Relationships,
 		}
 
-		err = c.learningRepo.InsertERAnswer(erAnswer)
+		err = s.learningRepo.InsertERAnswer(erAnswer, userID)
 		if err != nil && !utils.IsSqlDuplicateError(err) {
 			logs.GetInstance().Error(err)
 			return nil, errs.ErrInsertError
@@ -267,15 +293,15 @@ func (c learningService) CheckAnswer(userID int, request request.CheckAnswerRequ
 	response := response.AnswerResponse{
 		ActivityID:   _activity.ID,
 		IsCorrect:    isCorrect,
-		UpdatedPoint: user.Point,
+		UpdatedPoint: updatedPoint,
 		ErrMessage:   errMessage,
 	}
 
 	return &response, nil
 }
 
-func (c learningService) GetRecommend(userID int) (*response.RecommendResponse, error) {
-	loader := loaders.NewRecommendLoader(c.learningRepo, c.userRepo)
+func (s learningService) GetRecommend(userID int) (*response.RecommendResponse, error) {
+	loader := loaders.NewRecommendLoader(s.learningRepo, s.userRepo)
 
 	err := loader.Load(userID)
 	if err != nil {
@@ -293,4 +319,51 @@ func (c learningService) GetRecommend(userID int) (*response.RecommendResponse, 
 	}
 
 	return &response, err
+}
+
+func (s learningService) CheckPeerReview(userID int, request request.PeerReviewRequest) (*response.AnswerResponse, error) {
+	loader := loaders.NewCheckPeerReviewLoader(s.learningRepo)
+
+	err := loader.Load(*request.ERAnswerID, activity.PEER_ACTIVITY_ID)
+	if err != nil {
+		logs.GetInstance().Error(err)
+
+		if err == errs.ErrNotFoundError {
+			return nil, errs.ErrNotFoundError
+		} else {
+			return nil, errs.ErrLoadError
+		}
+	}
+
+	_erAnswer := loader.GetERAnswer()
+	_erChoice := loader.GetERChoice()
+	_progression := loader.GetProgression()
+
+	suggestionsList := _erChoice.GetSuggestionsList(activity.ERChoiceAnswer{
+		Tables:        _erAnswer.Tables,
+		Relationships: _erAnswer.Relationships,
+	})
+
+	correct := suggestionsList.Compare(request.Reviews)
+
+	updatedPoint, err := s.finishActivityAnswer(
+		_progression,
+		activity.PEER_ACTIVITY_ID,
+		activity.PEER_ACTIVITY_TYPE_ID,
+		activity.PEER_ACTIVITY_POINT,
+		correct,
+		userID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := response.AnswerResponse{
+		ActivityID:   activity.PEER_ACTIVITY_ID,
+		IsCorrect:    correct,
+		UpdatedPoint: updatedPoint,
+	}
+
+	return &res, nil
 }

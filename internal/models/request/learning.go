@@ -21,3 +21,16 @@ func (r CheckAnswerRequest) Validate() error {
 		return nil
 	}
 }
+
+type PeerReviewRequest struct {
+	ERAnswerID *int     `json:"er_answer_id"`
+	Reviews    []string `json:"reviews"`
+}
+
+func (r PeerReviewRequest) Validate() error {
+	if r.ERAnswerID == nil {
+		return errs.ErrERAnswerIDNotFound
+	} else {
+		return nil
+	}
+}

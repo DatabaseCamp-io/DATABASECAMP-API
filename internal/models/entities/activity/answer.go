@@ -243,7 +243,7 @@ func (answer ERChoiceAnswer) IsCorrect(choice ERChoice) (bool, string) {
 	}
 
 	if len(idMap) != len(answer.Tables) {
-		return false, RelationSuggestions[SUGGESTION_DUPLICATION_RELATION]
+		return false, RelationSuggestions[SUGGESTION_INCORRECT_RELATION]
 	}
 
 	for _, table := range answer.Tables {

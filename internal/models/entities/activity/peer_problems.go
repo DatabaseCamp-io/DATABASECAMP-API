@@ -1,6 +1,12 @@
 package activity
 
 const (
+	PEER_ACTIVITY_ID      = 10
+	PEER_ACTIVITY_TYPE_ID = 6
+	PEER_ACTIVITY_POINT   = 300
+)
+
+const (
 	SUGGESTION_LESS_RELATION = iota
 	SUGGESTION_MORE_RELATION
 	SUGGESTION_DUPLICATION_RELATION
@@ -19,17 +25,23 @@ type SuggestionGroup struct {
 	Suggestions Suggestions
 }
 
+const (
+	SUGGESTION_RELATION_GROUP     = "ด้าน Relation"
+	SUGGESTION_RELATIONSHIP_GROUP = "ด้าน Relationship"
+	SUGGESTION_ATTRIBUTE_GROUP    = "ด้าน Attribute"
+)
+
 var SuggestionGroups = []SuggestionGroup{
 	{
-		Name:        "ด้าน Relation",
+		Name:        SUGGESTION_RELATION_GROUP,
 		Suggestions: RelationSuggestions,
 	},
 	{
-		Name:        "ด้าน Relationship",
+		Name:        SUGGESTION_RELATIONSHIP_GROUP,
 		Suggestions: RelationshipSuggestions,
 	},
 	{
-		Name:        "ด้าน Attribute",
+		Name:        SUGGESTION_ATTRIBUTE_GROUP,
 		Suggestions: AttributeSuggestions,
 	},
 }
@@ -47,10 +59,9 @@ func (s Suggestions) Strings() []string {
 }
 
 var RelationSuggestions Suggestions = Suggestions{
-	SUGGESTION_LESS_RELATION:        "จำนวนของ Relation น้อยเกินไป",
-	SUGGESTION_MORE_RELATION:        "จำนวนของ Relation มากเกินไป",
-	SUGGESTION_INCORRECT_RELATION:   "Relation ไม่สอดคล้องกับความต้องการของระบบ",
-	SUGGESTION_DUPLICATION_RELATION: "มี Relation ซ้ำกัน",
+	SUGGESTION_LESS_RELATION:      "จำนวนของ Relation น้อยเกินไป",
+	SUGGESTION_MORE_RELATION:      "จำนวนของ Relation มากเกินไป",
+	SUGGESTION_INCORRECT_RELATION: "Relation ไม่สอดคล้องกับความต้องการของระบบ",
 }
 
 var RelationshipSuggestions Suggestions = Suggestions{

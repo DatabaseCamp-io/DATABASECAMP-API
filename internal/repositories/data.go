@@ -80,6 +80,7 @@ var IDName = struct {
 	Table            string
 	Attribute        string
 	Relationship     string
+	ERAnswer         string
 }{
 	"user_id",
 	"activity_id",
@@ -98,6 +99,7 @@ var IDName = struct {
 	"table_id",
 	"attribute_id",
 	"relationship_id",
+	"er_answer_id",
 }
 
 var ViewName = struct {
@@ -109,6 +111,7 @@ var ViewName = struct {
 	UserPreTestResult string
 	SpiderData        string
 	RandomERAnswer    string
+	AllERAnswer       string
 }{
 	"Profile",
 	"Ranking",
@@ -118,4 +121,5 @@ var ViewName = struct {
 	"UserPreTestResult",
 	"SpiderData",
 	"RandomERAnswer",
+	"AllERAnswer",
 }
