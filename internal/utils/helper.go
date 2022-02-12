@@ -61,7 +61,7 @@ func ToStrings(strs []interface{}) string {
 	}
 
 	for _, str := range strs {
-		result += fmt.Sprintf("%v,", str)
+		result += fmt.Sprintf("'%v',", str)
 	}
 
 	return result[:len(result)-1]

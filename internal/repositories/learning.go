@@ -477,7 +477,7 @@ func (r learningRepository) GetPeerChoice(erAnswerID *int) (activity.ERAnswer, e
 	answer := activity.ERAnswer{}
 
 	query := r.db.GetDB().
-		Select(IDName.Table, "title", IDName.Attribute, "value", "attribute_key").
+		Select(IDName.Table, "title", IDName.Attribute, "value", "attribute_key", IDName.ERAnswer).
 		Table(ViewName.RandomERAnswer)
 
 	if erAnswerID != nil {
@@ -499,7 +499,7 @@ func (r learningRepository) GetPeerChoice(erAnswerID *int) (activity.ERAnswer, e
 
 		attribute := activity.Attribute{}
 
-		err = rows.Scan(&table.ID, &table.Title, &attribute.ID, &attribute.Value, &attribute.Key)
+		err = rows.Scan(&table.ID, &table.Title, &attribute.ID, &attribute.Value, &attribute.Key, &answer.ID)
 		if err != nil {
 			return answer, err
 		}
