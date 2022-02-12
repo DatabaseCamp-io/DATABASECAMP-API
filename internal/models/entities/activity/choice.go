@@ -435,6 +435,7 @@ type ERAnswer struct {
 
 func (choice ERAnswer) CreatePropositionChoices() interface{} {
 	return map[string]interface{}{
+		"er_answe_id":   choice.ID,
 		"tables":        choice.Tables,
 		"relationships": choice.Relationships,
 		"problems":      GetPeerProblem(),
