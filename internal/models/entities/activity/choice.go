@@ -366,26 +366,27 @@ func (choice ERChoice) CreatePropositionChoices() interface{} {
 
 	tablesChoice := make([]TableChoice, 0)
 
-	for _, v := range choice.Tables {
+	for i, table := range choice.Tables {
+
+		logs.GetInstance().Info(table.Title)
+
 		tableChoice := TableChoice{
-			Attributes: make(Attributes, 0),
+			Attributes: []Attribute{},
 		}
 
 		if choice.Type == ER_CHOICE_FILL_TABLE {
-			count := len(v.Attributes)
+			count := len(table.Attributes)
 			tableChoice.AttributesCount = &count
 		}
 
-		tableChoice.Attributes = make(Attributes, 0)
-
-		if v.Fixed {
-			tableChoice.TitleID = &v.ID
-			tableChoice.Title = &v.Title
+		if table.Fixed {
+			tableChoice.TitleID = &choice.Tables[i].ID
+			tableChoice.Title = &choice.Tables[i].Title
 		} else {
-			vocabs = append(vocabs, v.Title)
+			vocabs = append(vocabs, table.Title)
 		}
 
-		for _, a := range v.Attributes {
+		for _, a := range table.Attributes {
 			if a.Fixed {
 				tableChoice.Attributes = append(tableChoice.Attributes, a)
 			} else {
