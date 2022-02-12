@@ -1,6 +1,7 @@
 package activity
 
 import (
+	"database-camp/internal/logs"
 	"database-camp/internal/utils"
 )
 
@@ -303,7 +304,9 @@ func (choice ERChoice) GetSuggestionsList(answer ERChoiceAnswer) ProblemGroups {
 					problemMap[SUGGESTION_ATTRIBUTE_GROUP] = append(problemMap[SUGGESTION_ATTRIBUTE_GROUP], AttributeSuggestions[SUGGESTION_INCORRECT_ATTRIBUTE])
 				} else {
 
-					if tableSolutionMap[table.Title][attribute.Value].Key != nil && *tableSolutionMap[table.Title][attribute.Value].Key != *attribute.Key {
+					if attribute.Key == nil && tableSolutionMap[table.Title][attribute.Value].Key != attribute.Key {
+						problemMap[SUGGESTION_ATTRIBUTE_GROUP] = append(problemMap[SUGGESTION_ATTRIBUTE_GROUP], AttributeSuggestions[SUGGESTION_INCORRECT_KEY_ATTRIBUTE])
+					} else if tableSolutionMap[table.Title][attribute.Value].Key != nil && *tableSolutionMap[table.Title][attribute.Value].Key != *attribute.Key {
 						problemMap[SUGGESTION_ATTRIBUTE_GROUP] = append(problemMap[SUGGESTION_ATTRIBUTE_GROUP], AttributeSuggestions[SUGGESTION_INCORRECT_KEY_ATTRIBUTE])
 					}
 
@@ -344,6 +347,8 @@ func (choice ERChoice) GetSuggestionsList(answer ERChoiceAnswer) ProblemGroups {
 			Choices: v,
 		})
 	}
+
+	logs.GetInstance().Info(problemGroup)
 
 	return problemGroup
 
