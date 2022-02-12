@@ -261,8 +261,13 @@ func (answer ERChoiceAnswer) IsCorrect(choice ERChoice) (bool, string) {
 
 			for _, attribute := range table.Attributes {
 				if _, ok := tableSolutionMap[table.Title][attribute.Value]; !ok {
+
 					return false, AttributeSuggestions[SUGGESTION_INCORRECT_ATTRIBUTE]
 				} else {
+
+					if attribute.Key == nil && tableSolutionMap[table.Title][attribute.Value].Key != attribute.Key {
+						return false, AttributeSuggestions[SUGGESTION_INCORRECT_KEY_ATTRIBUTE]
+					}
 
 					if tableSolutionMap[table.Title][attribute.Value].Key != nil && *tableSolutionMap[table.Title][attribute.Value].Key != *attribute.Key {
 						return false, AttributeSuggestions[SUGGESTION_INCORRECT_KEY_ATTRIBUTE]

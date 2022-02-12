@@ -247,8 +247,8 @@ func (s learningService) CheckAnswer(userID int, request request.CheckAnswerRequ
 		}
 		var message string
 		isCorrect, message = erChoiceAnswer.IsCorrect(choice)
-		errMessage = &message
 
+		errMessage = &message
 	} else {
 		formatedAnswer, err := activity.FormatAnswer(request.Answer, *request.ActivityTypeID)
 		if err != nil {
