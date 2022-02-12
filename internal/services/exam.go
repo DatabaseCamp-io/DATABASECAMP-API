@@ -151,6 +151,8 @@ func (s examService) CheckExam(userID int, request request.ExamAnswerRequest) (*
 
 	result, err := activities.CheckAnswers(*request.ExamID, userID, request.Activities)
 	if err != nil {
+		logs.GetInstance().Info(err)
+
 		return nil, err
 	}
 
@@ -159,13 +161,15 @@ func (s examService) CheckExam(userID int, request request.ExamAnswerRequest) (*
 		return nil, err
 	}
 
-	_, err = s.userRepo.InsertBadge(badge.UserBadge{
-		UserID:  userID,
-		BadgeID: exam.BadgeID,
-	})
-	if err != nil {
-		logs.GetInstance().Error(err)
-		return nil, errs.ErrInsertError
+	if exam.BadgeID != 0 {
+		_, err = s.userRepo.InsertBadge(badge.UserBadge{
+			UserID:  userID,
+			BadgeID: exam.BadgeID,
+		})
+		if err != nil {
+			logs.GetInstance().Error(err)
+			return nil, errs.ErrInsertError
+		}
 	}
 
 	response := response.ExamResultOverviewResponse{
