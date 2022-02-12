@@ -305,13 +305,6 @@ func (r learningRepository) getVocabGroupChoice(activityID int) (activity.VocabG
 func (r learningRepository) getDependencyChoice(activityID int) (activity.DependencyChoice, error) {
 	choice := activity.DependencyChoice{}
 
-	key := "learningRepository::getDependencyChoice::" + utils.ParseString(activityID)
-	if cacheData, err := r.cache.Get(key); err == nil {
-		if err = json.Unmarshal([]byte(cacheData), &choice); err == nil {
-			return choice, nil
-		}
-	}
-
 	rows, err := r.db.GetDB().
 		Table(TableName.DependencyChoice).
 		Select(
@@ -369,14 +362,6 @@ func (r learningRepository) getDependencyChoice(activityID int) (activity.Depend
 
 	for _, v := range dependencyMap {
 		choice.Dependencies = append(choice.Dependencies, *v)
-	}
-
-	if data, err := json.Marshal(choice); err != nil {
-		return choice, err
-	} else {
-		if err = r.cache.Set(key, string(data), time.Minute*300); err != nil {
-			return choice, err
-		}
 	}
 
 	return choice, err

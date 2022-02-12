@@ -57,6 +57,8 @@ func (s examService) GetExam(examID int, userID int) (*response.ExamResponse, er
 	correctedBadges := examLoader.GetCorrectedBadge()
 	_exam := examLoader.GetExam()
 
+	logs.GetInstance().Info(*_exam)
+
 	if len(examActivities) == 0 || *_exam == (exam.Exam{}) {
 		return nil, errs.ErrExamNotFound
 	}
