@@ -224,11 +224,13 @@ func (answer ERChoiceAnswer) IsCorrect(choice ERChoice) (bool, string) {
 		return false, RelationshipSuggestions[SUGGESTION_INCORRECT_NUMBER_RELATIONSHIP]
 	}
 
-	tableSolutionMap := map[string]map[string]Attribute{}
+	tableSolutionMap := map[string]map[string]*Attribute{}
 	for _, table := range choice.Tables {
-		tableSolutionMap[table.Title] = map[string]Attribute{}
+		tableSolutionMap[table.Title] = map[string]*Attribute{}
 		for _, attribute := range table.Attributes {
-			tableSolutionMap[table.Title][attribute.Value] = attribute
+			if attribute != (Attribute{}) {
+				tableSolutionMap[table.Title][attribute.Value] = &attribute
+			}
 		}
 
 	}

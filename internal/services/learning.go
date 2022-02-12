@@ -245,6 +245,7 @@ func (s learningService) CheckAnswer(userID int, request request.CheckAnswerRequ
 			logs.GetInstance().Error(err)
 			return nil, errs.ErrInternalServerError
 		}
+
 		var message string
 		isCorrect, message = erChoiceAnswer.IsCorrect(choice)
 

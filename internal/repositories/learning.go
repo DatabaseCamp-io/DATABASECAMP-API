@@ -370,7 +370,7 @@ func (r learningRepository) getDependencyChoice(activityID int) (activity.Depend
 func (r learningRepository) GetERChoice(activityID int) (activity.ERChoice, error) {
 	choice := activity.ERChoice{}
 
-	rows, err := r.db.GetDB().
+	rows, err := r.db.GetDB().Debug().
 		Select(
 			TableName.ERChoice+".type",
 			TableName.Tables+"."+IDName.Table,
@@ -382,21 +382,21 @@ func (r learningRepository) GetERChoice(activityID int) (activity.ERChoice, erro
 			TableName.Attributes+".fixed",
 		).
 		Table(TableName.ERChoiceTables).
-		Joins(fmt.Sprintf("INNER JOIN %s ON %s.%s = %s.%s",
+		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
 			TableName.ERChoice,
 			TableName.ERChoice,
 			IDName.ERChoice,
 			TableName.ERChoiceTables,
 			IDName.ERChoice,
 		)).
-		Joins(fmt.Sprintf("INNER JOIN %s ON %s.%s = %s.%s",
+		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
 			TableName.Tables,
 			TableName.Tables,
 			IDName.Table,
 			TableName.ERChoiceTables,
 			IDName.Table,
 		)).
-		Joins(fmt.Sprintf("INNER JOIN %s ON %s.%s = %s.%s",
+		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
 			TableName.Attributes,
 			TableName.Attributes,
 			IDName.Table,
@@ -414,13 +414,34 @@ func (r learningRepository) GetERChoice(activityID int) (activity.ERChoice, erro
 
 	for rows.Next() {
 
+		var attributeID *int
+		var attributeValue *string
+		var attributeKey *string
+		var attributeFixed *bool
+
+		var attribute activity.Attribute
+
 		table := activity.Table{}
 
-		attribute := activity.Attribute{}
+		// err = rows.Scan(&choice.Type, &table.ID, &table.Title, &table.Fixed, &attribute.ID, &attribute.Value, &attribute.Key, &attribute.Fixed)
+		// if err != nil {
+		// 	return choice, err
+		// }
 
-		err = rows.Scan(&choice.Type, &table.ID, &table.Title, &table.Fixed, &attribute.ID, &attribute.Value, &attribute.Key, &attribute.Fixed)
+		err = rows.Scan(&choice.Type, &table.ID, &table.Title, &table.Fixed, &attributeID, &attributeValue, &attributeKey, &attributeFixed)
 		if err != nil {
 			return choice, err
+		}
+
+		if attributeID != nil {
+			attribute = activity.Attribute{
+				ID:      *attributeID,
+				TableID: table.ID,
+				Key:     attributeKey,
+				Value:   *attributeValue,
+				Fixed:   *attributeFixed,
+			}
+
 		}
 
 		if _, ok := tablesMap[table.ID]; !ok {
