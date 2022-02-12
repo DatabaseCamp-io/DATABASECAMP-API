@@ -427,7 +427,7 @@ type ERAnswerTables struct {
 }
 
 type ERAnswer struct {
-	ID            int           `gorm:"column:er_answer_id" json:"-"`
+	ID            int           `gorm:"column:er_answer_id" json:"er_answer_id"`
 	UserID        int           `gorm:"column:user_id" json:"-"`
 	Tables        Tables        `gorm:"-" json:"tables"`
 	Relationships Relationships `gorm:"-" json:"relationships"`
