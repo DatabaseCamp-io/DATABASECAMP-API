@@ -358,7 +358,7 @@ func (choice ERChoice) CreatePropositionChoices() interface{} {
 	vocabs := make([]string, 0)
 
 	type TableChoice struct {
-		TitleID         *string    `json:"title_id"`
+		TableID         *string    `json:"table_id"`
 		Title           *string    `json:"title"`
 		AttributesCount *int       `json:"attributes_count"`
 		Attributes      Attributes `json:"attributes"`
@@ -380,7 +380,7 @@ func (choice ERChoice) CreatePropositionChoices() interface{} {
 		}
 
 		if table.Fixed {
-			tableChoice.TitleID = &choice.Tables[i].ID
+			tableChoice.TableID = &choice.Tables[i].ID
 			tableChoice.Title = &choice.Tables[i].Title
 		} else {
 			vocabs = append(vocabs, table.Title)
