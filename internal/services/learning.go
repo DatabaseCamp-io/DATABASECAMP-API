@@ -202,6 +202,8 @@ func (s learningService) finishActivityAnswer(
 		return 0, errs.ErrUserNotFound
 	}
 
+	logs.GetInstance().Info(user.Point)
+
 	return user.Point, nil
 }
 
@@ -344,6 +346,8 @@ func (s learningService) CheckPeerReview(userID int, request request.PeerReviewR
 		Tables:        _erAnswer.Tables,
 		Relationships: _erAnswer.Relationships,
 	})
+
+	logs.GetInstance().Info(suggestionsList)
 
 	correct := suggestionsList.Compare(request.Reviews)
 

@@ -282,7 +282,9 @@ func (choice ERChoice) GetSuggestionsList(answer ERChoiceAnswer) ProblemGroups {
 		}
 	}
 
-	if len(idMap) != len(answer.Tables) {
+	logs.GetInstance().Info(idMap)
+
+	if len(idMap) != len(choice.Tables) {
 		problemMap[SUGGESTION_RELATION_GROUP] = append(problemMap[SUGGESTION_RELATION_GROUP], RelationSuggestions[SUGGESTION_INCORRECT_RELATION])
 	}
 

@@ -3,6 +3,7 @@ package repositories
 import (
 	"database-camp/internal/infrastructure/cache"
 	"database-camp/internal/infrastructure/database"
+	"database-camp/internal/logs"
 	"database-camp/internal/models/entities/activity"
 	"database-camp/internal/models/entities/badge"
 	"database-camp/internal/models/entities/content"
@@ -282,7 +283,11 @@ func (r userRepository) InsertLearningProgression(userID int, activityID int, po
 		return err
 	}
 
+	logs.GetInstance().Info(hasProgression)
+
 	if !hasProgression && isCorrect {
+		logs.GetInstance().Info("update point")
+
 		statement := fmt.Sprintf("UPDATE %s SET point = point + %d WHERE %s = %d",
 			TableName.User,
 			point,
@@ -290,8 +295,10 @@ func (r userRepository) InsertLearningProgression(userID int, activityID int, po
 			userID,
 		)
 		temp := map[string]interface{}{}
-		err = tx.Raw(statement).Find(&temp).Error
+		err = tx.Debug().Raw(statement).Find(&temp).Error
 	}
+
+	logs.GetInstance().Info("not update point")
 
 	if err != nil {
 		tx.Rollback()
