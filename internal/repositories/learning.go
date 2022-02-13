@@ -5,6 +5,7 @@ import (
 	"database-camp/internal/infrastructure/cache"
 	"database-camp/internal/infrastructure/database"
 	"database-camp/internal/infrastructure/storage"
+	"database-camp/internal/logs"
 	"database-camp/internal/models/entities/activity"
 	"database-camp/internal/models/entities/content"
 	"database-camp/internal/utils"
@@ -475,9 +476,10 @@ func (r learningRepository) GetERChoice(activityID int) (activity.ERChoice, erro
 }
 
 func (r learningRepository) GetPeerChoice(erAnswerID *int) (activity.ERAnswer, error) {
+
 	answer := activity.ERAnswer{}
 
-	query := r.db.GetDB().
+	query := r.db.GetDB().Debug().
 		Select(IDName.Table, "title", IDName.Attribute, "value", "attribute_key", IDName.ERAnswer).
 		Table(ViewName.RandomERAnswer)
 
@@ -498,11 +500,26 @@ func (r learningRepository) GetPeerChoice(erAnswerID *int) (activity.ERAnswer, e
 	for rows.Next() {
 		table := activity.Table{}
 
-		attribute := activity.Attribute{}
+		var attributeID *int
+		var attributeValue *string
+		var attributeKey *string
 
-		err = rows.Scan(&table.ID, &table.Title, &attribute.ID, &attribute.Value, &attribute.Key, &answer.ID)
+		var attribute activity.Attribute
+
+		err = rows.Scan(&table.ID, &table.Title, &attributeID, &attributeValue, &attributeKey, &answer.ID)
 		if err != nil {
 			return answer, err
+		}
+
+		if attributeID != nil {
+			attribute = activity.Attribute{
+				ID:      *attributeID,
+				TableID: table.ID,
+				Key:     attributeKey,
+				Value:   *attributeValue,
+				Fixed:   false,
+			}
+
 		}
 
 		if _, ok := tablesMap[table.ID]; !ok {
@@ -512,6 +529,8 @@ func (r learningRepository) GetPeerChoice(erAnswerID *int) (activity.ERAnswer, e
 
 		tablesMap[table.ID].Attributes = append(tablesMap[table.ID].Attributes, attribute)
 	}
+
+	logs.GetInstance().Info(tablesMap)
 
 	tableIDs := make([]interface{}, 0)
 
