@@ -257,7 +257,13 @@ func (r userRepository) InsertBadge(userBadge badge.UserBadge) (*badge.UserBadge
 		Table(TableName.UserBadge).
 		Create(&userBadge).
 		Error
-	return &userBadge, err
+
+	if utils.IsSqlDuplicateError(err) {
+		return &userBadge, nil
+	} else {
+		return &userBadge, err
+	}
+
 }
 
 func (r userRepository) InsertLearningProgression(userID int, activityID int, point int, isCorrect bool, hasProgression bool) error {

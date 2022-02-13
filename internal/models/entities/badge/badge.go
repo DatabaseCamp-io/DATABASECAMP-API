@@ -12,14 +12,14 @@ type Badge struct {
 	IsCollected bool   `gorm:"-"`
 }
 
-func (b *Badge) setIsCollected(correctedBadgesDB []UserBadge) {
+func (b *Badge) isCollected(correctedBadgesDB []UserBadge) bool {
 	for _, correctedBadgeDB := range correctedBadgesDB {
 		if b.ID == correctedBadgeDB.BadgeID {
-			b.IsCollected = true
+			return true
 		}
 	}
 
-	b.IsCollected = false
+	return false
 }
 
 func NewBadges(allBadges []Badge, collectedBadges []UserBadge) []Badge {
@@ -32,7 +32,7 @@ func NewBadges(allBadges []Badge, collectedBadges []UserBadge) []Badge {
 			Name:      badgeDB.Name,
 		}
 
-		badge.setIsCollected(collectedBadges)
+		badge.IsCollected = badge.isCollected(collectedBadges)
 
 		badges = append(badges, badge)
 	}

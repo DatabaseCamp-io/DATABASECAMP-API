@@ -5,7 +5,6 @@ import (
 	"database-camp/internal/infrastructure/cache"
 	"database-camp/internal/infrastructure/database"
 	"database-camp/internal/infrastructure/storage"
-	"database-camp/internal/logs"
 	"database-camp/internal/models/entities/activity"
 	"database-camp/internal/models/entities/content"
 	"database-camp/internal/utils"
@@ -529,8 +528,6 @@ func (r learningRepository) GetPeerChoice(erAnswerID *int) (activity.ERAnswer, e
 
 		tablesMap[table.ID].Attributes = append(tablesMap[table.ID].Attributes, attribute)
 	}
-
-	logs.GetInstance().Info(tablesMap)
 
 	tableIDs := make([]interface{}, 0)
 
