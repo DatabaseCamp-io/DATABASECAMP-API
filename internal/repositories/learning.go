@@ -381,12 +381,12 @@ func (r learningRepository) GetERChoice(activityID int) (activity.ERChoice, erro
 			TableName.Attributes+".key",
 			TableName.Attributes+".fixed",
 		).
-		Table(TableName.ERChoiceTables).
+		Table(TableName.ERChoice).
 		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
-			TableName.ERChoice,
-			TableName.ERChoice,
-			IDName.ERChoice,
 			TableName.ERChoiceTables,
+			TableName.ERChoiceTables,
+			IDName.ERChoice,
+			TableName.ERChoice,
 			IDName.ERChoice,
 		)).
 		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.%s = %s.%s",
@@ -422,11 +422,6 @@ func (r learningRepository) GetERChoice(activityID int) (activity.ERChoice, erro
 		var attribute activity.Attribute
 
 		table := activity.Table{}
-
-		// err = rows.Scan(&choice.Type, &table.ID, &table.Title, &table.Fixed, &attribute.ID, &attribute.Value, &attribute.Key, &attribute.Fixed)
-		// if err != nil {
-		// 	return choice, err
-		// }
 
 		err = rows.Scan(&choice.Type, &table.ID, &table.Title, &table.Fixed, &attributeID, &attributeValue, &attributeKey, &attributeFixed)
 		if err != nil {
@@ -748,6 +743,10 @@ func (r learningRepository) InsertERAnswer(answer activity.ERAnswer, userID int)
 			}
 
 			attributes = append(attributes, v.Attributes...)
+		}
+
+		if len(attributes) == 0 {
+			return
 		}
 
 		e := tx.Table(TableName.Attributes).Create(&attributes).Error
