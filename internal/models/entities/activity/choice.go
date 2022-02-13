@@ -368,8 +368,6 @@ func (choice ERChoice) CreatePropositionChoices() interface{} {
 
 	for i, table := range choice.Tables {
 
-		logs.GetInstance().Info(table.Title)
-
 		tableChoice := TableChoice{
 			Attributes: []Attribute{},
 		}
@@ -413,19 +411,22 @@ func (choice ERChoice) CreatePropositionChoices() interface{} {
 	}
 
 	relationships := choice.Relationships
+	_relationships := make([]Relationship, 0)
 
 	for i, v := range choice.Relationships {
-		if !v.Fixed {
-			relationships = append(relationships[:i], relationships[i+1:]...)
+
+		if v.Fixed {
+			_relationships = append(_relationships, relationships[i])
 		}
+
 	}
 
-	utils.Shuffle(relationships)
+	utils.Shuffle(_relationships)
 
 	return map[string]interface {
 	}{
 		"tables":        tablesChoice,
-		"relationships": relationships,
+		"relationships": _relationships,
 	}
 }
 
