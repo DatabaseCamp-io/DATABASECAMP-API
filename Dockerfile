@@ -4,7 +4,10 @@ WORKDIR /src
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build -o DatabaseCamp .
+RUN CGO_ENABLED=0 go build \
+    -ldflags "-X 'DatabaseCamp/router.BuildTime=`date "+%Y-%m-%dT%H:%M:%S%Z:00"`'\
+    -X 'DatabaseCamp/router.BuildCommit=`git rev-parse --short HEAD`'"\
+    -o DatabaseCamp cmd/server/main.go
 
 FROM alpine:3.13
 
@@ -17,7 +20,7 @@ WORKDIR /usr/src/app
 COPY --from=builder /src/DatabaseCamp /usr/src/app/DatabaseCamp
 COPY --from=builder /src/.env /usr/src/app/.env
 COPY --from=builder /src/service_account.json /usr/src/app/service_account.json
-
+RUN mkdir tmp
 RUN apk add dumb-init
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
